@@ -124,12 +124,12 @@
             </el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="paymentReason" label="付款事由" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="businessType" label="业务类型" width="100">
-          <template #default="scope">
-            <el-tag size="small">{{ getBusinessTypeLabel(scope.row.businessType) }}</el-tag>
-          </template>
-        </el-table-column>
+        <el-table-column prop="supplierAccount" label="供应商账号" min-width="130" />
+        <el-table-column prop="prepaymentCompany" label="预付款公司" min-width="120" />
+        <el-table-column prop="warehouseCode" label="仓库代码" min-width="100" />
+        <el-table-column prop="businessRefNo" label="业务参考编号" min-width="140" />
+        <el-table-column prop="expenseItem" label="费用项目" min-width="100" />
+        <el-table-column prop="currency" label="币种" width="80" />
         <el-table-column prop="prepaymentAmount" label="预付金额" width="140" align="right" sortable>
           <template #default="scope">¥{{ formatMoney(scope.row.prepaymentAmount) }}</template>
         </el-table-column>
@@ -185,7 +185,6 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="applyDate" label="申请日期" width="120" />
         <el-table-column prop="expectedPaymentDate" label="预计付款日" width="120">
           <template #default="scope">
             <span :class="isExpectedOverdue(scope.row) ? 'text-danger' : ''">
@@ -196,6 +195,11 @@
         </el-table-column>
         <el-table-column prop="paymentDate" label="实际付款日" width="120" />
         <el-table-column prop="applicant" label="申请人" width="100" />
+        <el-table-column prop="applyDate" label="申请日期" width="160">
+          <template #default="scope">
+            {{ formatDateTime(scope.row.applyDate) }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="280" fixed="right">
           <template #default="scope">
             <el-button type="primary" size="small" link @click.stop="handleView(scope.row)">查看</el-button>
@@ -662,113 +666,185 @@ const alerts = ref([
 const tableData = ref([
   {
     id: 1,
-    prepaymentNo: 'YF2024040001',
+    prepaymentNo: 'YF2024050001',
+    businessRefNo: 'PO2024040001',
     supplierId: 1,
     supplierName: '深圳硬件供应商A公司',
-    paymentReason: '服务器采购预付款30%',
-    businessType: 'purchase',
-    prepaymentAmount: 100000.00,
-    paidAmount: 100000.00,
-    invoicedAmount: 100000.00,
-    writtenOffAmount: 60000.00,
-    balanceAmount: 40000.00,
-    prepaymentStatus: 'invoiced',
-    invoiceStatus: 'binded',
-    writeoffStatus: 'partial',
-    applyDate: '2024-02-01',
-    expectedPaymentDate: '2024-02-05',
-    paymentDate: '2024-02-04',
-    agingDays: 45,
+    supplierAccount: '75512345678',
+    prepaymentCompany: '总部',
+    warehouseCode: 'WH001',
+    expenseItem: '采购成本',
+    currency: 'CNY',
+    prepaymentAmount: 150000.00,
+    paidAmount: 0.00,
+    invoicedAmount: 0.00,
+    writtenOffAmount: 0.00,
+    balanceAmount: 150000.00,
+    prepaymentStatus: 'draft',
+    invoiceStatus: 'unbinded',
+    writeoffStatus: 'unwritten_off',
+    applyDate: '2024-04-20 10:30:45',
+    expectedPaymentDate: '2024-04-25',
+    paymentDate: '',
+    agingDays: 5,
     overdueDays: 0,
     applicant: '张三'
   },
   {
     id: 2,
-    prepaymentNo: 'YF2024040002',
+    prepaymentNo: 'YF2024050002',
+    businessRefNo: 'PO2024040002',
     supplierId: 2,
     supplierName: '北京云服务B公司',
-    paymentReason: '2024年Q1云服务费预付款',
-    businessType: 'service',
-    prepaymentAmount: 56000.00,
-    paidAmount: 56000.00,
-    invoicedAmount: 0.00,
-    writtenOffAmount: 0.00,
-    balanceAmount: 56000.00,
-    prepaymentStatus: 'paid',
-    invoiceStatus: 'unbinded',
-    writeoffStatus: 'unwritten_off',
-    applyDate: '2024-02-10',
-    expectedPaymentDate: '2024-02-15',
-    paymentDate: '2024-02-14',
-    agingDays: 30,
-    overdueDays: 15,
-    applicant: '李四'
-  },
-  {
-    id: 3,
-    prepaymentNo: 'YF2024040003',
-    supplierId: 3,
-    supplierName: '上海软件C公司',
-    paymentReason: '系统定制开发预付款',
-    businessType: 'service',
+    supplierAccount: '62170012345',
+    prepaymentCompany: '北京分公司',
+    warehouseCode: 'WH002',
+    expenseItem: '服务费',
+    currency: 'CNY',
     prepaymentAmount: 80000.00,
     paidAmount: 0.00,
     invoicedAmount: 0.00,
     writtenOffAmount: 0.00,
     balanceAmount: 80000.00,
+    prepaymentStatus: 'pending',
+    invoiceStatus: 'unbinded',
+    writeoffStatus: 'unwritten_off',
+    applyDate: '2024-04-18 14:22:30',
+    expectedPaymentDate: '2024-04-23',
+    paymentDate: '',
+    agingDays: 7,
+    overdueDays: 0,
+    applicant: '李四'
+  },
+  {
+    id: 3,
+    prepaymentNo: 'YF2024050003',
+    businessRefNo: 'PO2024040003',
+    supplierId: 3,
+    supplierName: '上海软件C公司',
+    supplierAccount: '62220811111',
+    prepaymentCompany: '上海分公司',
+    warehouseCode: 'WH003',
+    expenseItem: '服务费',
+    currency: 'CNY',
+    prepaymentAmount: 120000.00,
+    paidAmount: 0.00,
+    invoicedAmount: 0.00,
+    writtenOffAmount: 0.00,
+    balanceAmount: 120000.00,
     prepaymentStatus: 'approved',
     invoiceStatus: 'unbinded',
     writeoffStatus: 'unwritten_off',
-    applyDate: '2024-03-05',
-    expectedPaymentDate: '2024-03-10',
+    applyDate: '2024-04-15 09:15:20',
+    expectedPaymentDate: '2024-04-20',
     paymentDate: '',
-    agingDays: 12,
+    agingDays: 10,
     overdueDays: 0,
     applicant: '王五'
   },
   {
     id: 4,
-    prepaymentNo: 'YF2024040004',
+    prepaymentNo: 'YF2024050004',
+    businessRefNo: 'PO2024040004',
     supplierId: 4,
     supplierName: '广州物流D公司',
-    paymentReason: 'Q2物流服务费预付款',
-    businessType: 'service',
-    prepaymentAmount: 76000.00,
-    paidAmount: 0.00,
+    supplierAccount: '62284812345',
+    prepaymentCompany: '广州分公司',
+    warehouseCode: 'WH004',
+    expenseItem: '物流费',
+    currency: 'CNY',
+    prepaymentAmount: 50000.00,
+    paidAmount: 50000.00,
     invoicedAmount: 0.00,
     writtenOffAmount: 0.00,
-    balanceAmount: 76000.00,
-    prepaymentStatus: 'pending',
+    balanceAmount: 50000.00,
+    prepaymentStatus: 'invoiced',
     invoiceStatus: 'unbinded',
     writeoffStatus: 'unwritten_off',
-    applyDate: '2024-03-10',
-    expectedPaymentDate: '2024-03-20',
-    paymentDate: '',
-    agingDays: 7,
+    applyDate: '2024-04-10 16:45:00',
+    expectedPaymentDate: '2024-04-15',
+    paymentDate: '2024-04-14',
+    agingDays: 15,
     overdueDays: 0,
     applicant: '赵六'
   },
   {
     id: 5,
-    prepaymentNo: 'YF2024040005',
+    prepaymentNo: 'YF2024050005',
+    businessRefNo: 'PO2024040005',
     supplierId: 5,
     supplierName: '杭州装修E公司',
-    paymentReason: '办公室装修预付款（保证金）',
-    businessType: 'deposit',
+    supplierAccount: '62220822222',
+    prepaymentCompany: '杭州分公司',
+    warehouseCode: 'WH005',
+    expenseItem: '保证金',
+    currency: 'CNY',
+    prepaymentAmount: 100000.00,
+    paidAmount: 100000.00,
+    invoicedAmount: 60000.00,
+    writtenOffAmount: 0.00,
+    balanceAmount: 100000.00,
+    prepaymentStatus: 'partial_writeoff',
+    invoiceStatus: 'partial',
+    writeoffStatus: 'unwritten_off',
+    applyDate: '2024-03-28 11:30:15',
+    expectedPaymentDate: '2024-04-02',
+    paymentDate: '2024-04-01',
+    agingDays: 25,
+    overdueDays: 0,
+    applicant: '孙七'
+  },
+  {
+    id: 6,
+    prepaymentNo: 'YF2024050006',
+    businessRefNo: 'PO2024040006',
+    supplierId: 1,
+    supplierName: '深圳硬件供应商A公司',
+    supplierAccount: '75512345678',
+    prepaymentCompany: '总部',
+    warehouseCode: 'WH001',
+    expenseItem: '采购成本',
+    currency: 'CNY',
     prepaymentAmount: 200000.00,
     paidAmount: 200000.00,
     invoicedAmount: 200000.00,
-    writtenOffAmount: 200000.00,
+    writtenOffAmount: 120000.00,
+    balanceAmount: 80000.00,
+    prepaymentStatus: 'partial',
+    invoiceStatus: 'binded',
+    writeoffStatus: 'partial',
+    applyDate: '2024-03-15 08:20:10',
+    expectedPaymentDate: '2024-03-20',
+    paymentDate: '2024-03-19',
+    agingDays: 35,
+    overdueDays: 5,
+    applicant: '张三'
+  },
+  {
+    id: 7,
+    prepaymentNo: 'YF2024050007',
+    businessRefNo: 'PO2024040007',
+    supplierId: 2,
+    supplierName: '北京云服务B公司',
+    supplierAccount: '62170012345',
+    prepaymentCompany: '北京分公司',
+    warehouseCode: 'WH002',
+    expenseItem: '服务费',
+    currency: 'CNY',
+    prepaymentAmount: 180000.00,
+    paidAmount: 180000.00,
+    invoicedAmount: 180000.00,
+    writtenOffAmount: 180000.00,
     balanceAmount: 0.00,
     prepaymentStatus: 'written_off',
     invoiceStatus: 'binded',
     writeoffStatus: 'written_off',
-    applyDate: '2024-01-15',
-    expectedPaymentDate: '2024-01-20',
-    paymentDate: '2024-01-18',
+    applyDate: '2024-02-20 13:50:30',
+    expectedPaymentDate: '2024-02-25',
+    paymentDate: '2024-02-24',
     agingDays: 0,
     overdueDays: 0,
-    applicant: '孙七'
+    applicant: '李四'
   }
 ])
 
@@ -859,14 +935,17 @@ const formatMoney = (value: number) => {
   return value.toLocaleString('zh-CN', { minimumFractionDigits: 2 })
 }
 
-// 获取业务类型标签
-const getBusinessTypeLabel = (type: string) => {
-  const map: Record<string, string> = {
-    'purchase': '采购类',
-    'service': '服务类',
-    'deposit': '保证金类'
-  }
-  return map[type] || type
+// 格式化日期时间
+const formatDateTime = (dateStr: string) => {
+  if (!dateStr) return '-'
+  const date = new Date(dateStr)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 
 // 获取状态配置
@@ -874,13 +953,11 @@ const getStatusConfig = (status: string) => {
   const config: Record<string, { label: string, type: string }> = {
     'draft': { label: '草稿', type: 'info' },
     'pending': { label: '待审核', type: 'warning' },
-    'approved': { label: '已审核', type: 'primary' },
-    'paid': { label: '已付款', type: 'success' },
-    'invoiced': { label: '已开票', type: 'success' },
-    'written_off': { label: '已核销', type: 'success' },
-    'partial_writeoff': { label: '部分核销', type: 'warning' },
-    'rejected': { label: '已驳回', type: 'danger' },
-    'cancelled': { label: '已作废', type: 'info' }
+    'approved': { label: '待付款', type: 'primary' },
+    'invoiced': { label: '待关联发票', type: 'primary' },
+    'partial_writeoff': { label: '待核销', type: 'warning' },
+    'partial': { label: '部分核销', type: 'warning' },
+    'written_off': { label: '已核销', type: 'success' }
   }
   return config[status] || { label: status, type: 'info' }
 }
@@ -892,13 +969,6 @@ const getInvoiceStatusType = (row: any) => {
   return 'warning'
 }
 
-// 获取发票状态文本
-const getInvoiceStatusText = (row: any) => {
-  if (row.invoicedAmount === 0) return '未绑定'
-  if (row.invoicedAmount >= row.prepaymentAmount) return '已全额'
-  return '部分'
-}
-
 // 获取核销状态类型
 const getWriteoffStatusType = (row: any) => {
   if (row.writtenOffAmount === 0) return 'info'
@@ -906,11 +976,18 @@ const getWriteoffStatusType = (row: any) => {
   return 'warning'
 }
 
+// 获取发票状态文本
+const getInvoiceStatusText = (row: any) => {
+  if (row.invoicedAmount === 0) return '未绑定'
+  if (row.invoicedAmount >= row.prepaymentAmount) return '已全额'
+  return '部分绑定'
+}
+
 // 获取核销状态文本
 const getWriteoffStatusText = (row: any) => {
   if (row.writtenOffAmount === 0) return '未核销'
-  if (row.writtenOffAmount >= row.paidAmount) return '已全额'
-  return '部分'
+  if (row.writtenOffAmount >= row.paidAmount) return '已核销'
+  return '部分核销'
 }
 
 // 获取账龄标签类型
