@@ -90,24 +90,24 @@
       </el-button>
     </div>
 
-    <!-- 预警提示区域 -->
-    <div class="alert-panel" v-if="alerts.length > 0">
-      <el-alert
-        v-for="(alert, index) in alerts"
-        :key="index"
-        :title="alert.title"
-        :type="alert.type"
-        :description="alert.description"
-        show-icon
-        :closable="true"
-        @close="handleCloseAlert(index)"
-      />
+    <!-- 状态 Tab 导航 -->
+    <div class="status-tabs">
+      <el-radio-group v-model="activeStatusTab" @change="handleStatusTabChange">
+        <el-radio-button value="all">全部</el-radio-button>
+        <el-radio-button value="draft">草稿</el-radio-button>
+        <el-radio-button value="pending">待审核</el-radio-button>
+        <el-radio-button value="approved">待付款</el-radio-button>
+        <el-radio-button value="invoiced">待关联发票</el-radio-button>
+        <el-radio-button value="partial_writeoff">待核销</el-radio-button>
+        <el-radio-button value="partial">部分核销</el-radio-button>
+        <el-radio-button value="written_off">已核销</el-radio-button>
+      </el-radio-group>
     </div>
 
     <!-- 表格区域 -->
     <div class="table-container">
       <el-table
-        :data="tableData"
+        :data="filteredTableData"
         v-loading="loading"
         border
         stripe
@@ -128,6 +128,8 @@
         <el-table-column prop="prepaymentCompany" label="预付款公司" min-width="120" />
         <el-table-column prop="warehouseCode" label="仓库代码" min-width="100" />
         <el-table-column prop="businessRefNo" label="业务参考编号" min-width="140" />
+        <el-table-column prop="rateSheetNo" label="费率单编号" min-width="140" />
+        <el-table-column prop="billNo" label="提单号" min-width="140" />
         <el-table-column prop="expenseItem" label="费用项目" min-width="100" />
         <el-table-column prop="currency" label="币种" width="80" />
         <el-table-column prop="prepaymentAmount" label="预付金额" width="140" align="right" sortable>
@@ -200,9 +202,8 @@
             {{ formatDateTime(scope.row.applyDate) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="280" fixed="right">
+        <el-table-column label="操作" width="240" fixed="right">
           <template #default="scope">
-            <el-button type="primary" size="small" link @click.stop="handleView(scope.row)">查看</el-button>
             <el-button type="success" size="small" link @click.stop="handleEdit(scope.row)" :disabled="!canEdit(scope.row)">编辑</el-button>
             <el-button type="warning" size="small" link @click.stop="handleSubmit(scope.row)" :disabled="!canSubmit(scope.row)">提交</el-button>
             <el-dropdown trigger="hover" @command="(command: string) => handleMoreAction(command, scope.row)">
@@ -216,10 +217,6 @@
                   <el-dropdown-item command="payment" :disabled="!canPayment(scope.row)">付款登记</el-dropdown-item>
                   <el-dropdown-item command="bindInvoice" :disabled="!canBindInvoice(scope.row)">绑定发票</el-dropdown-item>
                   <el-dropdown-item command="writeoff" :disabled="!canWriteoff(scope.row)">核销</el-dropdown-item>
-                  <el-dropdown-item command="autoWriteoff" :disabled="!canAutoWriteoff(scope.row)">自动核销</el-dropdown-item>
-                  <el-dropdown-item command="transfer" :disabled="!canTransfer(scope.row)">余款转应付</el-dropdown-item>
-                  <el-dropdown-item command="print">打印</el-dropdown-item>
-                  <el-dropdown-item command="log">操作日志</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -595,6 +592,8 @@ const router = useRouter()
 const loading = ref(false)
 const selectedRows = ref<any[]>([])
 const showDetail = ref(false)
+const activeStatusTab = ref('all')
+const filteredTableData = ref<any[]>([])
 const currentRow = ref<any>(null)
 const showBindInvoice = ref(false)
 const showWriteoff = ref(false)
@@ -648,26 +647,14 @@ const stats = reactive({
   totalAmount: 1208000.00
 })
 
-// 预警信息
-const alerts = ref([
-  {
-    title: '预付款逾期提醒',
-    type: 'warning',
-    description: '有2笔预付款已逾期90天以上，请及时处理'
-  },
-  {
-    title: '发票缺失提醒',
-    type: 'info',
-    description: '有3笔已付款预付款尚未绑定发票'
-  }
-])
-
 // 表格数据
 const tableData = ref([
   {
     id: 1,
     prepaymentNo: 'YF2024050001',
     businessRefNo: 'PO2024040001',
+    rateSheetNo: 'FL2024040001',
+    billNo: 'BL2024040001',
     supplierId: 1,
     supplierName: '深圳硬件供应商A公司',
     supplierAccount: '75512345678',
@@ -694,6 +681,8 @@ const tableData = ref([
     id: 2,
     prepaymentNo: 'YF2024050002',
     businessRefNo: 'PO2024040002',
+    rateSheetNo: 'FL2024040002',
+    billNo: 'BL2024040002',
     supplierId: 2,
     supplierName: '北京云服务B公司',
     supplierAccount: '62170012345',
@@ -720,6 +709,8 @@ const tableData = ref([
     id: 3,
     prepaymentNo: 'YF2024050003',
     businessRefNo: 'PO2024040003',
+    rateSheetNo: 'FL2024040003',
+    billNo: 'BL2024040003',
     supplierId: 3,
     supplierName: '上海软件C公司',
     supplierAccount: '62220811111',
@@ -746,6 +737,8 @@ const tableData = ref([
     id: 4,
     prepaymentNo: 'YF2024050004',
     businessRefNo: 'PO2024040004',
+    rateSheetNo: 'FL2024040004',
+    billNo: 'BL2024040004',
     supplierId: 4,
     supplierName: '广州物流D公司',
     supplierAccount: '62284812345',
@@ -772,6 +765,8 @@ const tableData = ref([
     id: 5,
     prepaymentNo: 'YF2024050005',
     businessRefNo: 'PO2024040005',
+    rateSheetNo: 'FL2024040005',
+    billNo: 'BL2024040005',
     supplierId: 5,
     supplierName: '杭州装修E公司',
     supplierAccount: '62220822222',
@@ -798,6 +793,8 @@ const tableData = ref([
     id: 6,
     prepaymentNo: 'YF2024050006',
     businessRefNo: 'PO2024040006',
+    rateSheetNo: 'FL2024040006',
+    billNo: 'BL2024040006',
     supplierId: 1,
     supplierName: '深圳硬件供应商A公司',
     supplierAccount: '75512345678',
@@ -824,6 +821,8 @@ const tableData = ref([
     id: 7,
     prepaymentNo: 'YF2024050007',
     businessRefNo: 'PO2024040007',
+    rateSheetNo: 'FL2024040007',
+    billNo: 'BL2024040007',
     supplierId: 2,
     supplierName: '北京云服务B公司',
     supplierAccount: '62170012345',
@@ -848,7 +847,7 @@ const tableData = ref([
   }
 ])
 
-pagination.total = tableData.value.length
+pagination.total = filteredTableData.value.length
 
 // 绑定发票表单
 const bindInvoiceForm = reactive({
@@ -1037,12 +1036,29 @@ const canWriteoff = (row: any) => row.prepaymentStatus === 'invoiced' && row.bal
 const canAutoWriteoff = (row: any) => row.prepaymentStatus === 'invoiced' && row.balanceAmount > 0
 const canTransfer = (row: any) => row.prepaymentStatus === 'invoiced' && row.balanceAmount > 0
 
+// 过滤数据
+const filterDataByStatus = () => {
+  if (activeStatusTab.value === 'all') {
+    filteredTableData.value = [...tableData.value]
+  } else {
+    filteredTableData.value = tableData.value.filter(
+      item => item.prepaymentStatus === activeStatusTab.value
+    )
+  }
+  pagination.total = filteredTableData.value.length
+}
+
+// 状态 Tab 切换
+const handleStatusTabChange = () => {
+  filterDataByStatus()
+}
+
 // 搜索
 const handleSearch = () => {
   loading.value = true
   setTimeout(() => {
     loading.value = false
-    ElMessage.success('搜索完成')
+    filterDataByStatus()
   }, 500)
 }
 
@@ -1344,11 +1360,6 @@ const confirmBatchAudit = async () => {
   }
 }
 
-// 关闭预警
-const handleCloseAlert = (index: number) => {
-  alerts.value.splice(index, 1)
-}
-
 // 关闭详情
 const handleCloseDetail = () => {
   showDetail.value = false
@@ -1356,7 +1367,7 @@ const handleCloseDetail = () => {
 }
 
 onMounted(() => {
-  handleSearch()
+  filterDataByStatus()
 })
 </script>
 
@@ -1373,6 +1384,14 @@ onMounted(() => {
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
+.status-tabs {
+  background: #fff;
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
 .action-bar {
   background: #fff;
   padding: 16px 20px;
@@ -1381,14 +1400,6 @@ onMounted(() => {
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   display: flex;
   gap: 10px;
-}
-
-.alert-panel {
-  margin-bottom: 20px;
-}
-
-.alert-panel .el-alert {
-  margin-bottom: 10px;
 }
 
 .table-container {

@@ -16,27 +16,31 @@
       >
         <el-row :gutter="20">
           <el-col :span="8">
-            <el-form-item label="申请单号" prop="prepaymentNo">
+            <el-form-item label="预付款单号" prop="prepaymentNo">
               <el-input v-model="form.prepaymentNo" disabled placeholder="系统自动生成" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="申请日期" prop="applyDate">
-              <el-date-picker
-                v-model="form.applyDate"
-                type="date"
-                placeholder="请选择"
-                value-format="YYYY-MM-DD"
-                style="width: 100%"
-              />
+            <el-form-item label="供应商" prop="supplierId">
+              <el-select v-model="form.supplierId" filterable placeholder="请选择" style="width: 100%">
+                <el-option
+                  v-for="supplier in supplierList"
+                  :key="supplier.id"
+                  :label="`${supplier.code} - ${supplier.name}`"
+                  :value="supplier.id"
+                />
+              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="申请人" prop="applicantId">
-              <el-select v-model="form.applicantId" placeholder="请选择" style="width: 100%">
-                <el-option label="张三" value="1" />
-                <el-option label="李四" value="2" />
-                <el-option label="王五" value="3" />
+            <el-form-item label="供应商账号" prop="supplierAccount">
+              <el-select v-model="form.supplierAccount" placeholder="请选择" style="width: 100%">
+                <el-option
+                  v-for="item in supplierAccountList"
+                  :key="item.account"
+                  :label="item.account"
+                  :value="item.account"
+                />
               </el-select>
             </el-form-item>
           </el-col>
@@ -44,20 +48,24 @@
 
         <el-row :gutter="20">
           <el-col :span="8">
-            <el-form-item label="供应商" prop="supplierId">
-              <el-select v-model="form.supplierId" filterable placeholder="请选择" style="width: 100%">
-                <el-option label="深圳硬件供应商" value="1" />
-                <el-option label="北京云服务商" value="2" />
-                <el-option label="上海软件公司" value="3" />
+            <el-form-item label="预付款公司" prop="prepaymentCompany">
+              <el-select v-model="form.prepaymentCompany" placeholder="请选择" style="width: 100%">
+                <el-option label="总部" value="总部" />
+                <el-option label="北京分公司" value="北京分公司" />
+                <el-option label="上海分公司" value="上海分公司" />
+                <el-option label="广州分公司" value="广州分公司" />
+                <el-option label="杭州分公司" value="杭州分公司" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="业务类型" prop="businessType">
-              <el-select v-model="form.businessType" placeholder="请选择" style="width: 100%">
-                <el-option label="采购类" value="purchase" />
-                <el-option label="服务类" value="service" />
-                <el-option label="保证金类" value="deposit" />
+            <el-form-item label="仓库代码" prop="warehouseCode">
+              <el-select v-model="form.warehouseCode" placeholder="请选择" style="width: 100%">
+                <el-option label="WH001" value="WH001" />
+                <el-option label="WH002" value="WH002" />
+                <el-option label="WH003" value="WH003" />
+                <el-option label="WH004" value="WH004" />
+                <el-option label="WH005" value="WH005" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -76,6 +84,33 @@
 
         <el-row :gutter="20">
           <el-col :span="8">
+            <el-form-item label="费用项目" prop="expenseItem">
+              <el-select v-model="form.expenseItem" placeholder="请选择" style="width: 100%">
+                <el-option label="搬运费" value="搬运费" />
+                <el-option label="装卸费" value="装卸费" />
+                <el-option label="KJ3税金" value="KJ3税金" />
+                <el-option label="机场提货费" value="机场提货费" />
+                <el-option label="海关监管仓库费" value="海关监管仓库费" />
+                <el-option label="仓储费" value="仓储费" />
+                <el-option label="磁检费" value="磁检费" />
+                <el-option label="港杂费" value="港杂费" />
+                <el-option label="品质鉴定报告费" value="品质鉴定报告费" />
+                <el-option label="宽带网络费" value="宽带网络费" />
+                <el-option label="换单费" value="换单费" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="币种" prop="currency">
+              <el-select v-model="form.currency" placeholder="请选择" style="width: 100%">
+                <el-option label="人民币 (CNY)" value="CNY" />
+                <el-option label="美元 (USD)" value="USD" />
+                <el-option label="欧元 (EUR)" value="EUR" />
+                <el-option label="港币 (HKD)" value="HKD" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
             <el-form-item label="预付金额" prop="prepaymentAmount">
               <el-input-number
                 v-model="form.prepaymentAmount"
@@ -86,36 +121,29 @@
               />
             </el-form-item>
           </el-col>
-          <el-col :span="8">
-            <el-form-item label="付款方式" prop="paymentType">
-              <el-select v-model="form.paymentType" placeholder="请选择" style="width: 100%">
-                <el-option label="银行转账" value="bank_transfer" />
-                <el-option label="承兑汇票" value="acceptance" />
-                <el-option label="现金" value="cash" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item label="关联订单" prop="orderId">
-              <el-select v-model="form.orderId" filterable placeholder="可选择" clearable style="width: 100%">
-                <el-option label="SO202402150008 - 杭州制造有限公司" value="1" />
-                <el-option label="SO202403010012 - 北京科技有限公司" value="2" />
-              </el-select>
-            </el-form-item>
-          </el-col>
         </el-row>
 
-        <el-row>
-          <el-col :span="24">
-            <el-form-item label="付款事由" prop="paymentReason">
-              <el-input
-                v-model="form.paymentReason"
-                type="textarea"
-                :rows="2"
-                placeholder="请详细描述付款事由"
-                maxlength="500"
-                show-word-limit
-              />
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-form-item label="费率单编号" prop="rateSheetNo">
+              <el-select v-model="form.rateSheetNo" placeholder="请选择" style="width: 100%" @change="handleRateSheetChange">
+                <el-option
+                  v-for="item in rateSheetList"
+                  :key="item.rateSheetNo"
+                  :label="item.rateSheetNo"
+                  :value="item.rateSheetNo"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="业务参考编号" prop="businessRefNo">
+              <el-input v-model="form.businessRefNo" placeholder="自动获取" disabled />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="提单号" prop="billNo">
+              <el-input v-model="form.billNo" placeholder="请输入提单号" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -126,7 +154,7 @@
               <el-input
                 v-model="form.remark"
                 type="textarea"
-                :rows="2"
+                :rows="3"
                 placeholder="请输入其他需要说明的信息"
                 maxlength="500"
                 show-word-limit
@@ -134,26 +162,6 @@
             </el-form-item>
           </el-col>
         </el-row>
-
-        <!-- 附件上传 -->
-        <div class="form-section">
-          <h4>附件上传 <span style="color: red; font-size: 12px;">（请上传付款申请单、合同、报价单等相关证明文件）</span></h4>
-          <el-upload
-            v-model:file-list="fileList"
-            :limit="10"
-            accept=".jpg,.png,.pdf,.doc,.docx,.xls,.xlsx"
-            :on-exceed="handleExceed"
-            :before-upload="beforeUpload"
-            list-type="text"
-          >
-            <el-button type="primary" icon="upload">点击上传</el-button>
-            <template #tip>
-              <div class="el-upload__tip">
-                支持JPG、PNG、PDF、Word、Excel格式，单文件不超过10MB，最多上传10个文件
-              </div>
-            </template>
-          </el-upload>
-        </div>
       </el-form>
     </el-card>
 
@@ -170,7 +178,6 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElForm } from 'element-plus'
-import { Upload } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -181,77 +188,91 @@ const submitLoading = ref(false)
 // 编辑模式判断
 const isEdit = computed(() => !!route.params.id)
 
+// 供应商列表
+const supplierList = ref([
+  { id: 1, code: 'SUP001', name: '深圳硬件供应商A公司', account: '75512345678' },
+  { id: 2, code: 'SUP002', name: '北京云服务B公司', account: '62170012345' },
+  { id: 3, code: 'SUP003', name: '上海软件C公司', account: '62220811111' },
+  { id: 4, code: 'SUP004', name: '广州物流D公司', account: '62284812345' },
+  { id: 5, code: 'SUP005', name: '杭州装修E公司', account: '62220822222' }
+])
+
+// 供应商账号列表
+const supplierAccountList = ref([
+  { account: '75512345678', name: '深圳硬件供应商A公司' },
+  { account: '62170012345', name: '北京云服务B公司' },
+  { account: '62220811111', name: '上海软件C公司' },
+  { account: '62284812345', name: '广州物流D公司' },
+  { account: '62220822222', name: '杭州装修E公司' }
+])
+
+// 费率单列表
+const rateSheetList = ref([
+  { rateSheetNo: 'FL2024040001', businessRefNo: 'PO2024040001' },
+  { rateSheetNo: 'FL2024040002', businessRefNo: 'PO2024040002' },
+  { rateSheetNo: 'FL2024040003', businessRefNo: 'PO2024040003' },
+  { rateSheetNo: 'FL2024040004', businessRefNo: 'PO2024040004' },
+  { rateSheetNo: 'FL2024040005', businessRefNo: 'PO2024040005' },
+  { rateSheetNo: 'FL2024040006', businessRefNo: 'PO2024040006' },
+  { rateSheetNo: 'FL2024040007', businessRefNo: 'PO2024040007' }
+])
+
 // 表单数据
 const form = reactive({
   prepaymentNo: '',
-  applyDate: '',
-  applicantId: '',
   supplierId: '',
-  businessType: '',
-  expectedPaymentDate: '',
+  supplierAccount: '',
+  prepaymentCompany: '',
+  warehouseCode: '',
+  businessRefNo: '',
+  rateSheetNo: '',
+  billNo: '',
+  expenseItem: '',
+  currency: 'CNY',
   prepaymentAmount: 0,
-  paymentType: '',
-  orderId: '',
-  paymentReason: '',
+  expectedPaymentDate: '',
   remark: ''
 })
 
 // 表单校验规则
 const rules = {
-  applyDate: [
-    { required: true, message: '请选择申请日期', trigger: 'change' }
-  ],
-  applicantId: [
-    { required: true, message: '请选择申请人', trigger: 'change' }
-  ],
   supplierId: [
     { required: true, message: '请选择供应商', trigger: 'change' }
   ],
-  businessType: [
-    { required: true, message: '请选择业务类型', trigger: 'change' }
+  supplierAccount: [
+    { required: true, message: '请选择供应商账号', trigger: 'change' }
   ],
-  expectedPaymentDate: [
-    { required: true, message: '请选择预计付款日', trigger: 'change' }
+  prepaymentCompany: [
+    { required: true, message: '请选择预付款公司', trigger: 'change' }
+  ],
+  warehouseCode: [
+    { required: true, message: '请选择仓库代码', trigger: 'change' }
+  ],
+  expenseItem: [
+    { required: true, message: '请选择费用项目', trigger: 'change' }
+  ],
+  currency: [
+    { required: true, message: '请选择币种', trigger: 'change' }
   ],
   prepaymentAmount: [
     { required: true, message: '请输入预付金额', trigger: 'blur' },
     { type: 'number', min: 0.01, message: '预付金额必须大于0', trigger: 'blur' }
   ],
-  paymentType: [
-    { required: true, message: '请选择付款方式', trigger: 'change' }
-  ],
-  paymentReason: [
-    { required: true, message: '请输入付款事由', trigger: 'blur' }
+  expectedPaymentDate: [
+    { required: true, message: '请选择预计付款日', trigger: 'change' }
   ]
 }
 
-// 上传文件列表
-const fileList = ref([])
-
-// 文件超出限制
-const handleExceed = (files: any, fileList: any) => {
-  ElMessage.warning(`最多只能上传 ${10} 个文件`)
-}
-
-// 文件上传前校验
-const beforeUpload = (file: any) => {
-  const allowedTypes = [
-    'image/jpeg', 'image/png',
-    'application/pdf',
-    'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  ]
-  const isAllowed = allowedTypes.includes(file.type)
-  if (!isAllowed) {
-    ElMessage.error('只能上传JPG、PNG、PDF、Word、Excel格式的文件')
-    return false
+// 费率单选择变化
+const handleRateSheetChange = (rateSheetNo: string) => {
+  if (rateSheetNo) {
+    const rateSheet = rateSheetList.value.find(item => item.rateSheetNo === rateSheetNo)
+    if (rateSheet) {
+      form.businessRefNo = rateSheet.businessRefNo
+    }
+  } else {
+    form.businessRefNo = ''
   }
-  const isLt10M = file.size / 1024 / 1024 < 10
-  if (!isLt10M) {
-    ElMessage.error('单文件大小不能超过 10MB')
-    return false
-  }
-  return true
 }
 
 // 返回
@@ -282,11 +303,6 @@ const handleSaveDraft = async () => {
 const handleSubmit = async () => {
   if (!formRef.value) return
 
-  if (fileList.value.length === 0) {
-    ElMessage.warning('请至少上传一个证明文件')
-    return
-  }
-
   try {
     await formRef.value.validate()
     submitLoading.value = true
@@ -306,24 +322,24 @@ onMounted(() => {
   // 如果是编辑模式，加载预付款数据
   if (isEdit.value) {
     // 模拟加载数据
-    form.prepaymentNo = 'YF2024030003'
-    form.applyDate = '2024-03-15'
-    form.applicantId = '1'
-    form.supplierId = '4'
-    form.businessType = 'service'
-    form.expectedPaymentDate = '2024-03-25'
-    form.prepaymentAmount = 200000.00
-    form.paymentType = 'bank_transfer'
-    form.orderId = ''
-    form.paymentReason = '办公室装修预付款'
-    form.remark = '按合同约定支付30%预付款'
+    form.prepaymentNo = 'YF2024050001'
+    form.supplierId = 1
+    form.supplierAccount = '75512345678'
+    form.prepaymentCompany = '总部'
+    form.warehouseCode = 'WH001'
+    form.rateSheetNo = 'FL2024040001'
+    form.businessRefNo = 'PO2024040001'
+    form.billNo = 'BL2024040001'
+    form.expenseItem = '采购成本'
+    form.currency = 'CNY'
+    form.prepaymentAmount = 150000.00
+    form.expectedPaymentDate = '2024-04-25'
+    form.remark = ''
   } else {
     // 新增模式，生成临时单号
     const now = new Date()
     const dateStr = now.getFullYear() + (now.getMonth() + 1).toString().padStart(2, '0')
     form.prepaymentNo = `YF${dateStr}XXXXXX`
-    form.applyDate = now.toISOString().split('T')[0]
-    form.applicantId = '1' // 默认当前登录用户
   }
 })
 </script>

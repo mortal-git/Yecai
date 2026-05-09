@@ -84,31 +84,35 @@
 
       <!-- 账单拆分交互图片 -->
       <div class="flow-image">
-        <img src="@/assets/bill-split-flow.jpg" alt="账单拆分交互流程图" />
+        <img src="@/assets/账单交互.png" alt="账单拆分交互流程图" />
       </div>
     </div>
 
     <!-- 自定义字段配置弹窗 -->
     <el-dialog
       v-model="showFieldConfig"
-      title="字段设置 - 自定义字段配置"
-      width="800px"
+      title="字段设置"
+      width="850px"
       :close-on-click-modal="false"
     >
       <div class="field-config-container">
-        <!-- 历史已配置字段列表 -->
+        <!-- 已配置字段 -->
         <div class="config-section">
           <div class="section-header">
             <h4>已配置字段</h4>
-            <span class="tip">（可编辑历史字段）</span>
           </div>
           <el-table :data="customFields" border style="margin-top: 10px">
-            <el-table-column prop="fieldCode" label="COS表字段" min-width="150">
+            <el-table-column prop="cosTable" label="COS表" min-width="200">
               <template #default="scope">
-                <el-input v-model="scope.row.fieldCode" placeholder="COS表字段" :disabled="scope.row.isSystem" />
+                <el-input v-model="scope.row.cosTable" placeholder="请输入COS表名" />
               </template>
             </el-table-column>
-            <el-table-column prop="fieldName" label="中文名称" min-width="150">
+            <el-table-column prop="fieldCode" label="COS表字段" min-width="200">
+              <template #default="scope">
+                <el-input v-model="scope.row.fieldCode" placeholder="COS表字段" />
+              </template>
+            </el-table-column>
+            <el-table-column prop="fieldName" label="中文名称" min-width="180">
               <template #default="scope">
                 <el-input v-model="scope.row.fieldName" placeholder="中文名称" />
               </template>
@@ -116,27 +120,19 @@
           </el-table>
         </div>
 
-        <!-- 新增字段配置 -->
+        <!-- 新增字段 -->
         <div class="config-section" style="margin-top: 20px">
           <div class="section-header">
             <h4>新增字段</h4>
-            <span class="tip">（可新增配置「表字段 + 中文名称」）</span>
           </div>
           <div class="add-field-form">
-            <el-form :model="newField" :inline="true">
-              <el-form-item label="COS表字段">
-                <el-input v-model="newField.fieldCode" placeholder="请输入底层表字段名" style="width: 180px" />
-              </el-form-item>
-              <el-form-item label="中文名称">
-                <el-input v-model="newField.fieldName" placeholder="请输入展示名称" style="width: 180px" />
-              </el-form-item>
-              <el-form-item>
-                <el-button type="primary" @click="addField" :disabled="!newField.fieldCode || !newField.fieldName">
-                  <el-icon><Plus /></el-icon>
-                  添加
-                </el-button>
-              </el-form-item>
-            </el-form>
+            <el-input v-model="newField.cosTable" placeholder="COS表" style="width: 180px; margin-right: 10px" />
+            <el-input v-model="newField.fieldCode" placeholder="COS表字段" style="width: 180px; margin-right: 10px" />
+            <el-input v-model="newField.fieldName" placeholder="中文名称" style="width: 140px; margin-right: 10px" />
+            <el-button type="primary" @click="addField" :disabled="!newField.cosTable || !newField.fieldCode || !newField.fieldName">
+              <el-icon><Plus /></el-icon>
+              添加
+            </el-button>
           </div>
         </div>
       </div>
@@ -185,14 +181,15 @@ const pagination = reactive({
 
 // 自定义字段列表
 const customFields = ref([
-  { fieldCode: 'department', fieldName: '部门', isSystem: false },
-  { fieldCode: 'ownerRegion', fieldName: '货主区域', isSystem: false },
-  { fieldCode: 'plant', fieldName: 'Plant', isSystem: false },
-  { fieldCode: 'location', fieldName: 'Location', isSystem: false }
+  { cosTable: 'ord_order', fieldCode: 'department', fieldName: '部门' },
+  { cosTable: 'ord_order', fieldCode: 'owner_region', fieldName: '货主区域' },
+  { cosTable: 'ord_order', fieldCode: 'plant', fieldName: 'Plant' },
+  { cosTable: 'ord_order', fieldCode: 'location', fieldName: 'Location' }
 ])
 
 // 新增字段
 const newField = reactive({
+  cosTable: '',
   fieldCode: '',
   fieldName: ''
 })
@@ -292,7 +289,7 @@ const openFieldConfig = () => {
 
 // 添加字段
 const addField = () => {
-  if (!newField.fieldCode || !newField.fieldName) {
+  if (!newField.cosTable || !newField.fieldCode || !newField.fieldName) {
     ElMessage.warning('请填写完整的字段信息')
     return
   }
@@ -303,21 +300,17 @@ const addField = () => {
     return
   }
   customFields.value.push({
+    cosTable: newField.cosTable,
     fieldCode: newField.fieldCode,
-    fieldName: newField.fieldName,
-    isSystem: false
+    fieldName: newField.fieldName
   })
+  newField.cosTable = ''
   newField.fieldCode = ''
   newField.fieldName = ''
 }
 
 // 删除字段
 const removeField = (index: number) => {
-  const field = customFields.value[index]
-  if (field.isSystem) {
-    ElMessage.warning('系统字段不能删除')
-    return
-  }
   ElMessageBox.confirm('确定要删除该字段吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
