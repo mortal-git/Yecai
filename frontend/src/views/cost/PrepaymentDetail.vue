@@ -283,7 +283,6 @@ const getStatusConfig = (status: string) => {
     'approved': { label: '待付款', type: 'primary' },
     'invoiced': { label: '待关联发票', type: 'primary' },
     'partial_writeoff': { label: '待核销', type: 'warning' },
-    'partial': { label: '部分核销', type: 'warning' },
     'written_off': { label: '已核销', type: 'success' }
   }
   return config[status] || { label: status, type: 'info' }

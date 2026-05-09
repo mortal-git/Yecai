@@ -26,7 +26,6 @@
             <el-option label="待付款" value="approved" />
             <el-option label="待关联发票" value="invoiced" />
             <el-option label="待核销" value="partial_writeoff" />
-            <el-option label="部分核销" value="partial" />
             <el-option label="已核销" value="written_off" />
           </el-select>
         </el-form-item>
@@ -99,7 +98,6 @@
         <el-radio-button value="approved">待付款</el-radio-button>
         <el-radio-button value="invoiced">待关联发票</el-radio-button>
         <el-radio-button value="partial_writeoff">待核销</el-radio-button>
-        <el-radio-button value="partial">部分核销</el-radio-button>
         <el-radio-button value="written_off">已核销</el-radio-button>
       </el-radio-group>
     </div>
@@ -462,6 +460,8 @@
     >
       <div class="payment-form">
         <el-form :model="paymentForm" label-width="120px">
+          <!-- 基本信息 -->
+          <div class="form-section-title">基本信息</div>
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="预付款单号">
@@ -476,41 +476,19 @@
           </el-row>
           <el-row :gutter="20">
             <el-col :span="12">
+              <el-form-item label="预付款公司">
+                {{ paymentForm.prepaymentCompany }}
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
               <el-form-item label="预付金额">
                 <span class="text-primary">¥{{ formatMoney(paymentForm.prepaymentAmount) }}</span>
               </el-form-item>
             </el-col>
-            <el-col :span="12">
-              <el-form-item label="可用余额">
-                <span class="text-warning">¥{{ formatMoney(paymentForm.balanceAmount) }}</span>
-              </el-form-item>
-            </el-col>
           </el-row>
           <el-divider />
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="本次付款金额" required>
-                <el-input-number
-                  v-model="paymentForm.paymentAmount"
-                  :min="0"
-                  :max="paymentForm.balanceAmount"
-                  :precision="2"
-                  style="width: 100%"
-                />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="付款日期" required>
-                <el-date-picker
-                  v-model="paymentForm.paymentDate"
-                  type="date"
-                  placeholder="选择日期"
-                  value-format="YYYY-MM-DD"
-                  style="width: 100%"
-                />
-              </el-form-item>
-            </el-col>
-          </el-row>
+          <!-- 付款信息 -->
+          <div class="form-section-title">付款信息</div>
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="付款方式" required>
@@ -523,7 +501,7 @@
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="银行账户" required>
+              <el-form-item label="银行账号">
                 <el-select v-model="paymentForm.bankAccountId" placeholder="请选择" style="width: 100%">
                   <el-option
                     v-for="bank in bankAccounts"
@@ -537,24 +515,17 @@
           </el-row>
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="交易流水号">
-                <el-input v-model="paymentForm.transactionNo" placeholder="请输入交易流水号" />
+              <el-form-item label="银行流水">
+                <el-input v-model="paymentForm.transactionNo" placeholder="请输入银行流水" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="实际付款金额">
-                <el-input-number
-                  v-model="paymentForm.actualAmount"
-                  :min="0"
-                  :precision="2"
-                  style="width: 100%"
-                />
+              <el-form-item label="备注">
+                <el-input v-model="paymentForm.remark" placeholder="请输入备注" />
               </el-form-item>
             </el-col>
           </el-row>
-          <el-form-item label="备注">
-            <el-input v-model="paymentForm.remark" type="textarea" :rows="3" placeholder="请输入备注信息" />
-          </el-form-item>
+          <el-divider />
           <el-form-item label="附件上传">
             <el-upload
               action="#"
@@ -909,6 +880,7 @@ const paymentForm = reactive({
   prepaymentId: null as number | null,
   prepaymentNo: '',
   supplierName: '',
+  prepaymentCompany: '',
   prepaymentAmount: 0,
   balanceAmount: 0,
   paymentAmount: 0,
@@ -916,7 +888,6 @@ const paymentForm = reactive({
   paymentMethod: '',
   bankAccountId: null as number | null,
   transactionNo: '',
-  actualAmount: 0,
   remark: '',
   fileList: [] as any[]
 })
@@ -955,7 +926,6 @@ const getStatusConfig = (status: string) => {
     'approved': { label: '待付款', type: 'primary' },
     'invoiced': { label: '待关联发票', type: 'primary' },
     'partial_writeoff': { label: '待核销', type: 'warning' },
-    'partial': { label: '部分核销', type: 'warning' },
     'written_off': { label: '已核销', type: 'success' }
   }
   return config[status] || { label: status, type: 'info' }
@@ -1031,8 +1001,8 @@ const canSubmit = (row: any) => row.prepaymentStatus === 'draft'
 const canCancel = (row: any) => ['pending'].includes(row.prepaymentStatus)
 const canAudit = (row: any) => row.prepaymentStatus === 'pending'
 const canPayment = (row: any) => row.prepaymentStatus === 'approved'
-const canBindInvoice = (row: any) => ['paid', 'invoiced'].includes(row.prepaymentStatus) && row.balanceAmount > 0
-const canWriteoff = (row: any) => row.prepaymentStatus === 'invoiced' && row.balanceAmount > 0
+const canBindInvoice = (row: any) => row.prepaymentStatus === 'invoiced' && row.balanceAmount > 0
+const canWriteoff = (row: any) => row.prepaymentStatus === 'partial_writeoff' && row.balanceAmount > 0
 const canAutoWriteoff = (row: any) => row.prepaymentStatus === 'invoiced' && row.balanceAmount > 0
 const canTransfer = (row: any) => row.prepaymentStatus === 'invoiced' && row.balanceAmount > 0
 
@@ -1186,6 +1156,7 @@ const handlePayment = (row: any) => {
   paymentForm.prepaymentId = row.id
   paymentForm.prepaymentNo = row.prepaymentNo
   paymentForm.supplierName = row.supplierName
+  paymentForm.prepaymentCompany = row.prepaymentCompany || ''
   paymentForm.prepaymentAmount = row.prepaymentAmount
   paymentForm.balanceAmount = row.balanceAmount
   paymentForm.paymentAmount = row.balanceAmount
@@ -1193,7 +1164,6 @@ const handlePayment = (row: any) => {
   paymentForm.paymentMethod = ''
   paymentForm.bankAccountId = null
   paymentForm.transactionNo = ''
-  paymentForm.actualAmount = row.balanceAmount
   paymentForm.remark = ''
   paymentForm.fileList = []
   showPayment.value = true
@@ -1217,10 +1187,6 @@ const confirmPayment = async () => {
   }
   if (!paymentForm.paymentMethod) {
     ElMessage.warning('请选择付款方式')
-    return
-  }
-  if (!paymentForm.bankAccountId) {
-    ElMessage.warning('请选择银行账户')
     return
   }
   if (paymentForm.paymentAmount <= 0) {
@@ -1505,5 +1471,14 @@ onMounted(() => {
 
 :deep(.row-warning) {
   background-color: #fdf6ec;
+}
+
+.form-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 16px;
+  padding-left: 10px;
+  border-left: 3px solid #409eff;
 }
 </style>
