@@ -228,7 +228,7 @@
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.size"
           :total="pagination.total"
-          :page-sizes="[10, 20, 50, 100]"
+          :page-sizes="[100, 300, 500, 1000]"
           layout="total, sizes, prev, pager, next, jumper"
           @size-change="handlePageChange"
           @current-change="handlePageChange"
@@ -447,7 +447,42 @@
       </div>
       <template #footer>
         <el-button @click="showBatchAudit = false">取消</el-button>
-        <el-button type="primary" @click="confirmBatchAudit" :loading="batchAuditLoading">确认</el-button>
+        <el-button type="primary" @click="confirmBatchAudit" :loading="batchAuditLoading">确认审核</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 审核弹窗 -->
+    <el-dialog
+      v-model="showAudit"
+      title="审核预付款"
+      width="600px"
+      :close-on-click-modal="false"
+    >
+      <div class="audit-form">
+        <el-form :model="auditForm" label-width="100px">
+          <el-form-item label="预付款单号">
+            {{ auditForm.prepaymentNo }}
+          </el-form-item>
+          <el-form-item label="供应商">
+            {{ auditForm.supplierName }}
+          </el-form-item>
+          <el-form-item label="预付金额">
+            <span class="text-primary">¥{{ formatMoney(auditForm.prepaymentAmount) }}</span>
+          </el-form-item>
+          <el-form-item label="审核操作" required>
+            <el-radio-group v-model="auditForm.action">
+              <el-radio label="approve">通过</el-radio>
+              <el-radio label="reject">驳回</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="备注">
+            <el-input v-model="auditForm.remark" type="textarea" :rows="3" placeholder="请输入审核备注" />
+          </el-form-item>
+        </el-form>
+      </div>
+      <template #footer>
+        <el-button @click="showAudit = false">取消</el-button>
+        <el-button type="primary" @click="confirmAudit" :loading="auditLoading">确认</el-button>
       </template>
     </el-dialog>
 
@@ -570,10 +605,12 @@ const showBindInvoice = ref(false)
 const showWriteoff = ref(false)
 const showAgingAnalysis = ref(false)
 const showBatchAudit = ref(false)
+const showAudit = ref(false)
 const showPayment = ref(false)
 const bindLoading = ref(false)
 const writeoffLoading = ref(false)
 const batchAuditLoading = ref(false)
+const auditLoading = ref(false)
 const paymentLoading = ref(false)
 
 // 搜索表单
@@ -604,28 +641,29 @@ const pagination = reactive({
 
 // 统计数据
 const stats = reactive({
-  pendingCount: 3,
-  pendingAmount: 156000.00,
+  pendingCount: 2,
+  pendingAmount: 170000.00,
   approvedCount: 2,
-  approvedAmount: 98000.00,
-  waitWriteoffCount: 5,
-  waitWriteoffAmount: 286000.00,
-  writtenOffCount: 10,
-  writtenOffAmount: 568000.00,
+  approvedAmount: 235000.00,
+  waitWriteoffCount: 2,
+  waitWriteoffAmount: 160000.00,
+  writtenOffCount: 2,
+  writtenOffAmount: 410000.00,
   overdueCount: 2,
-  overdueAmount: 86000.00,
-  totalCount: 25,
-  totalAmount: 1208000.00
+  overdueAmount: 235000.00,
+  totalCount: 12,
+  totalAmount: 1295000.00
 })
 
-// 表格数据
+// 表格数据 - 每个预付款状态2条数据
 const tableData = ref([
+  // 草稿状态 (draft) - 2条
   {
     id: 1,
-    prepaymentNo: 'YF2024050001',
-    businessRefNo: 'PO2024040001',
-    rateSheetNo: 'FL2024040001',
-    billNo: 'BL2024040001',
+    prepaymentNo: 'YF2026050001',
+    businessRefNo: 'PO2026050001',
+    rateSheetNo: 'FL2026050001',
+    billNo: 'BL2026050001',
     supplierId: 1,
     supplierName: '深圳硬件供应商A公司',
     supplierAccount: '75512345678',
@@ -641,47 +679,19 @@ const tableData = ref([
     prepaymentStatus: 'draft',
     invoiceStatus: 'unbinded',
     writeoffStatus: 'unwritten_off',
-    applyDate: '2024-04-20 10:30:45',
-    expectedPaymentDate: '2024-04-25',
+    applyDate: '2026-05-08 10:30:45',
+    expectedPaymentDate: '2026-05-13',
     paymentDate: '',
-    agingDays: 5,
+    agingDays: 3,
     overdueDays: 0,
     applicant: '张三'
   },
   {
     id: 2,
-    prepaymentNo: 'YF2024050002',
-    businessRefNo: 'PO2024040002',
-    rateSheetNo: 'FL2024040002',
-    billNo: 'BL2024040002',
-    supplierId: 2,
-    supplierName: '北京云服务B公司',
-    supplierAccount: '62170012345',
-    prepaymentCompany: '北京分公司',
-    warehouseCode: 'WH002',
-    expenseItem: '服务费',
-    currency: 'CNY',
-    prepaymentAmount: 80000.00,
-    paidAmount: 0.00,
-    invoicedAmount: 0.00,
-    writtenOffAmount: 0.00,
-    balanceAmount: 80000.00,
-    prepaymentStatus: 'pending',
-    invoiceStatus: 'unbinded',
-    writeoffStatus: 'unwritten_off',
-    applyDate: '2024-04-18 14:22:30',
-    expectedPaymentDate: '2024-04-23',
-    paymentDate: '',
-    agingDays: 7,
-    overdueDays: 0,
-    applicant: '李四'
-  },
-  {
-    id: 3,
-    prepaymentNo: 'YF2024050003',
-    businessRefNo: 'PO2024040003',
-    rateSheetNo: 'FL2024040003',
-    billNo: 'BL2024040003',
+    prepaymentNo: 'YF2026050002',
+    businessRefNo: 'PO2026050002',
+    rateSheetNo: 'FL2026050002',
+    billNo: 'BL2026050002',
     supplierId: 3,
     supplierName: '上海软件C公司',
     supplierAccount: '62220811111',
@@ -689,55 +699,56 @@ const tableData = ref([
     warehouseCode: 'WH003',
     expenseItem: '服务费',
     currency: 'CNY',
+    prepaymentAmount: 80000.00,
+    paidAmount: 0.00,
+    invoicedAmount: 0.00,
+    writtenOffAmount: 0.00,
+    balanceAmount: 80000.00,
+    prepaymentStatus: 'draft',
+    invoiceStatus: 'unbinded',
+    writeoffStatus: 'unwritten_off',
+    applyDate: '2026-05-09 14:22:30',
+    expectedPaymentDate: '2026-05-14',
+    paymentDate: '',
+    agingDays: 2,
+    overdueDays: 0,
+    applicant: '王五'
+  },
+  // 待审核状态 (pending) - 2条
+  {
+    id: 3,
+    prepaymentNo: 'YF2026050003',
+    businessRefNo: 'PO2026050003',
+    rateSheetNo: 'FL2026050003',
+    billNo: 'BL2026050003',
+    supplierId: 2,
+    supplierName: '北京云服务B公司',
+    supplierAccount: '62170012345',
+    prepaymentCompany: '北京分公司',
+    warehouseCode: 'WH002',
+    expenseItem: '服务费',
+    currency: 'CNY',
     prepaymentAmount: 120000.00,
     paidAmount: 0.00,
     invoicedAmount: 0.00,
     writtenOffAmount: 0.00,
     balanceAmount: 120000.00,
-    prepaymentStatus: 'approved',
+    prepaymentStatus: 'pending',
     invoiceStatus: 'unbinded',
     writeoffStatus: 'unwritten_off',
-    applyDate: '2024-04-15 09:15:20',
-    expectedPaymentDate: '2024-04-20',
+    applyDate: '2026-05-06 09:15:20',
+    expectedPaymentDate: '2026-05-11',
     paymentDate: '',
-    agingDays: 10,
+    agingDays: 5,
     overdueDays: 0,
-    applicant: '王五'
+    applicant: '李四'
   },
   {
     id: 4,
-    prepaymentNo: 'YF2024050004',
-    businessRefNo: 'PO2024040004',
-    rateSheetNo: 'FL2024040004',
-    billNo: 'BL2024040004',
-    supplierId: 4,
-    supplierName: '广州物流D公司',
-    supplierAccount: '62284812345',
-    prepaymentCompany: '广州分公司',
-    warehouseCode: 'WH004',
-    expenseItem: '物流费',
-    currency: 'CNY',
-    prepaymentAmount: 50000.00,
-    paidAmount: 50000.00,
-    invoicedAmount: 0.00,
-    writtenOffAmount: 0.00,
-    balanceAmount: 50000.00,
-    prepaymentStatus: 'invoiced',
-    invoiceStatus: 'unbinded',
-    writeoffStatus: 'unwritten_off',
-    applyDate: '2024-04-10 16:45:00',
-    expectedPaymentDate: '2024-04-15',
-    paymentDate: '2024-04-14',
-    agingDays: 15,
-    overdueDays: 0,
-    applicant: '赵六'
-  },
-  {
-    id: 5,
-    prepaymentNo: 'YF2024050005',
-    businessRefNo: 'PO2024040005',
-    rateSheetNo: 'FL2024040005',
-    billNo: 'BL2024040005',
+    prepaymentNo: 'YF2026050004',
+    businessRefNo: 'PO2026050004',
+    rateSheetNo: 'FL2026050004',
+    billNo: 'BL2026050004',
     supplierId: 5,
     supplierName: '杭州装修E公司',
     supplierAccount: '62220822222',
@@ -745,27 +756,56 @@ const tableData = ref([
     warehouseCode: 'WH005',
     expenseItem: '保证金',
     currency: 'CNY',
-    prepaymentAmount: 100000.00,
-    paidAmount: 100000.00,
-    invoicedAmount: 60000.00,
+    prepaymentAmount: 50000.00,
+    paidAmount: 0.00,
+    invoicedAmount: 0.00,
     writtenOffAmount: 0.00,
-    balanceAmount: 100000.00,
-    prepaymentStatus: 'partial_writeoff',
-    invoiceStatus: 'partial',
+    balanceAmount: 50000.00,
+    prepaymentStatus: 'pending',
+    invoiceStatus: 'unbinded',
     writeoffStatus: 'unwritten_off',
-    applyDate: '2024-03-28 11:30:15',
-    expectedPaymentDate: '2024-04-02',
-    paymentDate: '2024-04-01',
-    agingDays: 25,
+    applyDate: '2026-05-07 11:30:15',
+    expectedPaymentDate: '2026-05-12',
+    paymentDate: '',
+    agingDays: 4,
     overdueDays: 0,
     applicant: '孙七'
   },
+  // 待付款状态 (approved) - 2条
+  {
+    id: 5,
+    prepaymentNo: 'YF2026050005',
+    businessRefNo: 'PO2026050005',
+    rateSheetNo: 'FL2026050005',
+    billNo: 'BL2026050005',
+    supplierId: 4,
+    supplierName: '广州物流D公司',
+    supplierAccount: '62284812345',
+    prepaymentCompany: '广州分公司',
+    warehouseCode: 'WH004',
+    expenseItem: '物流费',
+    currency: 'CNY',
+    prepaymentAmount: 35000.00,
+    paidAmount: 0.00,
+    invoicedAmount: 0.00,
+    writtenOffAmount: 0.00,
+    balanceAmount: 35000.00,
+    prepaymentStatus: 'approved',
+    invoiceStatus: 'unbinded',
+    writeoffStatus: 'unwritten_off',
+    applyDate: '2026-05-03 16:45:00',
+    expectedPaymentDate: '2026-05-08',
+    paymentDate: '',
+    agingDays: 8,
+    overdueDays: 3,
+    applicant: '赵六'
+  },
   {
     id: 6,
-    prepaymentNo: 'YF2024050006',
-    businessRefNo: 'PO2024040006',
-    rateSheetNo: 'FL2024040006',
-    billNo: 'BL2024040006',
+    prepaymentNo: 'YF2026050006',
+    businessRefNo: 'PO2026050006',
+    rateSheetNo: 'FL2026050006',
+    billNo: 'BL2026050006',
     supplierId: 1,
     supplierName: '深圳硬件供应商A公司',
     supplierAccount: '75512345678',
@@ -774,26 +814,27 @@ const tableData = ref([
     expenseItem: '采购成本',
     currency: 'CNY',
     prepaymentAmount: 200000.00,
-    paidAmount: 200000.00,
-    invoicedAmount: 200000.00,
-    writtenOffAmount: 120000.00,
-    balanceAmount: 80000.00,
-    prepaymentStatus: 'partial',
-    invoiceStatus: 'binded',
-    writeoffStatus: 'partial',
-    applyDate: '2024-03-15 08:20:10',
-    expectedPaymentDate: '2024-03-20',
-    paymentDate: '2024-03-19',
-    agingDays: 35,
-    overdueDays: 5,
+    paidAmount: 0.00,
+    invoicedAmount: 0.00,
+    writtenOffAmount: 0.00,
+    balanceAmount: 200000.00,
+    prepaymentStatus: 'approved',
+    invoiceStatus: 'unbinded',
+    writeoffStatus: 'unwritten_off',
+    applyDate: '2026-05-02 08:20:10',
+    expectedPaymentDate: '2026-05-07',
+    paymentDate: '',
+    agingDays: 9,
+    overdueDays: 4,
     applicant: '张三'
   },
+  // 待关联发票状态 (invoiced) - 2条
   {
     id: 7,
-    prepaymentNo: 'YF2024050007',
-    businessRefNo: 'PO2024040007',
-    rateSheetNo: 'FL2024040007',
-    billNo: 'BL2024040007',
+    prepaymentNo: 'YF2026050007',
+    businessRefNo: 'PO2026050007',
+    rateSheetNo: 'FL2026050007',
+    billNo: 'BL2026050007',
     supplierId: 2,
     supplierName: '北京云服务B公司',
     supplierAccount: '62170012345',
@@ -803,15 +844,157 @@ const tableData = ref([
     currency: 'CNY',
     prepaymentAmount: 180000.00,
     paidAmount: 180000.00,
-    invoicedAmount: 180000.00,
-    writtenOffAmount: 180000.00,
+    invoicedAmount: 0.00,
+    writtenOffAmount: 0.00,
+    balanceAmount: 180000.00,
+    prepaymentStatus: 'invoiced',
+    invoiceStatus: 'unbinded',
+    writeoffStatus: 'unwritten_off',
+    applyDate: '2026-04-28 13:50:30',
+    expectedPaymentDate: '2026-05-03',
+    paymentDate: '2026-05-02',
+    agingDays: 12,
+    overdueDays: 0,
+    applicant: '李四'
+  },
+  {
+    id: 8,
+    prepaymentNo: 'YF2026050008',
+    businessRefNo: 'PO2026050008',
+    rateSheetNo: 'FL2026050008',
+    billNo: 'BL2026050008',
+    supplierId: 3,
+    supplierName: '上海软件C公司',
+    supplierAccount: '62220811111',
+    prepaymentCompany: '上海分公司',
+    warehouseCode: 'WH003',
+    expenseItem: '服务费',
+    currency: 'CNY',
+    prepaymentAmount: 95000.00,
+    paidAmount: 95000.00,
+    invoicedAmount: 0.00,
+    writtenOffAmount: 0.00,
+    balanceAmount: 95000.00,
+    prepaymentStatus: 'invoiced',
+    invoiceStatus: 'unbinded',
+    writeoffStatus: 'unwritten_off',
+    applyDate: '2026-04-25 15:30:00',
+    expectedPaymentDate: '2026-04-30',
+    paymentDate: '2026-04-29',
+    agingDays: 15,
+    overdueDays: 0,
+    applicant: '王五'
+  },
+  // 待核销状态 (partial_writeoff) - 2条
+  {
+    id: 9,
+    prepaymentNo: 'YF2026050009',
+    businessRefNo: 'PO2026050009',
+    rateSheetNo: 'FL2026050009',
+    billNo: 'BL2026050009',
+    supplierId: 5,
+    supplierName: '杭州装修E公司',
+    supplierAccount: '62220822222',
+    prepaymentCompany: '杭州分公司',
+    warehouseCode: 'WH005',
+    expenseItem: '装修款',
+    currency: 'CNY',
+    prepaymentAmount: 100000.00,
+    paidAmount: 100000.00,
+    invoicedAmount: 60000.00,
+    writtenOffAmount: 30000.00,
+    balanceAmount: 70000.00,
+    prepaymentStatus: 'partial_writeoff',
+    invoiceStatus: 'partial',
+    writeoffStatus: 'partial',
+    applyDate: '2026-04-15 10:20:00',
+    expectedPaymentDate: '2026-04-20',
+    paymentDate: '2026-04-18',
+    agingDays: 25,
+    overdueDays: 0,
+    applicant: '孙七'
+  },
+  {
+    id: 10,
+    prepaymentNo: 'YF2026050010',
+    businessRefNo: 'PO2026050010',
+    rateSheetNo: 'FL2026050010',
+    billNo: 'BL2026050010',
+    supplierId: 4,
+    supplierName: '广州物流D公司',
+    supplierAccount: '62284812345',
+    prepaymentCompany: '广州分公司',
+    warehouseCode: 'WH004',
+    expenseItem: '物流费',
+    currency: 'CNY',
+    prepaymentAmount: 60000.00,
+    paidAmount: 60000.00,
+    invoicedAmount: 40000.00,
+    writtenOffAmount: 20000.00,
+    balanceAmount: 40000.00,
+    prepaymentStatus: 'partial_writeoff',
+    invoiceStatus: 'partial',
+    writeoffStatus: 'partial',
+    applyDate: '2026-04-18 14:40:20',
+    expectedPaymentDate: '2026-04-23',
+    paymentDate: '2026-04-22',
+    agingDays: 22,
+    overdueDays: 0,
+    applicant: '赵六'
+  },
+  // 已核销状态 (written_off) - 2条
+  {
+    id: 11,
+    prepaymentNo: 'YF2026050011',
+    businessRefNo: 'PO2026050011',
+    rateSheetNo: 'FL2026050011',
+    billNo: 'BL2026050011',
+    supplierId: 1,
+    supplierName: '深圳硬件供应商A公司',
+    supplierAccount: '75512345678',
+    prepaymentCompany: '总部',
+    warehouseCode: 'WH001',
+    expenseItem: '采购成本',
+    currency: 'CNY',
+    prepaymentAmount: 250000.00,
+    paidAmount: 250000.00,
+    invoicedAmount: 250000.00,
+    writtenOffAmount: 250000.00,
     balanceAmount: 0.00,
     prepaymentStatus: 'written_off',
     invoiceStatus: 'binded',
     writeoffStatus: 'written_off',
-    applyDate: '2024-02-20 13:50:30',
-    expectedPaymentDate: '2024-02-25',
-    paymentDate: '2024-02-24',
+    applyDate: '2026-03-20 09:30:00',
+    expectedPaymentDate: '2026-03-25',
+    paymentDate: '2026-03-24',
+    agingDays: 0,
+    overdueDays: 0,
+    applicant: '张三'
+  },
+  {
+    id: 12,
+    prepaymentNo: 'YF2026050012',
+    businessRefNo: 'PO2026050012',
+    rateSheetNo: 'FL2026050012',
+    billNo: 'BL2026050012',
+    supplierId: 2,
+    supplierName: '北京云服务B公司',
+    supplierAccount: '62170012345',
+    prepaymentCompany: '北京分公司',
+    warehouseCode: 'WH002',
+    expenseItem: '服务费',
+    currency: 'CNY',
+    prepaymentAmount: 160000.00,
+    paidAmount: 160000.00,
+    invoicedAmount: 160000.00,
+    writtenOffAmount: 160000.00,
+    balanceAmount: 0.00,
+    prepaymentStatus: 'written_off',
+    invoiceStatus: 'binded',
+    writeoffStatus: 'written_off',
+    applyDate: '2026-03-15 11:20:30',
+    expectedPaymentDate: '2026-03-20',
+    paymentDate: '2026-03-19',
     agingDays: 0,
     overdueDays: 0,
     applicant: '李四'
@@ -857,21 +1040,31 @@ const availableOrders = ref([
 
 // 账龄分析数据
 const agingData = reactive({
-  within30Days: 156000.00,
-  days31to60: 80000.00,
-  days61to90: 56000.00,
-  over90Days: 86000.00
+  within30Days: 475000.00,
+  days31to60: 180000.00,
+  days61to90: 0.00,
+  over90Days: 0.00
 })
 
 const agingTableData = ref([
-  { supplierName: '北京云服务B公司', prepaymentNo: 'YF2024040002', balanceAmount: 56000.00, agingDays: 45, agingLevel: '31-60天', riskLevel: '中' },
-  { supplierName: '广州物流D公司', prepaymentNo: 'YF2024040004', balanceAmount: 76000.00, agingDays: 75, agingLevel: '61-90天', riskLevel: '高' }
+  { supplierName: '北京云服务B公司', prepaymentNo: 'YF2026050007', balanceAmount: 180000.00, agingDays: 12, agingLevel: '30天内', riskLevel: '低' },
+  { supplierName: '广州物流D公司', prepaymentNo: 'YF2026050005', balanceAmount: 35000.00, agingDays: 11, agingLevel: '30天内', riskLevel: '低' }
 ])
 
 // 批量审核表单
 const batchAuditForm = reactive({
   action: 'approve',
   rejectReason: '',
+  remark: ''
+})
+
+// 审核表单
+const auditForm = reactive({
+  prepaymentId: null as number | null,
+  prepaymentNo: '',
+  supplierName: '',
+  prepaymentAmount: 0,
+  action: 'approve' as 'approve' | 'reject',
   remark: ''
 })
 
@@ -1094,7 +1287,11 @@ const handleEdit = (row: any) => {
 // 提交
 const handleSubmit = async (row: any) => {
   try {
-    await ElMessageBox.confirm('确定要提交该预付款申请审核吗？', '提示', { type: 'warning' })
+    await ElMessageBox.confirm('确定要提交该预付款申请审核吗？', '提示', {
+      type: 'warning',
+      confirmButtonText: '确定',
+      cancelButtonText: '取消'
+    })
     row.prepaymentStatus = 'pending'
     ElMessage.success('提交成功')
   } catch {}
@@ -1107,7 +1304,7 @@ const handleMoreAction = (command: string, row: any) => {
       handleCancel(row)
       break
     case 'audit':
-      handleAudit(row)
+      openAuditDialog(row)
       break
     case 'payment':
       handlePayment(row)
@@ -1142,13 +1339,33 @@ const handleCancel = async (row: any) => {
   } catch {}
 }
 
-// 审核
-const handleAudit = async (row: any) => {
+// 打开审核弹窗
+const openAuditDialog = (row: any) => {
+  auditForm.prepaymentId = row.id
+  auditForm.prepaymentNo = row.prepaymentNo
+  auditForm.supplierName = row.supplierName
+  auditForm.prepaymentAmount = row.prepaymentAmount
+  auditForm.action = 'approve'
+  auditForm.remark = ''
+  showAudit.value = true
+}
+
+// 确认审核
+const confirmAudit = async () => {
+  auditLoading.value = true
   try {
-    await ElMessageBox.confirm('确定审核通过该预付款申请吗？', '提示', { type: 'info' })
-    row.prepaymentStatus = 'approved'
-    ElMessage.success('审核通过')
-  } catch {}
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    const row = tableData.value.find(item => item.id === auditForm.prepaymentId)
+    if (row) {
+      row.prepaymentStatus = auditForm.action === 'approve' ? 'approved' : 'draft'
+      ElMessage.success(auditForm.action === 'approve' ? '审核通过' : '已驳回')
+    }
+    showAudit.value = false
+  } catch {
+    ElMessage.error('操作失败')
+  } finally {
+    auditLoading.value = false
+  }
 }
 
 // 付款登记
@@ -1451,6 +1668,10 @@ onMounted(() => {
 }
 
 .batch-audit-form {
+  padding: 10px 0;
+}
+
+.audit-form {
   padding: 10px 0;
 }
 
