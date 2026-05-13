@@ -82,15 +82,20 @@
         <!-- 付款记录 -->
         <el-tab-pane label="付款记录" name="payment">
           <el-table :data="paymentRecords" border stripe>
-            <el-table-column prop="paymentNo" label="付款单号" min-width="150" />
-            <el-table-column prop="paymentDate" label="付款日期" width="120" />
-            <el-table-column prop="paymentAmount" label="付款金额" width="130" align="right">
-              <template #default="scope">¥{{ formatMoney(scope.row.paymentAmount) }}</template>
+            <el-table-column prop="paymentMethod" label="付款方式" width="100" />
+            <el-table-column prop="bankAccount" label="银行账号" min-width="200" />
+            <el-table-column prop="transactionNo" label="银行流水" min-width="150" />
+            <el-table-column prop="remark" label="备注" min-width="150" />
+            <el-table-column prop="attachment" label="附件" width="120">
+              <template #default="scope">
+                <el-link v-if="scope.row.attachment" type="primary" @click="handleViewAttachment(scope.row.attachment)">
+                  {{ scope.row.attachment.name }}
+                </el-link>
+                <span v-else>-</span>
+              </template>
             </el-table-column>
-            <el-table-column prop="paymentMethod" label="付款方式" width="120" />
-            <el-table-column prop="bankAccount" label="付款账户" min-width="180" />
-            <el-table-column prop="transactionNo" label="交易流水号" min-width="150" />
-            <el-table-column prop="operator" label="操作人" width="100" />
+            <el-table-column prop="payer" label="付款人" width="100" />
+            <el-table-column prop="paymentTime" label="付款时间" width="160" />
           </el-table>
         </el-tab-pane>
 
@@ -115,21 +120,15 @@
 
         <!-- 核销记录 -->
         <el-tab-pane label="核销记录" name="writeoff">
-          <el-table :data="writeoffRecords" border stripe>
-            <el-table-column prop="writeoffNo" label="核销单号" min-width="150" />
-            <el-table-column prop="writeoffType" label="核销方式" width="120">
-              <template #default="scope">
-                {{ scope.row.writeoffType === 'order' ? '按订单核销' : '按金额核销' }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="orderNo" label="关联订单" min-width="150" />
-            <el-table-column prop="writeoffAmount" label="核销金额" width="130" align="right">
-              <template #default="scope">¥{{ formatMoney(scope.row.writeoffAmount) }}</template>
-            </el-table-column>
-            <el-table-column prop="writeoffDate" label="核销日期" width="120" />
-            <el-table-column prop="operator" label="操作人" width="100" />
-            <el-table-column prop="remark" label="核销说明" min-width="150" />
+          <el-table :data="[writeoffRecords[0]]" border stripe v-if="writeoffRecords.length > 0">
+            <el-table-column prop="rateSheetNo" label="费率单" min-width="150" />
+            <el-table-column prop="businessRefNo" label="业务参考编号" min-width="150" />
+            <el-table-column prop="incomeItem" label="收入项目" min-width="120" />
+            <el-table-column prop="remark" label="备注" min-width="150" />
+            <el-table-column prop="operator" label="核销人" width="100" />
+            <el-table-column prop="writeoffDate" label="核销时间" width="160" />
           </el-table>
+          <el-empty v-else description="暂无核销记录" />
         </el-tab-pane>
 
         <!-- 操作日志 -->
@@ -161,13 +160,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { WarningFilled } from '@element-plus/icons-vue'
+import { WarningFilled, Minus } from '@element-plus/icons-vue'
 
 const props = defineProps<{
   prepaymentId: number
 }>()
 
-const activeTab = ref('invoice')
+const activeTab = ref('payment')
 
 // 预付款数据
 const prepayment = ref({
@@ -181,7 +180,7 @@ const prepayment = ref({
   businessRefNo: 'PO2024040001',
   rateSheetNo: 'FL2024040001',
   billNo: 'BL2024040001',
-  expenseItem: '采购成本',
+  expenseItem: '仓储费',
   currency: 'CNY',
   prepaymentAmount: 150000.00,
   paidAmount: 0.00,
@@ -218,23 +217,12 @@ const invoiceRecords = ref([
 const writeoffRecords = ref([
   {
     id: 1,
-    writeoffNo: 'HX2024040001',
-    writeoffType: 'order',
-    orderNo: 'PO2024030001',
-    writeoffAmount: 50000.00,
-    writeoffDate: '2024-04-22',
+    rateSheetNo: 'FL2024040001',
+    businessRefNo: 'PO2024030001',
+    incomeItem: '仓储费',
+    remark: '按订单核销',
     operator: '张三',
-    remark: '按订单核销'
-  },
-  {
-    id: 2,
-    writeoffNo: 'HX2024040002',
-    writeoffType: 'amount',
-    orderNo: '-',
-    writeoffAmount: 30000.00,
-    writeoffDate: '2024-04-25',
-    operator: '李四',
-    remark: '按金额核销'
+    writeoffDate: '2024-04-22 10:30:00'
   }
 ])
 
@@ -242,13 +230,13 @@ const writeoffRecords = ref([
 const paymentRecords = ref([
   {
     id: 1,
-    paymentNo: 'FK2024040001',
-    paymentDate: '2024-04-20',
-    paymentAmount: 150000.00,
     paymentMethod: '银行转账',
     bankAccount: '中国建设银行 6217001234567890123',
     transactionNo: 'FT202404200001',
-    operator: '财务王五'
+    remark: '预付款首期款项',
+    attachment: { name: '付款凭证.pdf', url: '/files/voucher1.pdf' },
+    payer: '财务王五',
+    paymentTime: '2024-04-20 14:30:25'
   }
 ])
 
@@ -261,6 +249,62 @@ const operationLogs = ref([
     content: '创建了预付款单 YF2024050001',
     createTime: '2024-04-20 10:30:45',
     remark: ''
+  },
+  {
+    operator: '张三',
+    action: '提交审核',
+    type: 'warning',
+    content: '提交预付款单 YF2024050001 待审核',
+    createTime: '2024-04-20 11:00:00',
+    remark: ''
+  },
+  {
+    operator: '李四',
+    action: '审核驳回',
+    type: 'danger',
+    content: '驳回预付款单 YF2024050001',
+    createTime: '2024-04-20 13:00:00',
+    remark: '附件不完整，请补充合同扫描件'
+  },
+  {
+    operator: '张三',
+    action: '重新提交审核',
+    type: 'warning',
+    content: '重新提交预付款单 YF2024050001 待审核',
+    createTime: '2024-04-20 13:30:00',
+    remark: '已补充合同扫描件'
+  },
+  {
+    operator: '李四',
+    action: '审核通过',
+    type: 'success',
+    content: '审核通过预付款单 YF2024050001',
+    createTime: '2024-04-20 14:00:00',
+    remark: '资料完整，同意付款'
+  },
+  {
+    operator: '王五',
+    action: '付款登记',
+    type: 'primary',
+    content: '登记预付款单 YF2024050001 付款信息',
+    createTime: '2024-04-20 14:30:25',
+    remark: '银行转账150000元'
+  },
+  {
+    operator: '张三',
+    action: '绑定发票',
+    type: 'primary',
+    content: '绑定发票 FP2024040001 到预付款单 YF2024050001',
+    createTime: '2024-04-22 09:15:00',
+    remark: '绑定金额50000元'
+  },
+  {
+    operator: '张三',
+    action: '核销',
+    type: 'success',
+    content: '核销预付款单 YF2024050001',
+    createTime: '2024-04-22 10:30:00',
+    remark: '按订单核销50000元'
   }
 ])
 
@@ -328,6 +372,11 @@ const getLogType = (action: string) => {
   if (action.includes('驳回') || action.includes('作废')) return 'danger'
   if (action.includes('提交') || action.includes('申请')) return 'warning'
   return 'info'
+}
+
+// 查看附件
+const handleViewAttachment = (file: { name: string, url: string }) => {
+  window.open(file.url, '_blank')
 }
 
 onMounted(() => {

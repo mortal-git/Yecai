@@ -103,6 +103,12 @@ const routes: Array<RouteRecordRaw> = [
             meta: { title: '应收单列表' }
           },
           {
+            path: 'revenue-detail',
+            name: 'RevenueDetail',
+            component: () => import('../views/receivable/RevenueDetail.vue'),
+            meta: { title: '收入明细' }
+          },
+          {
             path: 'create',
             name: 'ReceivableCreate',
             component: () => import('../views/receivable/Create.vue'),
@@ -163,41 +169,7 @@ const routes: Array<RouteRecordRaw> = [
             name: 'PayableDetail',
             component: () => import('../views/payable/Detail.vue'),
             meta: { title: '应付单详情' }
-          }
-        ]
-      },
-      // 对账单管理模块
-      {
-        path: 'statement',
-        name: 'Statement',
-        meta: { title: '对账单管理', icon: 'List' },
-        children: [
-          {
-            path: 'list',
-            name: 'StatementList',
-            component: () => import('../views/statement/List.vue'),
-            meta: { title: '对账单列表' }
           },
-          {
-            path: 'create',
-            name: 'StatementCreate',
-            component: () => import('../views/statement/Create.vue'),
-            meta: { title: '生成对账单' }
-          },
-          {
-            path: 'detail/:id',
-            name: 'StatementDetail',
-            component: () => import('../views/statement/Detail.vue'),
-            meta: { title: '对账单详情' }
-          }
-        ]
-      },
-      // 资金管理模块
-      {
-        path: 'cost',
-        name: 'Cost',
-        meta: { title: '资金管理', icon: 'DataAnalysis' },
-        children: [
           {
             path: 'monthly',
             name: 'CostMonthly',
@@ -251,6 +223,32 @@ const routes: Array<RouteRecordRaw> = [
             name: 'CostAdvanceEdit',
             component: () => import('../views/cost/AdvanceCreate.vue'),
             meta: { title: '编辑垫付申请' }
+          }
+        ]
+      },
+      // 对账单管理模块
+      {
+        path: 'statement',
+        name: 'Statement',
+        meta: { title: '对账单管理', icon: 'List' },
+        children: [
+          {
+            path: 'list',
+            name: 'StatementList',
+            component: () => import('../views/statement/List.vue'),
+            meta: { title: '对账单列表' }
+          },
+          {
+            path: 'create',
+            name: 'StatementCreate',
+            component: () => import('../views/statement/Create.vue'),
+            meta: { title: '生成对账单' }
+          },
+          {
+            path: 'detail/:id',
+            name: 'StatementDetail',
+            component: () => import('../views/statement/Detail.vue'),
+            meta: { title: '对账单详情' }
           }
         ]
       },

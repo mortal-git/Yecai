@@ -84,6 +84,7 @@
               <span>应收管理</span>
             </template>
             <el-menu-item index="/receivable/list">应收单列表</el-menu-item>
+            <el-menu-item index="/receivable/revenue-detail">收入明细</el-menu-item>
             <el-menu-item index="/receivable/collection">收款管理</el-menu-item>
             <el-menu-item index="/receivable/aging">账龄分析</el-menu-item>
           </el-sub-menu>
@@ -96,6 +97,9 @@
             <el-menu-item index="/payable/list">应付单列表</el-menu-item>
             <el-menu-item index="/payable/payment">付款管理</el-menu-item>
             <el-menu-item index="/payable/aging">账龄分析</el-menu-item>
+            <el-menu-item index="/payable/monthly">月结成本</el-menu-item>
+            <el-menu-item index="/payable/prepayment">预付成本</el-menu-item>
+            <el-menu-item index="/payable/advance">垫付成本</el-menu-item>
           </el-sub-menu>
 
           <el-sub-menu index="statement">
@@ -105,16 +109,6 @@
             </template>
             <el-menu-item index="/statement/list">对账单列表</el-menu-item>
             <el-menu-item index="/statement/create">生成对账单</el-menu-item>
-          </el-sub-menu>
-
-          <el-sub-menu index="cost">
-            <template #title>
-              <el-icon><DataAnalysis /></el-icon>
-              <span>资金管理</span>
-            </template>
-            <el-menu-item index="/cost/monthly">月结成本</el-menu-item>
-            <el-menu-item index="/cost/prepayment">预付成本</el-menu-item>
-            <el-menu-item index="/cost/advance">垫付成本</el-menu-item>
           </el-sub-menu>
 
           <el-sub-menu index="budget">
@@ -257,7 +251,6 @@ import {
   Money,
   Wallet,
   List,
-  DataAnalysis,
   TrendCharts,
   PieChart,
   Setting,
@@ -336,8 +329,6 @@ const handleMenuSelect = (index: string) => {
     router.push('/payable/list')
   } else if (index === 'statement') {
     router.push('/statement/list')
-  } else if (index === 'cost') {
-    router.push('/cost/monthly')
   } else if (index === 'budget') {
     router.push('/budget/list')
   } else if (index === 'statistics') {

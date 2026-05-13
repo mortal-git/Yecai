@@ -83,6 +83,14 @@
         <el-icon><Check /></el-icon>
         批量审核
       </el-button>
+      <el-button type="primary" @click="handleBatchPayment" :disabled="selectedRows.length === 0">
+        <el-icon><Money /></el-icon>
+        批量付款
+      </el-button>
+      <el-button type="success" @click="handleBatchBindInvoice" :disabled="selectedRows.length === 0">
+        <el-icon><Document /></el-icon>
+        批量关联发票
+      </el-button>
       <el-button type="info" @click="handleAgingAnalysis">
         <el-icon><DataAnalysis /></el-icon>
         账龄分析
@@ -257,13 +265,38 @@
     >
       <div class="bind-invoice-form">
         <el-form :model="bindInvoiceForm" label-width="120px">
-          <el-form-item label="可用余额">
-            <span class="text-primary">¥{{ formatMoney(bindInvoiceForm.availableAmount) }}</span>
-          </el-form-item>
+          <!-- 基本信息 -->
+          <div class="form-section-title">基本信息</div>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="预付款单号">
+                {{ bindInvoiceForm.prepaymentNo }}
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="供应商">
+                {{ bindInvoiceForm.supplierName }}
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="预付款公司">
+                {{ bindInvoiceForm.prepaymentCompany }}
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="预付金额">
+                <span class="text-primary">¥{{ formatMoney(bindInvoiceForm.prepaymentAmount) }}</span>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-divider />
+          <!-- 发票信息 -->
+          <div class="form-section-title">发票信息</div>
           <el-form-item label="选择发票" required>
             <el-select
-              v-model="bindInvoiceForm.selectedInvoices"
-              multiple
+              v-model="bindInvoiceForm.selectedInvoice"
               filterable
               placeholder="请选择要绑定的发票"
               style="width: 100%"
@@ -283,17 +316,12 @@
               </el-option>
             </el-select>
           </el-form-item>
-          <el-form-item label="绑定金额">
-            <el-input-number
-              v-model="bindInvoiceForm.bindAmount"
-              :min="0"
-              :max="bindInvoiceForm.availableAmount"
-              :precision="2"
-              style="width: 100%"
-            />
+          <el-form-item label="关联总金额">
+            <span class="text-primary">¥{{ formatMoney(bindInvoiceForm.bindAmount) }}</span>
           </el-form-item>
+          <el-divider />
           <el-form-item label="备注">
-            <el-input v-model="bindInvoiceForm.remark" type="textarea" :rows="3" />
+            <el-input v-model="bindInvoiceForm.remark" type="textarea" :rows="3" placeholder="请输入备注" />
           </el-form-item>
         </el-form>
       </div>
@@ -312,47 +340,84 @@
     >
       <div class="writeoff-form">
         <el-form :model="writeoffForm" label-width="120px">
-          <el-form-item label="可用余额">
-            <span class="text-primary">¥{{ formatMoney(writeoffForm.availableBalance) }}</span>
-          </el-form-item>
-          <el-form-item label="核销方式" required>
-            <el-radio-group v-model="writeoffForm.writeoffType">
-              <el-radio label="order">按订单核销</el-radio>
-              <el-radio label="amount">按金额核销</el-radio>
-            </el-radio-group>
-          </el-form-item>
-          <el-form-item v-if="writeoffForm.writeoffType === 'order'" label="选择订单" required>
+          <!-- 基本信息 -->
+          <div class="form-section-title">基本信息</div>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="预付款单号">
+                {{ writeoffForm.prepaymentNo }}
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="供应商">
+                {{ writeoffForm.supplierName }}
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="预付款公司">
+                {{ writeoffForm.prepaymentCompany }}
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="费用项目">
+                {{ writeoffForm.expenseItem }}
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="预付金额">
+                <span class="text-primary">¥{{ formatMoney(writeoffForm.prepaymentAmount) }}</span>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-divider />
+          <!-- 核销信息 -->
+          <div class="form-section-title">核销信息</div>
+          <el-form-item label="选择费率单" required>
             <el-select
-              v-model="writeoffForm.selectedOrders"
-              multiple
+              v-model="writeoffForm.selectedRateSheet"
               filterable
-              placeholder="请选择要核销的订单"
+              placeholder="请选择费率单"
               style="width: 100%"
+              @change="handleWriteoffRateSheetChange"
             >
               <el-option
-                v-for="order in availableOrders"
-                :key="order.id"
-                :label="`${order.orderNo} - ¥${formatMoney(order.amount)}`"
-                :value="order.id"
-              >
-                <div class="order-option">
-                  <span>{{ order.orderNo }}</span>
-                  <span class="text-muted">¥{{ formatMoney(order.amount) }}</span>
-                </div>
-              </el-option>
+                v-for="item in writeoffRateSheetList"
+                :key="item.rateSheetNo"
+                :label="item.rateSheetNo"
+                :value="item.rateSheetNo"
+              />
             </el-select>
           </el-form-item>
-          <el-form-item v-if="writeoffForm.writeoffType === 'amount'" label="核销金额" required>
-            <el-input-number
-              v-model="writeoffForm.writeoffAmount"
-              :min="0"
-              :max="writeoffForm.availableBalance"
-              :precision="2"
-              style="width: 100%"
-            />
-          </el-form-item>
-          <el-form-item label="核销说明">
-            <el-input v-model="writeoffForm.remark" type="textarea" :rows="3" placeholder="请输入核销说明" />
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="业务参考编号">
+                <el-input v-model="writeoffForm.businessRefNo" disabled />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="收入项目">
+                <el-select
+                  v-model="writeoffForm.incomeItem"
+                  placeholder="请选择收入项目"
+                  style="width: 100%"
+                  clearable
+                >
+                  <el-option
+                    v-for="item in incomeItemOptions"
+                    :key="item"
+                    :label="item"
+                    :value="item"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-form-item label="备注">
+            <el-input v-model="writeoffForm.remark" type="textarea" :rows="3" placeholder="请输入备注" />
           </el-form-item>
         </el-form>
       </div>
@@ -448,6 +513,123 @@
       <template #footer>
         <el-button @click="showBatchAudit = false">取消</el-button>
         <el-button type="primary" @click="confirmBatchAudit" :loading="batchAuditLoading">确认审核</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 批量付款弹窗 -->
+    <el-dialog
+      v-model="showBatchPayment"
+      title="批量付款"
+      width="700px"
+      :close-on-click-modal="false"
+    >
+      <div class="batch-payment-form">
+        <el-form :model="batchPaymentForm" label-width="100px">
+          <el-form-item label="选中记录">
+            {{ selectedRows.length }} 条预付款单
+          </el-form-item>
+          <el-form-item label="预付总金额">
+            <span class="text-primary">¥{{ formatMoney(batchPaymentForm.totalAmount) }}</span>
+          </el-form-item>
+          <el-divider />
+          <el-form-item label="付款方式" required>
+            <el-select v-model="batchPaymentForm.paymentMethod" placeholder="请选择" style="width: 100%">
+              <el-option label="银行转账" value="bank_transfer" />
+              <el-option label="承兑汇票" value="acceptance" />
+              <el-option label="现金" value="cash" />
+              <el-option label="支票" value="cheque" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="银行账号">
+            <el-select v-model="batchPaymentForm.bankAccountId" placeholder="请选择" style="width: 100%">
+              <el-option
+                v-for="bank in bankAccounts"
+                :key="bank.id"
+                :label="`${bank.bankName} ${bank.accountNo}`"
+                :value="bank.id"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="银行流水">
+            <el-input v-model="batchPaymentForm.transactionNo" placeholder="请输入银行流水" />
+          </el-form-item>
+          <el-form-item label="备注">
+            <el-input v-model="batchPaymentForm.remark" type="textarea" :rows="3" placeholder="请输入备注" />
+          </el-form-item>
+          <el-divider />
+          <el-form-item label="附件上传">
+            <el-upload
+              action="#"
+              :auto-upload="false"
+              :file-list="batchPaymentForm.fileList"
+              :on-change="handleBatchPaymentFileChange"
+              :on-remove="handleBatchPaymentFileRemove"
+              accept=".jpg,.png,.pdf"
+              multiple
+            >
+              <el-button size="small" type="primary">点击上传</el-button>
+              <template #tip>
+                <div class="el-upload__tip">支持JPG、PNG、PDF格式，单文件不超过10MB</div>
+              </template>
+            </el-upload>
+          </el-form-item>
+        </el-form>
+      </div>
+      <template #footer>
+        <el-button @click="showBatchPayment = false">取消</el-button>
+        <el-button type="primary" @click="confirmBatchPayment" :loading="batchPaymentLoading">确认付款</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 批量关联发票弹窗 -->
+    <el-dialog
+      v-model="showBatchBindInvoice"
+      title="批量关联发票"
+      width="700px"
+      :close-on-click-modal="false"
+    >
+      <div class="batch-bind-invoice-form">
+        <el-form :model="batchBindInvoiceForm" label-width="100px">
+          <el-form-item label="选中记录">
+            {{ selectedRows.length }} 条预付款单
+          </el-form-item>
+          <el-form-item label="预付总金额">
+            <span class="text-primary">¥{{ formatMoney(batchBindInvoiceForm.totalAmount) }}</span>
+          </el-form-item>
+          <el-divider />
+          <el-form-item label="选择发票" required>
+            <el-select
+              v-model="batchBindInvoiceForm.selectedInvoice"
+              filterable
+              placeholder="请选择要关联的发票"
+              style="width: 100%"
+              @change="handleBatchInvoiceSelectChange"
+            >
+              <el-option
+                v-for="invoice in availableInvoices"
+                :key="invoice.id"
+                :label="`${invoice.invoiceNo} - ${invoice.supplierName} - ¥${formatMoney(invoice.invoiceAmount)}`"
+                :value="invoice.id"
+              >
+                <div class="invoice-option">
+                  <span class="invoice-no">{{ invoice.invoiceNo }}</span>
+                  <span class="invoice-supplier">{{ invoice.supplierName }}</span>
+                  <span class="invoice-amount">¥{{ formatMoney(invoice.invoiceAmount) }}</span>
+                </div>
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="关联总金额">
+            <span class="text-primary">¥{{ formatMoney(batchBindInvoiceForm.bindAmount) }}</span>
+          </el-form-item>
+          <el-form-item label="备注">
+            <el-input v-model="batchBindInvoiceForm.remark" type="textarea" :rows="3" placeholder="请输入备注" />
+          </el-form-item>
+        </el-form>
+      </div>
+      <template #footer>
+        <el-button @click="showBatchBindInvoice = false">取消</el-button>
+        <el-button type="primary" @click="confirmBatchBindInvoice" :loading="batchBindInvoiceLoading">确认关联</el-button>
       </template>
     </el-dialog>
 
@@ -591,7 +773,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Refresh, Plus, Download, Check, DataAnalysis, WarningFilled, ArrowDown } from '@element-plus/icons-vue'
+import { Search, Refresh, Plus, Download, Check, DataAnalysis, WarningFilled, ArrowDown, Money, Document } from '@element-plus/icons-vue'
 import PrepaymentDetail from './PrepaymentDetail.vue'
 
 const router = useRouter()
@@ -607,11 +789,15 @@ const showAgingAnalysis = ref(false)
 const showBatchAudit = ref(false)
 const showAudit = ref(false)
 const showPayment = ref(false)
+const showBatchPayment = ref(false)
+const showBatchBindInvoice = ref(false)
 const bindLoading = ref(false)
 const writeoffLoading = ref(false)
 const batchAuditLoading = ref(false)
 const auditLoading = ref(false)
 const paymentLoading = ref(false)
+const batchPaymentLoading = ref(false)
+const batchBindInvoiceLoading = ref(false)
 
 // 搜索表单
 const searchForm = reactive({
@@ -669,7 +855,7 @@ const tableData = ref([
     supplierAccount: '75512345678',
     prepaymentCompany: '总部',
     warehouseCode: 'WH001',
-    expenseItem: '采购成本',
+    expenseItem: '仓储费',
     currency: 'CNY',
     prepaymentAmount: 150000.00,
     paidAmount: 0.00,
@@ -697,7 +883,7 @@ const tableData = ref([
     supplierAccount: '62220811111',
     prepaymentCompany: '上海分公司',
     warehouseCode: 'WH003',
-    expenseItem: '服务费',
+    expenseItem: '搬运费',
     currency: 'CNY',
     prepaymentAmount: 80000.00,
     paidAmount: 0.00,
@@ -726,7 +912,7 @@ const tableData = ref([
     supplierAccount: '62170012345',
     prepaymentCompany: '北京分公司',
     warehouseCode: 'WH002',
-    expenseItem: '服务费',
+    expenseItem: '装卸费',
     currency: 'CNY',
     prepaymentAmount: 120000.00,
     paidAmount: 0.00,
@@ -754,7 +940,7 @@ const tableData = ref([
     supplierAccount: '62220822222',
     prepaymentCompany: '杭州分公司',
     warehouseCode: 'WH005',
-    expenseItem: '保证金',
+    expenseItem: '换单费',
     currency: 'CNY',
     prepaymentAmount: 50000.00,
     paidAmount: 0.00,
@@ -783,7 +969,7 @@ const tableData = ref([
     supplierAccount: '62284812345',
     prepaymentCompany: '广州分公司',
     warehouseCode: 'WH004',
-    expenseItem: '物流费',
+    expenseItem: '搬运费',
     currency: 'CNY',
     prepaymentAmount: 35000.00,
     paidAmount: 0.00,
@@ -811,7 +997,7 @@ const tableData = ref([
     supplierAccount: '75512345678',
     prepaymentCompany: '总部',
     warehouseCode: 'WH001',
-    expenseItem: '采购成本',
+    expenseItem: '仓储费',
     currency: 'CNY',
     prepaymentAmount: 200000.00,
     paidAmount: 0.00,
@@ -840,7 +1026,7 @@ const tableData = ref([
     supplierAccount: '62170012345',
     prepaymentCompany: '北京分公司',
     warehouseCode: 'WH002',
-    expenseItem: '服务费',
+    expenseItem: '搬运费',
     currency: 'CNY',
     prepaymentAmount: 180000.00,
     paidAmount: 180000.00,
@@ -868,7 +1054,7 @@ const tableData = ref([
     supplierAccount: '62220811111',
     prepaymentCompany: '上海分公司',
     warehouseCode: 'WH003',
-    expenseItem: '服务费',
+    expenseItem: '仓储费',
     currency: 'CNY',
     prepaymentAmount: 95000.00,
     paidAmount: 95000.00,
@@ -897,7 +1083,7 @@ const tableData = ref([
     supplierAccount: '62220822222',
     prepaymentCompany: '杭州分公司',
     warehouseCode: 'WH005',
-    expenseItem: '装修款',
+    expenseItem: '港杂费',
     currency: 'CNY',
     prepaymentAmount: 100000.00,
     paidAmount: 100000.00,
@@ -925,7 +1111,7 @@ const tableData = ref([
     supplierAccount: '62284812345',
     prepaymentCompany: '广州分公司',
     warehouseCode: 'WH004',
-    expenseItem: '物流费',
+    expenseItem: '搬运费',
     currency: 'CNY',
     prepaymentAmount: 60000.00,
     paidAmount: 60000.00,
@@ -954,7 +1140,7 @@ const tableData = ref([
     supplierAccount: '75512345678',
     prepaymentCompany: '总部',
     warehouseCode: 'WH001',
-    expenseItem: '采购成本',
+    expenseItem: '仓储费',
     currency: 'CNY',
     prepaymentAmount: 250000.00,
     paidAmount: 250000.00,
@@ -982,7 +1168,7 @@ const tableData = ref([
     supplierAccount: '62170012345',
     prepaymentCompany: '北京分公司',
     warehouseCode: 'WH002',
-    expenseItem: '服务费',
+    expenseItem: '搬运费',
     currency: 'CNY',
     prepaymentAmount: 160000.00,
     paidAmount: 160000.00,
@@ -1006,8 +1192,11 @@ pagination.total = filteredTableData.value.length
 // 绑定发票表单
 const bindInvoiceForm = reactive({
   prepaymentId: null as number | null,
-  availableAmount: 0,
-  selectedInvoices: [] as number[],
+  prepaymentNo: '',
+  supplierName: '',
+  prepaymentCompany: '',
+  prepaymentAmount: 0,
+  selectedInvoice: null as number | null,
   bindAmount: 0,
   remark: ''
 })
@@ -1024,12 +1213,28 @@ const availableInvoices = ref([
 // 核销表单
 const writeoffForm = reactive({
   prepaymentId: null as number | null,
-  availableBalance: 0,
-  writeoffType: 'order',
-  selectedOrders: [] as number[],
-  writeoffAmount: 0,
+  prepaymentNo: '',
+  supplierName: '',
+  prepaymentCompany: '',
+  prepaymentAmount: 0,
+  expenseItem: '',
+  selectedRateSheet: null as string | null,
+  businessRefNo: '',
+  incomeItem: '',
   remark: ''
 })
+
+// 收入项目选项
+const incomeItemOptions = ref(['仓储费', '装卸费', '港杂费', '机场提货费', '换单费'])
+
+// 核销可选费率单列表
+const writeoffRateSheetList = ref([
+  { rateSheetNo: 'FL2024040001', businessRefNo: 'PO2024040001', incomeItem: '仓储费' },
+  { rateSheetNo: 'FL2024040002', businessRefNo: 'PO2024040002', incomeItem: '装卸费' },
+  { rateSheetNo: 'FL2024040003', businessRefNo: 'PO2024040003', incomeItem: '港杂费' },
+  { rateSheetNo: 'FL2024040004', businessRefNo: 'PO2024040004', incomeItem: '机场提货费' },
+  { rateSheetNo: 'FL2024040005', businessRefNo: 'PO2024040005', incomeItem: '换单费' }
+])
 
 // 可选订单列表
 const availableOrders = ref([
@@ -1055,6 +1260,24 @@ const agingTableData = ref([
 const batchAuditForm = reactive({
   action: 'approve',
   rejectReason: '',
+  remark: ''
+})
+
+// 批量付款表单
+const batchPaymentForm = reactive({
+  totalAmount: 0,
+  paymentMethod: '',
+  bankAccountId: null as number | null,
+  transactionNo: '',
+  remark: '',
+  fileList: [] as any[]
+})
+
+// 批量关联发票表单
+const batchBindInvoiceForm = reactive({
+  totalAmount: 0,
+  selectedInvoice: null as number | null,
+  bindAmount: 0,
   remark: ''
 })
 
@@ -1292,8 +1515,12 @@ const handleSubmit = async (row: any) => {
       confirmButtonText: '确定',
       cancelButtonText: '取消'
     })
-    row.prepaymentStatus = 'pending'
+    const item = tableData.value.find(t => t.id === row.id)
+    if (item) {
+      item.prepaymentStatus = 'pending'
+    }
     ElMessage.success('提交成功')
+    filterDataByStatus()
   } catch {}
 }
 
@@ -1334,8 +1561,12 @@ const handleMoreAction = (command: string, row: any) => {
 const handleCancel = async (row: any) => {
   try {
     await ElMessageBox.confirm('确定要作废该预付款吗？', '警告', { type: 'warning' })
-    row.prepaymentStatus = 'cancelled'
+    const item = tableData.value.find(t => t.id === row.id)
+    if (item) {
+      item.prepaymentStatus = 'cancelled'
+    }
     ElMessage.success('作废成功')
+    filterDataByStatus()
   } catch {}
 }
 
@@ -1359,6 +1590,8 @@ const confirmAudit = async () => {
     if (row) {
       row.prepaymentStatus = auditForm.action === 'approve' ? 'approved' : 'draft'
       ElMessage.success(auditForm.action === 'approve' ? '审核通过' : '已驳回')
+      // 审核成功后直接更新当前Tab数据
+      filterDataByStatus()
     }
     showAudit.value = false
   } catch {
@@ -1413,9 +1646,16 @@ const confirmPayment = async () => {
   paymentLoading.value = true
   try {
     await new Promise(resolve => setTimeout(resolve, 1000))
+    // 更新付款数据
+    const item = tableData.value.find(t => t.id === paymentForm.prepaymentId)
+    if (item) {
+      item.paidAmount = paymentForm.paymentAmount
+      item.paymentDate = paymentForm.paymentDate
+      item.prepaymentStatus = 'invoiced'
+    }
     ElMessage.success('付款登记成功')
     showPayment.value = false
-    handleSearch()
+    filterDataByStatus()
   } catch {
     ElMessage.error('付款登记失败')
   } finally {
@@ -1426,34 +1666,44 @@ const confirmPayment = async () => {
 // 打开绑定发票弹窗
 const openBindInvoice = (row: any) => {
   bindInvoiceForm.prepaymentId = row.id
-  bindInvoiceForm.availableAmount = row.balanceAmount
-  bindInvoiceForm.selectedInvoices = []
+  bindInvoiceForm.prepaymentNo = row.prepaymentNo
+  bindInvoiceForm.supplierName = row.supplierName
+  bindInvoiceForm.prepaymentCompany = row.prepaymentCompany || ''
+  bindInvoiceForm.prepaymentAmount = row.prepaymentAmount
+  bindInvoiceForm.selectedInvoice = null
   bindInvoiceForm.bindAmount = 0
   bindInvoiceForm.remark = ''
   showBindInvoice.value = true
 }
 
 // 发票选择变化
-const handleInvoiceSelectChange = (selected: number[]) => {
-  const total = selected.reduce((sum, id) => {
-    const invoice = availableInvoices.value.find(inv => inv.id === id)
-    return sum + (invoice?.invoiceAmount || 0)
-  }, 0)
-  bindInvoiceForm.bindAmount = Math.min(total, bindInvoiceForm.availableAmount)
+const handleInvoiceSelectChange = (selected: number | null) => {
+  if (selected) {
+    const invoice = availableInvoices.value.find(inv => inv.id === selected)
+    bindInvoiceForm.bindAmount = invoice?.invoiceAmount || 0
+  } else {
+    bindInvoiceForm.bindAmount = 0
+  }
 }
 
 // 确认绑定发票
 const confirmBindInvoice = async () => {
-  if (bindInvoiceForm.selectedInvoices.length === 0) {
+  if (!bindInvoiceForm.selectedInvoice) {
     ElMessage.warning('请选择要绑定的发票')
     return
   }
   bindLoading.value = true
   try {
     await new Promise(resolve => setTimeout(resolve, 1000))
+    // 更新绑定发票数据
+    const item = tableData.value.find(t => t.id === bindInvoiceForm.prepaymentId)
+    if (item) {
+      item.invoicedAmount = bindInvoiceForm.bindAmount
+      item.prepaymentStatus = 'partial_writeoff'
+    }
     ElMessage.success('发票绑定成功')
     showBindInvoice.value = false
-    handleSearch()
+    filterDataByStatus()
   } catch {
     ElMessage.error('绑定失败')
   } finally {
@@ -1464,30 +1714,53 @@ const confirmBindInvoice = async () => {
 // 打开核销弹窗
 const openWriteoff = (row: any) => {
   writeoffForm.prepaymentId = row.id
-  writeoffForm.availableBalance = row.balanceAmount
-  writeoffForm.writeoffType = 'order'
-  writeoffForm.selectedOrders = []
-  writeoffForm.writeoffAmount = 0
+  writeoffForm.prepaymentNo = row.prepaymentNo
+  writeoffForm.supplierName = row.supplierName
+  writeoffForm.prepaymentCompany = row.prepaymentCompany || ''
+  writeoffForm.prepaymentAmount = row.prepaymentAmount
+  writeoffForm.expenseItem = row.expenseItem || ''
+  writeoffForm.selectedRateSheet = null
+  writeoffForm.businessRefNo = ''
+  writeoffForm.incomeItem = ''
   writeoffForm.remark = ''
   showWriteoff.value = true
 }
 
+// 核销选择费率单变化
+const handleWriteoffRateSheetChange = (rateSheetNo: string) => {
+  if (rateSheetNo) {
+    const rateSheet = writeoffRateSheetList.value.find(item => item.rateSheetNo === rateSheetNo)
+    if (rateSheet) {
+      writeoffForm.businessRefNo = rateSheet.businessRefNo
+    }
+  } else {
+    writeoffForm.businessRefNo = ''
+  }
+}
+
 // 确认核销
 const confirmWriteoff = async () => {
-  if (writeoffForm.writeoffType === 'order' && writeoffForm.selectedOrders.length === 0) {
-    ElMessage.warning('请选择要核销的订单')
-    return
-  }
-  if (writeoffForm.writeoffType === 'amount' && writeoffForm.writeoffAmount <= 0) {
-    ElMessage.warning('请输入核销金额')
+  if (!writeoffForm.selectedRateSheet) {
+    ElMessage.warning('请选择费率单')
     return
   }
   writeoffLoading.value = true
   try {
     await new Promise(resolve => setTimeout(resolve, 1000))
+    // 更新核销数据
+    const item = tableData.value.find(t => t.id === writeoffForm.prepaymentId)
+    if (item) {
+      item.writtenOffAmount = (item.writtenOffAmount || 0) + item.prepaymentAmount
+      item.balanceAmount = item.balanceAmount - item.prepaymentAmount
+      // 如果余额为0或核销完成，状态变为已核销
+      if (item.balanceAmount <= 0) {
+        item.prepaymentStatus = 'written_off'
+        item.balanceAmount = 0
+      }
+    }
     ElMessage.success('核销成功')
     showWriteoff.value = false
-    handleSearch()
+    filterDataByStatus()
   } catch {
     ElMessage.error('核销失败')
   } finally {
@@ -1518,6 +1791,12 @@ const handleAgingAnalysis = () => {
 
 // 批量审核
 const handleBatchAudit = () => {
+  // 验证选中数据的预付款状态是否为待审核
+  const invalidRows = selectedRows.value.filter(row => row.prepaymentStatus !== 'pending')
+  if (invalidRows.length > 0) {
+    ElMessage.warning('预付款状态不符合！')
+    return
+  }
   batchAuditForm.action = 'approve'
   batchAuditForm.rejectReason = ''
   batchAuditForm.remark = ''
@@ -1533,13 +1812,139 @@ const confirmBatchAudit = async () => {
   batchAuditLoading.value = true
   try {
     await new Promise(resolve => setTimeout(resolve, 1000))
+    // 更新选中行的状态
+    const newStatus = batchAuditForm.action === 'approve' ? 'approved' : 'draft'
+    selectedRows.value.forEach(row => {
+      const item = tableData.value.find(t => t.id === row.id)
+      if (item) {
+        item.prepaymentStatus = newStatus
+      }
+    })
     ElMessage.success(`批量${batchAuditForm.action === 'approve' ? '审核通过' : '驳回'}成功`)
     showBatchAudit.value = false
-    handleSearch()
+    // 批量审核成功后直接更新当前Tab数据
+    filterDataByStatus()
+    selectedRows.value = []
   } catch {
     ElMessage.error('操作失败')
   } finally {
     batchAuditLoading.value = false
+  }
+}
+
+// 批量付款
+const handleBatchPayment = () => {
+  // 验证选中数据的预付款状态是否为待付款
+  const invalidRows = selectedRows.value.filter(row => row.prepaymentStatus !== 'approved')
+  if (invalidRows.length > 0) {
+    ElMessage.warning('预付款状态不符合！')
+    return
+  }
+  // 计算选中记录的总付款金额
+  const totalAmount = selectedRows.value.reduce((sum, row) => sum + (row.balanceAmount || row.prepaymentAmount), 0)
+  batchPaymentForm.totalAmount = totalAmount
+  batchPaymentForm.paymentMethod = ''
+  batchPaymentForm.bankAccountId = null
+  batchPaymentForm.transactionNo = ''
+  batchPaymentForm.remark = ''
+  batchPaymentForm.fileList = []
+  showBatchPayment.value = true
+}
+
+// 确认批量付款
+const confirmBatchPayment = async () => {
+  if (!batchPaymentForm.paymentMethod) {
+    ElMessage.warning('请选择付款方式')
+    return
+  }
+  batchPaymentLoading.value = true
+  try {
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    // 更新选中行的状态为已付款
+    const paymentTime = new Date().toISOString().replace('T', ' ').substring(0, 19)
+    selectedRows.value.forEach(row => {
+      const item = tableData.value.find(t => t.id === row.id)
+      if (item) {
+        item.prepaymentStatus = 'invoiced'
+        item.paidAmount = item.balanceAmount || item.prepaymentAmount
+        item.paymentDate = paymentTime
+      }
+    })
+    ElMessage.success('批量付款成功')
+    showBatchPayment.value = false
+    // 批量付款成功后直接更新当前Tab数据
+    filterDataByStatus()
+    selectedRows.value = []
+  } catch {
+    ElMessage.error('操作失败')
+  } finally {
+    batchPaymentLoading.value = false
+  }
+}
+
+// 批量付款文件变化
+const handleBatchPaymentFileChange = (file: any, fileList: any) => {
+  batchPaymentForm.fileList = fileList
+}
+
+// 批量付款文件删除
+const handleBatchPaymentFileRemove = (file: any, fileList: any) => {
+  batchPaymentForm.fileList = fileList
+}
+
+// 批量关联发票
+const handleBatchBindInvoice = () => {
+  // 验证选中数据的预付款状态是否为待关联发票
+  const invalidRows = selectedRows.value.filter(row => row.prepaymentStatus !== 'invoiced')
+  if (invalidRows.length > 0) {
+    ElMessage.warning('预付款状态不符合！')
+    return
+  }
+  // 计算选中记录的预付总金额
+  const totalAmount = selectedRows.value.reduce((sum, row) => sum + (row.prepaymentAmount || 0), 0)
+  batchBindInvoiceForm.totalAmount = totalAmount
+  batchBindInvoiceForm.selectedInvoice = null
+  batchBindInvoiceForm.bindAmount = 0
+  batchBindInvoiceForm.remark = ''
+  showBatchBindInvoice.value = true
+}
+
+// 批量发票选择变化
+const handleBatchInvoiceSelectChange = (selected: number | null) => {
+  if (selected) {
+    const invoice = availableInvoices.value.find(inv => inv.id === selected)
+    batchBindInvoiceForm.bindAmount = invoice?.invoiceAmount || 0
+  } else {
+    batchBindInvoiceForm.bindAmount = 0
+  }
+}
+
+// 确认批量关联发票
+const confirmBatchBindInvoice = async () => {
+  if (!batchBindInvoiceForm.selectedInvoice) {
+    ElMessage.warning('请选择要关联的发票')
+    return
+  }
+  batchBindInvoiceLoading.value = true
+  try {
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    // 更新选中行的发票绑定数据
+    selectedRows.value.forEach(row => {
+      const item = tableData.value.find(t => t.id === row.id)
+      if (item) {
+        item.invoicedAmount = batchBindInvoiceForm.bindAmount
+        item.prepaymentStatus = 'partial_writeoff'
+      }
+    })
+    ElMessage.success('批量关联发票成功')
+    showBatchBindInvoice.value = false
+    // 批量关联发票成功后直接更新当前Tab数据
+    filterDataByStatus()
+    selectedRows.value = []
+  } catch {
+    ElMessage.error('操作失败')
+  } finally {
+    batchBindInvoiceLoading.value = false
   }
 }
 
@@ -1668,6 +2073,14 @@ onMounted(() => {
 }
 
 .batch-audit-form {
+  padding: 10px 0;
+}
+
+.batch-payment-form {
+  padding: 10px 0;
+}
+
+.batch-bind-invoice-form {
   padding: 10px 0;
 }
 

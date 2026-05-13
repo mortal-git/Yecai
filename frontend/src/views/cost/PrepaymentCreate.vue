@@ -142,6 +142,21 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
+            <el-form-item label="收入项目" prop="incomeItem">
+              <el-select v-model="form.incomeItem" placeholder="请选择" style="width: 100%">
+                <el-option label="仓储费" value="仓储费" />
+                <el-option label="装卸费" value="装卸费" />
+                <el-option label="港杂费" value="港杂费" />
+                <el-option label="机场提货费" value="机场提货费" />
+                <el-option label="换单费" value="换单费" />
+                <el-option label="其他收入" value="其他收入" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row>
+          <el-col :span="8">
             <el-form-item label="提单号" prop="billNo">
               <el-input v-model="form.billNo" placeholder="请输入提单号" />
             </el-form-item>
@@ -208,13 +223,13 @@ const supplierAccountList = ref([
 
 // 费率单列表
 const rateSheetList = ref([
-  { rateSheetNo: 'FL2024040001', businessRefNo: 'PO2024040001' },
-  { rateSheetNo: 'FL2024040002', businessRefNo: 'PO2024040002' },
-  { rateSheetNo: 'FL2024040003', businessRefNo: 'PO2024040003' },
-  { rateSheetNo: 'FL2024040004', businessRefNo: 'PO2024040004' },
-  { rateSheetNo: 'FL2024040005', businessRefNo: 'PO2024040005' },
-  { rateSheetNo: 'FL2024040006', businessRefNo: 'PO2024040006' },
-  { rateSheetNo: 'FL2024040007', businessRefNo: 'PO2024040007' }
+  { rateSheetNo: 'FL2024040001', businessRefNo: 'PO2024040001', incomeItem: '仓储费' },
+  { rateSheetNo: 'FL2024040002', businessRefNo: 'PO2024040002', incomeItem: '装卸费' },
+  { rateSheetNo: 'FL2024040003', businessRefNo: 'PO2024040003', incomeItem: '港杂费' },
+  { rateSheetNo: 'FL2024040004', businessRefNo: 'PO2024040004', incomeItem: '机场提货费' },
+  { rateSheetNo: 'FL2024040005', businessRefNo: 'PO2024040005', incomeItem: '换单费' },
+  { rateSheetNo: 'FL2024040006', businessRefNo: 'PO2024040006', incomeItem: '仓储费' },
+  { rateSheetNo: 'FL2024040007', businessRefNo: 'PO2024040007', incomeItem: '其他收入' }
 ])
 
 // 表单数据
@@ -226,6 +241,7 @@ const form = reactive({
   warehouseCode: '',
   businessRefNo: '',
   rateSheetNo: '',
+  incomeItem: '',
   billNo: '',
   expenseItem: '',
   currency: 'CNY',
@@ -269,9 +285,11 @@ const handleRateSheetChange = (rateSheetNo: string) => {
     const rateSheet = rateSheetList.value.find(item => item.rateSheetNo === rateSheetNo)
     if (rateSheet) {
       form.businessRefNo = rateSheet.businessRefNo
+      form.incomeItem = rateSheet.incomeItem
     }
   } else {
     form.businessRefNo = ''
+    form.incomeItem = ''
   }
 }
 
