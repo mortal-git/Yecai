@@ -167,7 +167,7 @@
     <!-- 详细记录抽屉 -->
     <el-drawer
       v-model="showDetailDrawer"
-      :title="`${currentCustomer} - 应收明细`"
+      :title="`${currentCustomer} - 应收收入明细`"
       size="800px"
     >
       <template #default>

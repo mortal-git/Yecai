@@ -310,7 +310,7 @@ const handleSaveDraft = async () => {
     setTimeout(() => {
       saveLoading.value = false
       ElMessage.success('草稿保存成功')
-      router.push('/cost/prepayment')
+      router.push('/payable/prepayment')
     }, 1000)
   } catch (error) {
     ElMessage.error('表单校验失败，请检查填写内容')
@@ -329,7 +329,7 @@ const handleSubmit = async () => {
     setTimeout(() => {
       submitLoading.value = false
       ElMessage.success('提交成功，等待审核')
-      router.push('/cost/prepayment')
+      router.push('/payable/prepayment')
     }, 1000)
   } catch (error) {
     ElMessage.error('表单校验失败，请检查填写内容')

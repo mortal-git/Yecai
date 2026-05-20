@@ -83,8 +83,10 @@
               <el-icon><Money /></el-icon>
               <span>应收管理</span>
             </template>
-            <el-menu-item index="/receivable/list">应收单列表</el-menu-item>
-            <el-menu-item index="/receivable/revenue-detail">收入明细</el-menu-item>
+            <el-menu-item index="/receivable/list">应收列表</el-menu-item>
+            <el-menu-item index="/receivable/revenue-detail">应收收入明细</el-menu-item>
+            <el-menu-item index="/receivable/order-revenue-detail">订单收入明细</el-menu-item>
+            <el-menu-item index="/receivable/split-allocation">拆单均摊</el-menu-item>
             <el-menu-item index="/receivable/collection">收款管理</el-menu-item>
             <el-menu-item index="/receivable/aging">账龄分析</el-menu-item>
           </el-sub-menu>

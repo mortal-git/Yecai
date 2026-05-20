@@ -1,226 +1,257 @@
 <template>
   <div class="receivable-list-container">
-    <!-- 顶部操作栏 -->
-    <div class="action-header">
-      <div class="header-left">
-        <span class="page-title">应收单列表</span>
-      </div>
-      <div class="header-right">
-        <el-button type="primary" @click="handleCreate">
-          <el-icon><Plus /></el-icon>
-          新增应收单
-        </el-button>
-        <el-button @click="handleExport">
-          <el-icon><Download /></el-icon>
-          导出
-        </el-button>
-      </div>
-    </div>
-
     <!-- 统计卡片 -->
     <div class="statistics-cards">
       <el-row :gutter="16">
-        <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-icon total"><el-icon><Money /></el-icon></div>
-            <div class="stat-content">
-              <div class="stat-value">¥{{ statistics.totalAmount.toLocaleString() }}</div>
-              <div class="stat-label">应收总额</div>
+        <el-col :span="8">
+          <div class="stat-card revenue-card">
+            <div class="stat-header">
+              <span class="stat-title">收入</span>
+            </div>
+            <div class="stat-values">
+              <div class="stat-item">
+                <span class="stat-label">收入含税总金额</span>
+                <span class="stat-value">¥{{ formatMoney(statData.revenueIncTaxTotal) }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">收入不含税总金额</span>
+                <span class="stat-value">¥{{ formatMoney(statData.revenueExTaxTotal) }}</span>
+              </div>
             </div>
           </div>
         </el-col>
-        <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-icon received"><el-icon><CircleCheck /></el-icon></div>
-            <div class="stat-content">
-              <div class="stat-value">¥{{ statistics.receivedAmount.toLocaleString() }}</div>
-              <div class="stat-label">已收款</div>
+        <el-col :span="8">
+          <div class="stat-card cost-card">
+            <div class="stat-header">
+              <span class="stat-title">成本</span>
+            </div>
+            <div class="stat-values">
+              <div class="stat-item">
+                <span class="stat-label">成本含税总金额</span>
+                <span class="stat-value">¥{{ formatMoney(statData.costIncTaxTotal) }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">成本不含税总金额</span>
+                <span class="stat-value">¥{{ formatMoney(statData.costExTaxTotal) }}</span>
+              </div>
             </div>
           </div>
         </el-col>
-        <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-icon pending"><el-icon><Clock /></el-icon></div>
-            <div class="stat-content">
-              <div class="stat-value">¥{{ statistics.pendingAmount.toLocaleString() }}</div>
-              <div class="stat-label">待收款</div>
+        <el-col :span="8">
+          <div class="stat-card profit-card">
+            <div class="stat-header">
+              <span class="stat-title">毛利</span>
             </div>
-          </div>
-        </el-col>
-        <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-icon overdue"><el-icon><Warning /></el-icon></div>
-            <div class="stat-content">
-              <div class="stat-value">¥{{ statistics.overdueAmount.toLocaleString() }}</div>
-              <div class="stat-label">逾期金额</div>
+            <div class="stat-values">
+              <div class="stat-item">
+                <span class="stat-label">毛利含税总金额</span>
+                <span class="stat-value">¥{{ formatMoney(statData.profitIncTaxTotal) }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">毛利不含税总金额</span>
+                <span class="stat-value">¥{{ formatMoney(statData.profitExTaxTotal) }}</span>
+              </div>
             </div>
           </div>
         </el-col>
       </el-row>
     </div>
 
-    <!-- 搜索筛选 -->
+    <!-- 搜索筛选区域 -->
     <div class="search-panel">
-      <el-form :inline="true" :model="searchForm" class="search-form">
-        <el-form-item label="客户">
+      <el-form :model="searchForm" :inline="true" label-width="110px">
+        <el-form-item label="客户名称" required>
           <el-select
             v-model="searchForm.customerId"
             placeholder="请选择客户"
             clearable
             filterable
-            style="width: 200px"
+            style="width: 220px"
           >
             <el-option
-              v-for="customer in customerList"
-              :key="customer.id"
-              :label="customer.name"
-              :value="customer.id"
+              v-for="c in customerList"
+              :key="c.id"
+              :label="c.name"
+              :value="c.id"
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="订单">
-          <el-input
-            v-model="searchForm.orderNo"
-            placeholder="请输入订单号"
-            clearable
-            style="width: 180px"
-          />
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="searchForm.status" placeholder="请选择状态" clearable style="width: 140px">
-            <el-option label="待确认" value="pending" />
-            <el-option label="已确认" value="confirmed" />
-            <el-option label="部分收款" value="partial" />
-            <el-option label="已核销" value="written_off" />
-            <el-option label="部分核销" value="partial_writeoff" />
-            <el-option label="已逾期" value="overdue" />
-            <el-option label="坏账" value="bad_debt" />
+        <el-form-item label="仓库">
+          <el-select v-model="searchForm.warehouseCode" placeholder="请选择仓库" clearable filterable style="width: 180px">
+            <el-option v-for="w in warehouseList" :key="w.code" :label="w.name" :value="w.code" />
           </el-select>
         </el-form-item>
-        <el-form-item label="应收日期">
+        <el-form-item label="业务模式">
+          <el-select v-model="searchForm.businessMode" placeholder="请选择" clearable style="width: 150px">
+            <el-option label="FOB" value="fob" />
+            <el-option label="CIF" value="cif" />
+            <el-option label="DDP" value="ddp" />
+            <el-option label="EXW" value="exw" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="业务参考编号">
+          <el-input v-model="searchForm.businessRefNo" type="textarea" :rows="2" placeholder="支持多行" style="width: 200px" />
+        </el-form-item>
+        <el-form-item label="是否结算订单">
+          <el-select v-model="searchForm.isSettled" placeholder="请选择" clearable style="width: 140px">
+            <el-option label="是" value="yes" />
+            <el-option label="否" value="no" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="订单新建时间">
           <el-date-picker
-            v-model="searchForm.dateRange"
+            v-model="searchForm.orderCreateTime"
             type="daterange"
             range-separator="至"
             start-placeholder="开始日期"
             end-placeholder="结束日期"
             value-format="YYYY-MM-DD"
-            style="width: 260px"
+            style="width: 240px"
           />
         </el-form-item>
-        <el-form-item label="逾期状态">
-          <el-select v-model="searchForm.overdueStatus" placeholder="请选择" clearable style="width: 140px">
-            <el-option label="未逾期" value="normal" />
-            <el-option label="逾期1-30天" value="overdue1" />
-            <el-option label="逾期31-60天" value="overdue2" />
-            <el-option label="逾期61-90天" value="overdue3" />
-            <el-option label="逾期90天以上" value="overdue4" />
-          </el-select>
+        <el-form-item label="订单完成时间">
+          <el-date-picker
+            v-model="searchForm.orderFinishTime"
+            type="daterange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            value-format="YYYY-MM-DD"
+            style="width: 240px"
+          />
+        </el-form-item>
+        <el-form-item label="客户指令号">
+          <el-input v-model="searchForm.customerCmdNo" placeholder="请输入" clearable style="width: 160px" />
+        </el-form-item>
+        <el-form-item label="总运单">
+          <el-input v-model="searchForm.masterBillNo" placeholder="请输入" clearable style="width: 160px" />
+        </el-form-item>
+        <el-form-item label="分运单">
+          <el-input v-model="searchForm.houseBillNo" placeholder="请输入" clearable style="width: 160px" />
+        </el-form-item>
+        <el-form-item label="费率单编号">
+          <el-input v-model="searchForm.rateSheetNo" placeholder="请输入" clearable style="width: 160px" />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">查询</el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <el-button type="primary" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><Refresh /></el-icon>
+            重置
+          </el-button>
         </el-form-item>
       </el-form>
     </div>
 
-    <!-- 操作栏 -->
+    <!-- 操作按钮区域 -->
     <div class="action-bar">
-      <div class="action-left">
-        <el-checkbox v-model="isAllSelected" @change="handleSelectAll">全选</el-checkbox>
-        <el-divider direction="vertical" />
-        <span class="selected-count">已选择 {{ selectedRows.length }} 项</span>
-      </div>
-      <div class="action-right">
-        <el-button size="small" :disabled="!selectedRows.length" @click="handleBatchConfirm">
-          批量确认
-        </el-button>
-        <el-button size="small" :disabled="!selectedRows.length" @click="handleBatchCollection">
-          批量收款
-        </el-button>
-        <el-button size="small" :disabled="!selectedRows.length" @click="handleBatchWriteoff">
-          批量核销
-        </el-button>
-        <el-button size="small" :disabled="!selectedRows.length" @click="handleBatchBadDebt">
-          坏账处理
-        </el-button>
-      </div>
+      <el-button type="success" @click="handleExport" :disabled="selectedRows.length === 0">
+        <el-icon><Download /></el-icon>
+        导出
+      </el-button>
+      <el-button type="warning" @click="handleImport">
+        <el-icon><Upload /></el-icon>
+        导入
+      </el-button>
+      <el-button type="danger" @click="handleRecalculate" :disabled="selectedRows.length === 0">
+        <el-icon><Refresh /></el-icon>
+        重新计费
+      </el-button>
+      <el-button type="info" @click="handleCustomFields">
+        <el-icon><Setting /></el-icon>
+        自定义字段
+      </el-button>
     </div>
 
-    <!-- 数据表格 -->
+    <!-- 表格区域 -->
     <div class="table-container">
       <el-table
         ref="tableRef"
         :data="tableData"
         border
         stripe
+        v-loading="loading"
         @selection-change="handleSelectionChange"
-        @row-click="handleRowClick"
       >
-        <el-table-column type="selection" width="50" />
-        <el-table-column prop="receivableNo" label="应收单号" width="160" fixed />
-        <el-table-column prop="customerName" label="客户名称" min-width="160" />
-        <el-table-column prop="orderNo" label="关联订单" width="160">
+        <el-table-column type="selection" width="50" fixed />
+        <el-table-column v-if="visibleColumns.rateSheetNo" prop="rateSheetNo" label="费率单编号" min-width="150" fixed />
+        <el-table-column v-if="visibleColumns.rateSheetSource" prop="rateSheetSource" label="费率单创建来源" min-width="120" />
+        <el-table-column v-if="visibleColumns.rateSheetCreateTime" prop="rateSheetCreateTime" label="费率单创建时间" min-width="160" />
+        <el-table-column v-if="visibleColumns.businessRefNo" prop="businessRefNo" label="业务参考编号" min-width="150" />
+        <el-table-column v-if="visibleColumns.billingDoc" prop="billingDoc" label="计费单据" min-width="120" />
+        <el-table-column v-if="visibleColumns.customerDept" prop="customerDept" label="客户部门" min-width="120" />
+        <el-table-column v-if="visibleColumns.customerCmdNo" prop="customerCmdNo" label="客户指令号" min-width="130" />
+        <el-table-column v-if="visibleColumns.masterBillNo" prop="masterBillNo" label="总运单号" min-width="140" />
+        <el-table-column v-if="visibleColumns.houseBillNo" prop="houseBillNo" label="分运单号" min-width="140" />
+        <el-table-column v-if="visibleColumns.revenueExTaxTotal" prop="revenueExTaxTotal" label="收入不含税总金额" min-width="150" align="right">
+          <template #default="{ row }">¥{{ formatMoney(row.revenueExTaxTotal) }}</template>
+        </el-table-column>
+        <el-table-column v-if="visibleColumns.costExTaxTotal" prop="costExTaxTotal" label="成本不含税总金额" min-width="150" align="right">
+          <template #default="{ row }">¥{{ formatMoney(row.costExTaxTotal) }}</template>
+        </el-table-column>
+        <el-table-column v-if="visibleColumns.profitExTaxTotal" prop="profitExTaxTotal" label="毛利不含税总金额" min-width="150" align="right">
+          <template #default="{ row }">¥{{ formatMoney(row.profitExTaxTotal) }}</template>
+        </el-table-column>
+        <el-table-column v-if="visibleColumns.revenueIncTaxTotal" prop="revenueIncTaxTotal" label="收入含税总金额" min-width="150" align="right">
+          <template #default="{ row }">¥{{ formatMoney(row.revenueIncTaxTotal) }}</template>
+        </el-table-column>
+        <el-table-column v-if="visibleColumns.costIncTaxTotal" prop="costIncTaxTotal" label="成本含税总金额" min-width="150" align="right">
+          <template #default="{ row }">¥{{ formatMoney(row.costIncTaxTotal) }}</template>
+        </el-table-column>
+        <el-table-column v-if="visibleColumns.profitIncTaxTotal" prop="profitIncTaxTotal" label="毛利含税总金额" min-width="150" align="right">
+          <template #default="{ row }">¥{{ formatMoney(row.profitIncTaxTotal) }}</template>
+        </el-table-column>
+        <el-table-column v-if="visibleColumns.billingDocNo" prop="billingDocNo" label="计费单据编号" min-width="150" />
+        <el-table-column v-if="visibleColumns.customerName" prop="customerName" label="客户名称" min-width="160" />
+        <el-table-column v-if="visibleColumns.warehouse" prop="warehouse" label="仓库" min-width="100" />
+        <el-table-column v-if="visibleColumns.businessMode" prop="businessMode" label="业务模式" min-width="80">
+          <template #default="{ row }">{{ getBusinessModeText(row.businessMode) }}</template>
+        </el-table-column>
+        <el-table-column v-if="visibleColumns.rateSheetType" prop="rateSheetType" label="费率单类型" min-width="100" />
+        <el-table-column v-if="visibleColumns.orderCreateTime" prop="orderCreateTime" label="订单新建时间" min-width="160" />
+        <el-table-column v-if="visibleColumns.orderFinishTime" prop="orderFinishTime" label="订单完成时间" min-width="160" />
+        <el-table-column v-if="visibleColumns.orderStatus" prop="orderStatus" label="订单状态" min-width="100">
           <template #default="{ row }">
-            <el-link type="primary" @click.prevent="handleViewOrder(row.orderId)">
-              {{ row.orderNo }}
-            </el-link>
+            <el-tag :type="getOrderStatusType(row.orderStatus)" size="small">{{ row.orderStatus }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="invoiceNo" label="关联发票" width="140">
+        <el-table-column v-if="visibleColumns.isSettled" prop="isSettled" label="是否结算订单" min-width="110">
+          <template #default="{ row }">{{ row.isSettled === 'yes' ? '是' : '否' }}</template>
+        </el-table-column>
+        <el-table-column v-if="visibleColumns.customerQuoteNo" prop="customerQuoteNo" label="客户报价单编号" min-width="150" />
+        <el-table-column v-if="visibleColumns.businessNo" prop="businessNo" label="业务编号" min-width="120" />
+        <el-table-column v-if="visibleColumns.flowSheetNo" prop="flowSheetNo" label="流转单编号" min-width="120" />
+        <el-table-column v-if="visibleColumns.rateSheetStatus" prop="rateSheetStatus" label="费率单状态" min-width="100">
           <template #default="{ row }">
-            <el-link v-if="row.invoiceId" type="primary" @click.prevent="handleViewInvoice(row.invoiceId)">
-              {{ row.invoiceNo }}
-            </el-link>
-            <span v-else>-</span>
+            <el-tag :type="getRateSheetStatusType(row.rateSheetStatus)" size="small">{{ row.rateSheetStatus }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="amount" label="应收金额" width="120" align="right">
-          <template #default="{ row }">¥{{ row.amount.toLocaleString() }}</template>
-        </el-table-column>
-        <el-table-column prop="receivedAmount" label="已收金额" width="120" align="right">
-          <template #default="{ row }">¥{{ row.receivedAmount.toLocaleString() }}</template>
-        </el-table-column>
-        <el-table-column prop="pendingAmount" label="待收金额" width="120" align="right">
-          <template #default="{ row }">¥{{ row.pendingAmount.toLocaleString() }}</template>
-        </el-table-column>
-        <el-table-column prop="dueDate" label="到期日期" width="110">
+        <el-table-column v-if="visibleColumns.rateSheetConfirmTime" prop="rateSheetConfirmTime" label="费率单确认时间" min-width="160" />
+        <el-table-column v-if="visibleColumns.rateSheetReconcileStatus" prop="rateSheetReconcileStatus" label="费率单对账状态" min-width="120">
           <template #default="{ row }">
-            <span :class="{ overdue: isOverdue(row) }">{{ row.dueDate }}</span>
+            <el-tag :type="getReconcileStatusType(row.rateSheetReconcileStatus)" size="small">{{ row.rateSheetReconcileStatus }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column v-if="visibleColumns.rateSheetCostStatus" prop="rateSheetCostStatus" label="费率单成本状态" min-width="120">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)" size="small">
-              {{ getStatusText(row.status) }}
-            </el-tag>
+            <el-tag :type="getCostStatusType(row.rateSheetCostStatus)" size="small">{{ row.rateSheetCostStatus }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="overdueDays" label="逾期天数" width="90">
+        <el-table-column v-if="visibleColumns.rateSheetCostConfirmTime" prop="rateSheetCostConfirmTime" label="费率单成本确认时间" min-width="160" />
+        <el-table-column v-if="visibleColumns.approvalStatus" prop="approvalStatus" label="修改审批状态" min-width="110">
           <template #default="{ row }">
-            <span v-if="isOverdue(row)" class="overdue-days">{{ row.overdueDays }}天</span>
-            <span v-else>-</span>
+            <el-tag :type="getApprovalStatusType(row.approvalStatus)" size="small">{{ row.approvalStatus }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="160" />
-        <el-table-column label="操作" width="140" fixed="right">
+        <el-table-column v-if="visibleColumns.docId" prop="docId" label="单据ID" min-width="100" />
+        <el-table-column label="操作" width="120" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link size="small" @click.stop="handleView(row)">详情</el-button>
-            <el-dropdown trigger="hover" @command="(cmd: string) => handleCommand(cmd, row)">
-              <el-button type="primary" link size="small">
-                更多<el-icon class="el-icon--right"><ArrowDown /></el-icon>
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="confirm" v-if="row.status === 'pending'">确认应收</el-dropdown-item>
-                  <el-dropdown-item command="collection">收款登记</el-dropdown-item>
-                  <el-dropdown-item command="writeoff">核销</el-dropdown-item>
-                  <el-dropdown-item command="edit" v-if="row.status === 'pending'">编辑</el-dropdown-item>
-                  <el-dropdown-item command="badDebt" v-if="row.pendingAmount > 0">坏账处理</el-dropdown-item>
-                  <el-dropdown-item command="print">打印</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+            <el-button type="primary" link size="small" @click.stop="handleAddIncomeForRow(row)">
+              <el-icon><Plus /></el-icon>
+              添加收入
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -230,227 +261,33 @@
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.pageSize"
-          :page-sizes="[10, 20, 50, 100]"
+          :page-sizes="[20, 50, 100, 200]"
           :total="pagination.total"
           layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
+          @size-change="handlePageChange"
+          @current-change="handlePageChange"
         />
       </div>
     </div>
 
-    <!-- 详情抽屉 -->
-    <el-drawer
-      v-model="showDetailDrawer"
-      title="应收单详情"
-      size="700px"
-      :before-close="handleDrawerClose"
-    >
-      <template #default>
-        <div class="detail-content" v-if="currentRow">
-          <el-descriptions :column="2" border>
-            <el-descriptions-item label="应收单号">{{ currentRow.receivableNo }}</el-descriptions-item>
-            <el-descriptions-item label="客户名称">{{ currentRow.customerName }}</el-descriptions-item>
-            <el-descriptions-item label="关联订单">{{ currentRow.orderNo || '-' }}</el-descriptions-item>
-            <el-descriptions-item label="关联发票">{{ currentRow.invoiceNo || '-' }}</el-descriptions-item>
-            <el-descriptions-item label="应收金额">¥{{ currentRow.amount.toLocaleString() }}</el-descriptions-item>
-            <el-descriptions-item label="已收金额">¥{{ currentRow.receivedAmount.toLocaleString() }}</el-descriptions-item>
-            <el-descriptions-item label="待收金额">¥{{ currentRow.pendingAmount.toLocaleString() }}</el-descriptions-item>
-            <el-descriptions-item label="到期日期">{{ currentRow.dueDate }}</el-descriptions-item>
-            <el-descriptions-item label="状态">
-              <el-tag :type="getStatusType(currentRow.status)" size="small">
-                {{ getStatusText(currentRow.status) }}
-              </el-tag>
-            </el-descriptions-item>
-            <el-descriptions-item label="逾期天数" v-if="isOverdue(currentRow)">
-              {{ currentRow.overdueDays }}天
-            </el-descriptions-item>
-            <el-descriptions-item label="创建时间">{{ currentRow.createTime }}</el-descriptions-item>
-            <el-descriptions-item label="备注">{{ currentRow.remark || '-' }}</el-descriptions-item>
-          </el-descriptions>
-
-          <!-- 收款记录 -->
-          <div class="section-title">收款记录</div>
-          <el-table :data="currentRow.collectionRecords || []" border size="small">
-            <el-table-column prop="collectionNo" label="收款单号" width="160" />
-            <el-table-column prop="collectionAmount" label="收款金额" width="120" align="right">
-              <template #default="{ row }">¥{{ row.collectionAmount.toLocaleString() }}</template>
-            </el-table-column>
-            <el-table-column prop="collectionDate" label="收款日期" width="120" />
-            <el-table-column prop="paymentMethod" label="收款方式" width="120">
-              <template #default="{ row }">
-                {{ getPaymentMethodText(row.paymentMethod) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="bankAccount" label="收款账户" />
-            <el-table-column prop="remark" label="备注" />
-          </el-table>
-          <el-empty v-if="!currentRow.collectionRecords?.length" description="暂无收款记录" />
-
-          <!-- 核销记录 -->
-          <div class="section-title">核销记录</div>
-          <el-table :data="currentRow.writeoffRecords || []" border size="small">
-            <el-table-column prop="writeoffNo" label="核销单号" width="160" />
-            <el-table-column prop="writeoffAmount" label="核销金额" width="120" align="right">
-              <template #default="{ row }">¥{{ row.writeoffAmount.toLocaleString() }}</template>
-            </el-table-column>
-            <el-table-column prop="writeoffDate" label="核销日期" width="120" />
-            <el-table-column prop="writeoffType" label="核销类型" width="120">
-              <template #default="{ row }">{{ row.writeoffType }}</template>
-            </el-table-column>
-            <el-table-column prop="remark" label="备注" />
-          </el-table>
-          <el-empty v-if="!currentRow.writeoffRecords?.length" description="暂无核销记录" />
+    <!-- 自定义字段弹窗 -->
+    <el-dialog v-model="showCustomFieldDialog" title="自定义字段" width="700px">
+      <div class="custom-field-content">
+        <p class="tip-text">勾选要显示的字段</p>
+        <el-scrollbar height="400px">
+          <div class="field-list">
+            <el-checkbox v-for="field in allFields" :key="field.key" v-model="selectedFields" :value="field.key" :label="field.key" class="field-checkbox-item">
+              {{ field.label }}
+            </el-checkbox>
+          </div>
+        </el-scrollbar>
+        <div class="field-actions">
+          <el-button size="small" @click="handleResetFields">恢复默认</el-button>
         </div>
-      </template>
+      </div>
       <template #footer>
-        <div class="drawer-footer">
-          <el-button @click="showDetailDrawer = false">关闭</el-button>
-          <el-button type="primary" @click="handleEdit(currentRow)">编辑</el-button>
-        </div>
-      </template>
-    </el-drawer>
-
-    <!-- 收款登记对话框 -->
-    <el-dialog v-model="showCollectionDialog" title="收款登记" width="500px">
-      <el-form ref="collectionFormRef" :model="collectionForm" :rules="collectionRules" label-width="100px">
-        <el-form-item label="应收单号">
-          <el-input v-model="collectionForm.receivableNo" disabled />
-        </el-form-item>
-        <el-form-item label="待收金额">
-          <el-input :value="'¥' + collectionForm.pendingAmount.toLocaleString()" disabled />
-        </el-form-item>
-        <el-form-item label="收款金额" prop="collectionAmount">
-          <el-input-number
-            v-model="collectionForm.collectionAmount"
-            :min="0.01"
-            :max="collectionForm.pendingAmount"
-            :precision="2"
-            style="width: 100%"
-          />
-        </el-form-item>
-        <el-form-item label="收款日期" prop="collectionDate">
-          <el-date-picker
-            v-model="collectionForm.collectionDate"
-            type="date"
-            placeholder="选择日期"
-            value-format="YYYY-MM-DD"
-            style="width: 100%"
-          />
-        </el-form-item>
-        <el-form-item label="收款方式" prop="paymentMethod">
-          <el-select v-model="collectionForm.paymentMethod" placeholder="请选择" style="width: 100%">
-            <el-option label="银行转账" value="bank" />
-            <el-option label="承兑汇票" value="acceptance" />
-            <el-option label="商业汇票" value="trade_bill" />
-            <el-option label="现金" value="cash" />
-            <el-option label="其他" value="other" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="收款账户" prop="bankAccount">
-          <el-select v-model="collectionForm.bankAccount" placeholder="请选择" style="width: 100%">
-            <el-option label="基本户-中国银行" value="boc" />
-            <el-option label="一般户-工商银行" value="icbc" />
-            <el-option label="一般户-建设银行" value="ccb" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input v-model="collectionForm.remark" type="textarea" :rows="3" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="showCollectionDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmitCollection">确认收款</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 核销对话框 -->
-    <el-dialog v-model="showWriteoffDialog" title="应收核销" width="500px">
-      <el-form ref="writeoffFormRef" :model="writeoffForm" :rules="writeoffRules" label-width="100px">
-        <el-form-item label="应收单号">
-          <el-input v-model="writeoffForm.receivableNo" disabled />
-        </el-form-item>
-        <el-form-item label="待核销金额">
-          <el-input :value="'¥' + writeoffForm.pendingAmount.toLocaleString()" disabled />
-        </el-form-item>
-        <el-form-item label="核销金额" prop="writeoffAmount">
-          <el-input-number
-            v-model="writeoffForm.writeoffAmount"
-            :min="0.01"
-            :max="writeoffForm.pendingAmount"
-            :precision="2"
-            style="width: 100%"
-          />
-        </el-form-item>
-        <el-form-item label="核销日期" prop="writeoffDate">
-          <el-date-picker
-            v-model="writeoffForm.writeoffDate"
-            type="date"
-            placeholder="选择日期"
-            value-format="YYYY-MM-DD"
-            style="width: 100%"
-          />
-        </el-form-item>
-        <el-form-item label="核销类型" prop="writeoffType">
-          <el-select v-model="writeoffForm.writeoffType" placeholder="请选择" style="width: 100%">
-            <el-option label="预收款核销" value="advance" />
-            <el-option label="应收冲抵" value="offset" />
-            <el-option label="其他核销" value="other" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input v-model="writeoffForm.remark" type="textarea" :rows="3" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="showWriteoffDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmitWriteoff">确认核销</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 坏账处理对话框 -->
-    <el-dialog v-model="showBadDebtDialog" title="坏账处理" width="500px">
-      <el-form ref="badDebtFormRef" :model="badDebtForm" :rules="badDebtRules" label-width="100px">
-        <el-form-item label="应收单号">
-          <el-input v-model="badDebtForm.receivableNo" disabled />
-        </el-form-item>
-        <el-form-item label="待收金额">
-          <el-input :value="'¥' + badDebtForm.pendingAmount.toLocaleString()" disabled />
-        </el-form-item>
-        <el-form-item label="坏账金额" prop="badDebtAmount">
-          <el-input-number
-            v-model="badDebtForm.badDebtAmount"
-            :min="0.01"
-            :max="badDebtForm.pendingAmount"
-            :precision="2"
-            style="width: 100%"
-          />
-        </el-form-item>
-        <el-form-item label="处理日期" prop="badDebtDate">
-          <el-date-picker
-            v-model="badDebtForm.badDebtDate"
-            type="date"
-            placeholder="选择日期"
-            value-format="YYYY-MM-DD"
-            style="width: 100%"
-          />
-        </el-form-item>
-        <el-form-item label="坏账原因" prop="badDebtReason">
-          <el-select v-model="badDebtForm.badDebtReason" placeholder="请选择" style="width: 100%">
-            <el-option label="客户破产" value="bankruptcy" />
-            <el-option label="客户失踪" value="missing" />
-            <el-option label="追讨无果" value="uncollectible" />
-            <el-option label="债务豁免" value="forgiveness" />
-            <el-option label="其他" value="other" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input v-model="badDebtForm.remark" type="textarea" :rows="3" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="showBadDebtDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmitBadDebt">确认坏账</el-button>
+        <el-button @click="showCustomFieldDialog = false">取消</el-button>
+        <el-button type="primary" @click="handleConfirmFields">确认</el-button>
       </template>
     </el-dialog>
   </div>
@@ -459,19 +296,38 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import {
-  Plus, Download, Money, Clock, Warning, CircleCheck, ArrowDown
-} from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { Search, Refresh, Download, Upload, Setting, Plus } from '@element-plus/icons-vue'
 
 const router = useRouter()
+const loading = ref(false)
 
-// 统计卡片数据
-const statistics = reactive({
-  totalAmount: 8563200,
-  receivedAmount: 5231800,
-  pendingAmount: 3331400,
-  overdueAmount: 892400
+// 统计数据
+const statData = computed(() => {
+  const data = selectedRows.value.length > 0 ? selectedRows.value : tableData.value
+  return {
+    revenueIncTaxTotal: data.reduce((sum, item) => sum + (item.revenueIncTaxTotal || 0), 0),
+    revenueExTaxTotal: data.reduce((sum, item) => sum + (item.revenueExTaxTotal || 0), 0),
+    costIncTaxTotal: data.reduce((sum, item) => sum + (item.costIncTaxTotal || 0), 0),
+    costExTaxTotal: data.reduce((sum, item) => sum + (item.costExTaxTotal || 0), 0),
+    profitIncTaxTotal: data.reduce((sum, item) => sum + (item.profitIncTaxTotal || 0), 0),
+    profitExTaxTotal: data.reduce((sum, item) => sum + (item.profitExTaxTotal || 0), 0)
+  }
+})
+
+// 搜索表单
+const searchForm = reactive({
+  customerId: null as number | null,
+  warehouseCode: '',
+  businessMode: '',
+  businessRefNo: '',
+  isSettled: '',
+  orderCreateTime: [] as string[],
+  orderFinishTime: [] as string[],
+  customerCmdNo: '',
+  masterBillNo: '',
+  houseBillNo: '',
+  rateSheetNo: ''
 })
 
 // 客户列表
@@ -483,225 +339,271 @@ const customerList = ref([
   { id: 5, name: '京东集团股份有限公司' }
 ])
 
-// 搜索表单
-const searchForm = reactive({
-  customerId: '',
-  orderNo: '',
-  status: '',
-  dateRange: [],
-  overdueStatus: ''
-})
-
-// 表格数据
-const tableData = ref([
-  {
-    receivableNo: 'YS2024040001',
-    customerName: '深圳市腾讯科技有限公司',
-    customerId: 1,
-    orderId: 'DD2024040001',
-    orderNo: 'DD2024040001',
-    invoiceId: 1,
-    invoiceNo: 'FP2024040001',
-    amount: 500000,
-    receivedAmount: 300000,
-    pendingAmount: 200000,
-    dueDate: '2024-05-15',
-    status: 'partial',
-    overdueDays: 0,
-    createTime: '2024-04-01 10:30:00',
-    remark: ''
-  },
-  {
-    receivableNo: 'YS2024040002',
-    customerName: '阿里巴巴（中国）有限公司',
-    customerId: 2,
-    orderId: 'DD2024040002',
-    orderNo: 'DD2024040002',
-    invoiceId: 2,
-    invoiceNo: 'FP2024040002',
-    amount: 800000,
-    receivedAmount: 800000,
-    pendingAmount: 0,
-    dueDate: '2024-04-20',
-    status: 'written_off',
-    overdueDays: 0,
-    createTime: '2024-04-05 14:20:00',
-    remark: ''
-  },
-  {
-    receivableNo: 'YS2024040003',
-    customerName: '字节跳动科技有限公司',
-    customerId: 3,
-    orderId: 'DD2024040003',
-    orderNo: 'DD2024040003',
-    invoiceId: null,
-    invoiceNo: '',
-    amount: 350000,
-    receivedAmount: 0,
-    pendingAmount: 350000,
-    dueDate: '2024-03-15',
-    status: 'overdue',
-    overdueDays: 41,
-    createTime: '2024-03-01 09:00:00',
-    remark: ''
-  },
-  {
-    receivableNo: 'YS2024040004',
-    customerName: '华为技术有限公司',
-    customerId: 4,
-    orderId: 'DD2024040004',
-    orderNo: 'DD2024040004',
-    invoiceId: 4,
-    invoiceNo: 'FP2024040004',
-    amount: 1200000,
-    receivedAmount: 0,
-    pendingAmount: 1200000,
-    dueDate: '2024-06-01',
-    status: 'confirmed',
-    overdueDays: 0,
-    createTime: '2024-04-10 16:45:00',
-    remark: ''
-  },
-  {
-    receivableNo: 'YS2024040005',
-    customerName: '京东集团股份有限公司',
-    customerId: 5,
-    orderId: 'DD2024040005',
-    orderNo: 'DD2024040005',
-    invoiceId: 5,
-    invoiceNo: 'FP2024040005',
-    amount: 200000,
-    receivedAmount: 0,
-    pendingAmount: 200000,
-    dueDate: '2024-03-01',
-    status: 'bad_debt',
-    overdueDays: 85,
-    createTime: '2024-02-15 11:20:00',
-    remark: '客户破产'
-  }
+// 仓库列表
+const warehouseList = ref([
+  { code: 'WH001', name: '深圳仓' },
+  { code: 'WH002', name: '上海仓' },
+  { code: 'WH003', name: '广州仓' },
+  { code: 'WH004', name: '北京仓' },
+  { code: 'WH005', name: '杭州仓' }
 ])
 
 // 分页
 const pagination = reactive({
   page: 1,
-  pageSize: 10,
-  total: 5
+  pageSize: 20,
+  total: 0
 })
 
 // 选中行
 const selectedRows = ref<any[]>([])
-const isAllSelected = computed({
-  get: () => tableData.value.length > 0 && selectedRows.value.length === tableData.value.length,
-  set: (val: boolean) => val ? selectedRows.value = [...tableData.value] : selectedRows.value = []
-})
 
-// 详情抽屉
-const showDetailDrawer = ref(false)
-const currentRow = ref<any>(null)
+// 自定义字段弹窗
+const showCustomFieldDialog = ref(false)
 
-// 收款登记对话框
-const showCollectionDialog = ref(false)
-const collectionFormRef = ref<FormInstance>()
-const collectionForm = reactive({
-  receivableNo: '',
-  pendingAmount: 0,
-  collectionAmount: 0,
-  collectionDate: '',
-  paymentMethod: '',
-  bankAccount: '',
-  remark: ''
-})
-const collectionRules: FormRules = {
-  collectionAmount: [{ required: true, message: '请输入收款金额', trigger: 'blur' }],
-  collectionDate: [{ required: true, message: '请选择收款日期', trigger: 'change' }],
-  paymentMethod: [{ required: true, message: '请选择收款方式', trigger: 'change' }],
-  bankAccount: [{ required: true, message: '请选择收款账户', trigger: 'change' }]
+// 所有字段
+const allFields = [
+  { key: 'rateSheetNo', label: '费率单编号' },
+  { key: 'rateSheetSource', label: '费率单创建来源' },
+  { key: 'rateSheetCreateTime', label: '费率单创建时间' },
+  { key: 'businessRefNo', label: '业务参考编号' },
+  { key: 'billingDoc', label: '计费单据' },
+  { key: 'customerDept', label: '客户部门' },
+  { key: 'customerCmdNo', label: '客户指令号' },
+  { key: 'masterBillNo', label: '总运单号' },
+  { key: 'houseBillNo', label: '分运单号' },
+  { key: 'revenueExTaxTotal', label: '收入不含税总金额' },
+  { key: 'costExTaxTotal', label: '成本不含税总金额' },
+  { key: 'profitExTaxTotal', label: '毛利不含税总金额' },
+  { key: 'revenueIncTaxTotal', label: '收入含税总金额' },
+  { key: 'costIncTaxTotal', label: '成本含税总金额' },
+  { key: 'profitIncTaxTotal', label: '毛利含税总金额' },
+  { key: 'billingDocNo', label: '计费单据编号' },
+  { key: 'customerName', label: '客户名称' },
+  { key: 'warehouse', label: '仓库' },
+  { key: 'businessMode', label: '业务模式' },
+  { key: 'rateSheetType', label: '费率单类型' },
+  { key: 'orderCreateTime', label: '订单新建时间' },
+  { key: 'orderFinishTime', label: '订单完成时间' },
+  { key: 'orderStatus', label: '订单状态' },
+  { key: 'isSettled', label: '是否结算订单' },
+  { key: 'customerQuoteNo', label: '客户报价单编号' },
+  { key: 'businessNo', label: '业务编号' },
+  { key: 'flowSheetNo', label: '流转单编号' },
+  { key: 'rateSheetStatus', label: '费率单状态' },
+  { key: 'rateSheetConfirmTime', label: '费率单确认时间' },
+  { key: 'rateSheetReconcileStatus', label: '费率单对账状态' },
+  { key: 'rateSheetCostStatus', label: '费率单成本状态' },
+  { key: 'rateSheetCostConfirmTime', label: '费率单成本确认时间' },
+  { key: 'approvalStatus', label: '修改审批状态' },
+  { key: 'docId', label: '单据ID' }
+]
+
+// 默认显示的字段
+const defaultVisibleColumns = {
+  rateSheetNo: true,
+  rateSheetSource: true,
+  rateSheetCreateTime: true,
+  businessRefNo: true,
+  billingDoc: true,
+  customerDept: true,
+  customerCmdNo: true,
+  masterBillNo: true,
+  houseBillNo: true,
+  revenueExTaxTotal: true,
+  costExTaxTotal: true,
+  profitExTaxTotal: true,
+  revenueIncTaxTotal: true,
+  costIncTaxTotal: true,
+  profitIncTaxTotal: true,
+  billingDocNo: true,
+  customerName: true,
+  warehouse: true,
+  businessMode: true,
+  rateSheetType: true,
+  orderCreateTime: true,
+  orderFinishTime: true,
+  orderStatus: true,
+  isSettled: true,
+  customerQuoteNo: true,
+  businessNo: true,
+  flowSheetNo: true,
+  rateSheetStatus: true,
+  rateSheetConfirmTime: true,
+  rateSheetReconcileStatus: true,
+  rateSheetCostStatus: true,
+  rateSheetCostConfirmTime: true,
+  approvalStatus: true,
+  docId: true
 }
 
-// 核销对话框
-const showWriteoffDialog = ref(false)
-const writeoffFormRef = ref<FormInstance>()
-const writeoffForm = reactive({
-  receivableNo: '',
-  pendingAmount: 0,
-  writeoffAmount: 0,
-  writeoffDate: '',
-  writeoffType: '',
-  remark: ''
-})
-const writeoffRules: FormRules = {
-  writeoffAmount: [{ required: true, message: '请输入核销金额', trigger: 'blur' }],
-  writeoffDate: [{ required: true, message: '请选择核销日期', trigger: 'change' }],
-  writeoffType: [{ required: true, message: '请选择核销类型', trigger: 'change' }]
+// 可见列
+const visibleColumns = reactive<Record<string, boolean>>({ ...defaultVisibleColumns })
+
+// 已选字段
+const selectedFields = ref<string[]>(Object.keys(defaultVisibleColumns).filter(key => defaultVisibleColumns[key]))
+
+// 表格数据
+const tableData = ref([
+  {
+    rateSheetNo: 'FL2024050001',
+    rateSheetSource: '系统创建',
+    rateSheetCreateTime: '2024-05-01 10:30:00',
+    businessRefNo: 'PO2024050001',
+    billingDoc: '应收单',
+    customerDept: '销售部',
+    customerCmdNo: 'CMD2024050001',
+    masterBillNo: 'MBL2024050001',
+    houseBillNo: 'HBL2024050001',
+    revenueExTaxTotal: 100000,
+    costExTaxTotal: 70000,
+    profitExTaxTotal: 30000,
+    revenueIncTaxTotal: 113000,
+    costIncTaxTotal: 79100,
+    profitIncTaxTotal: 33900,
+    billingDocNo: 'YS2024050001',
+    customerName: '深圳市腾讯科技有限公司',
+    warehouse: '深圳仓',
+    businessMode: 'FOB',
+    rateSheetType: '标准费率',
+    orderCreateTime: '2024-04-15 09:00:00',
+    orderFinishTime: '2024-05-01 18:00:00',
+    orderStatus: '已完成',
+    isSettled: 'yes',
+    customerQuoteNo: 'QT2024050001',
+    businessNo: 'BN2024050001',
+    flowSheetNo: 'LS2024050001',
+    rateSheetStatus: '已确认',
+    rateSheetConfirmTime: '2024-05-02 10:00:00',
+    rateSheetReconcileStatus: '已对账',
+    rateSheetCostStatus: '已确认',
+    rateSheetCostConfirmTime: '2024-05-02 11:00:00',
+    approvalStatus: '已通过',
+    docId: 'DOC001'
+  },
+  {
+    rateSheetNo: 'FL2024050002',
+    rateSheetSource: '手动创建',
+    rateSheetCreateTime: '2024-05-03 14:20:00',
+    businessRefNo: 'PO2024050002',
+    billingDoc: '应收单',
+    customerDept: '采购部',
+    customerCmdNo: 'CMD2024050002',
+    masterBillNo: 'MBL2024050002',
+    houseBillNo: 'HBL2024050002',
+    revenueExTaxTotal: 150000,
+    costExTaxTotal: 100000,
+    profitExTaxTotal: 50000,
+    revenueIncTaxTotal: 169500,
+    costIncTaxTotal: 113000,
+    profitIncTaxTotal: 56500,
+    billingDocNo: 'YS2024050002',
+    customerName: '阿里巴巴（中国）有限公司',
+    warehouse: '上海仓',
+    businessMode: 'CIF',
+    rateSheetType: '协议费率',
+    orderCreateTime: '2024-04-20 10:00:00',
+    orderFinishTime: '2024-05-03 17:30:00',
+    orderStatus: '已完成',
+    isSettled: 'no',
+    customerQuoteNo: 'QT2024050002',
+    businessNo: 'BN2024050002',
+    flowSheetNo: 'LS2024050002',
+    rateSheetStatus: '待确认',
+    rateSheetConfirmTime: '',
+    rateSheetReconcileStatus: '未对账',
+    rateSheetCostStatus: '待确认',
+    rateSheetCostConfirmTime: '',
+    approvalStatus: '审批中',
+    docId: 'DOC002'
+  }
+])
+
+// 设置分页总数
+pagination.total = tableData.value.length
+
+// 格式化金额
+const formatMoney = (value: number) => {
+  return value.toLocaleString('zh-CN', { minimumFractionDigits: 2 })
 }
 
-// 坏账处理对话框
-const showBadDebtDialog = ref(false)
-const badDebtFormRef = ref<FormInstance>()
-const badDebtForm = reactive({
-  receivableNo: '',
-  pendingAmount: 0,
-  badDebtAmount: 0,
-  badDebtDate: '',
-  badDebtReason: '',
-  remark: ''
-})
-const badDebtRules: FormRules = {
-  badDebtAmount: [{ required: true, message: '请输入坏账金额', trigger: 'blur' }],
-  badDebtDate: [{ required: true, message: '请选择处理日期', trigger: 'change' }],
-  badDebtReason: [{ required: true, message: '请选择坏账原因', trigger: 'change' }]
+// 获取业务模式文本
+const getBusinessModeText = (mode: string) => {
+  const texts: Record<string, string> = {
+    fob: 'FOB',
+    cif: 'CIF',
+    ddp: 'DDP',
+    exw: 'EXW'
+  }
+  return texts[mode] || mode
 }
 
-// 方法
-const getStatusType = (status: string) => {
+// 获取订单状态类型
+const getOrderStatusType = (status: string) => {
   const types: Record<string, string> = {
-    pending: 'info',
-    confirmed: 'success',
-    partial: 'warning',
-    written_off: 'success',
-    partial_writeoff: 'warning',
-    overdue: 'danger',
-    bad_debt: 'danger'
+    '已取消': 'info',
+    '待执行': 'warning',
+    '执行中': 'primary',
+    '已完成': 'success'
   }
   return types[status] || 'info'
 }
 
-const getStatusText = (status: string) => {
-  const texts: Record<string, string> = {
-    pending: '待确认',
-    confirmed: '已确认',
-    partial: '部分收款',
-    written_off: '已核销',
-    partial_writeoff: '部分核销',
-    overdue: '已逾期',
-    bad_debt: '坏账'
+// 获取费率单状态类型
+const getRateSheetStatusType = (status: string) => {
+  const types: Record<string, string> = {
+    '已确认': 'success',
+    '待确认': 'warning',
+    '已驳回': 'danger'
   }
-  return texts[status] || status
+  return types[status] || 'info'
 }
 
-const getPaymentMethodText = (method: string) => {
-  const texts: Record<string, string> = {
-    bank: '银行转账',
-    acceptance: '承兑汇票',
-    trade_bill: '商业汇票',
-    cash: '现金',
-    other: '其他'
+// 获取对账状态类型
+const getReconcileStatusType = (status: string) => {
+  const types: Record<string, string> = {
+    '已对账': 'success',
+    '未对账': 'warning',
+    '部分对账': 'warning'
   }
-  return texts[method] || method
+  return types[status] || 'info'
 }
 
-const isOverdue = (row: any) => {
-  if (!row.dueDate) return false
-  const today = new Date()
-  const dueDate = new Date(row.dueDate)
-  return today > dueDate && row.pendingAmount > 0
+// 获取成本状态类型
+const getCostStatusType = (status: string) => {
+  const types: Record<string, string> = {
+    '已确认': 'success',
+    '待确认': 'warning',
+    '已驳回': 'danger'
+  }
+  return types[status] || 'info'
 }
 
+// 获取审批状态类型
+const getApprovalStatusType = (status: string) => {
+  const types: Record<string, string> = {
+    '已通过': 'success',
+    '审批中': 'warning',
+    '已驳回': 'danger'
+  }
+  return types[status] || 'info'
+}
+
+// 搜索
 const handleSearch = () => {
-  ElMessage.success('搜索应收单')
-  pagination.page = 1
+  if (!searchForm.customerId) {
+    ElMessage.warning('请选择客户名称')
+    return
+  }
+  loading.value = true
+  setTimeout(() => {
+    loading.value = false
+    ElMessage.success('查询应收列表')
+    pagination.page = 1
+  }, 500)
 }
 
+// 重置
 const handleReset = () => {
   Object.keys(searchForm).forEach(key => {
     if (Array.isArray(searchForm[key as keyof typeof searchForm])) {
@@ -710,197 +612,77 @@ const handleReset = () => {
       ;(searchForm as any)[key] = ''
     }
   })
+  searchForm.customerId = null
   ElMessage.info('已重置搜索条件')
 }
 
-const handleCreate = () => {
-  router.push('/receivable/create')
+// 添加收入
+const handleAddIncome = () => {
+  router.push('/receivable/income/add')
 }
 
+// 行级添加收入
+const handleAddIncomeForRow = (row: any) => {
+  // 可以在这里传递行数据到添加收入页面
+  ElMessage.info(`为费率单 ${row.rateSheetNo} 添加收入`)
+  router.push('/receivable/income/add')
+}
+
+// 导出
 const handleExport = () => {
-  ElMessage.success('导出应收单')
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请选择要导出的数据')
+    return
+  }
+  ElMessage.success('导出数据')
 }
 
+// 导入
+const handleImport = () => {
+  ElMessage.info('导入功能开发中')
+}
+
+// 重新计费
+const handleRecalculate = () => {
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请选择要重新计费的订单')
+    return
+  }
+  ElMessage.success('重新计费功能开发中')
+}
+
+// 自定义字段
+const handleCustomFields = () => {
+  selectedFields.value = Object.keys(visibleColumns).filter(key => visibleColumns[key])
+  showCustomFieldDialog.value = true
+}
+
+// 确认字段设置
+const handleConfirmFields = () => {
+  Object.keys(visibleColumns).forEach(key => {
+    visibleColumns[key] = selectedFields.value.includes(key)
+  })
+  showCustomFieldDialog.value = false
+  ElMessage.success('字段显示设置已保存')
+}
+
+// 恢复默认字段
+const handleResetFields = () => {
+  Object.assign(visibleColumns, defaultVisibleColumns)
+  selectedFields.value = Object.keys(defaultVisibleColumns).filter(key => defaultVisibleColumns[key])
+}
+
+// 选中变化
 const handleSelectionChange = (rows: any[]) => {
   selectedRows.value = rows
 }
 
-const handleRowClick = (row: any) => {
-  currentRow.value = row
-}
-
-const handleView = (row: any) => {
-  currentRow.value = row
-  showDetailDrawer.value = true
-}
-
-const handleViewOrder = (orderId: string) => {
-  router.push(`/order/detail/${orderId}`)
-}
-
-const handleViewInvoice = (invoiceId: number) => {
-  router.push(`/invoice/detail/${invoiceId}`)
-}
-
-const handleEdit = (row: any) => {
-  router.push(`/receivable/edit/${row.receivableNo}`)
-}
-
-const handleCommand = (command: string, row: any) => {
-  currentRow.value = row
-  switch (command) {
-    case 'confirm':
-      handleConfirm(row)
-      break
-    case 'collection':
-      handleOpenCollection(row)
-      break
-    case 'writeoff':
-      handleOpenWriteoff(row)
-      break
-    case 'edit':
-      handleEdit(row)
-      break
-    case 'badDebt':
-      handleOpenBadDebt(row)
-      break
-    case 'print':
-      handlePrint(row)
-      break
-  }
-}
-
-const handleConfirm = (row: any) => {
-  ElMessageBox.confirm(`确认应收单 ${row.receivableNo} 吗？`, '确认应收', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    ElMessage.success('确认成功')
-  }).catch(() => {})
-}
-
-const handleOpenCollection = (row: any) => {
-  Object.assign(collectionForm, {
-    receivableNo: row.receivableNo,
-    pendingAmount: row.pendingAmount,
-    collectionAmount: row.pendingAmount,
-    collectionDate: new Date().toISOString().slice(0, 10),
-    paymentMethod: '',
-    bankAccount: '',
-    remark: ''
-  })
-  showCollectionDialog.value = true
-}
-
-const handleSubmitCollection = async () => {
-  if (!collectionFormRef.value) return
-  await collectionFormRef.value.validate((valid) => {
-    if (valid) {
-      ElMessage.success('收款登记成功')
-      showCollectionDialog.value = false
-    }
-  })
-}
-
-const handleOpenWriteoff = (row: any) => {
-  Object.assign(writeoffForm, {
-    receivableNo: row.receivableNo,
-    pendingAmount: row.pendingAmount,
-    writeoffAmount: row.pendingAmount,
-    writeoffDate: new Date().toISOString().slice(0, 10),
-    writeoffType: '',
-    remark: ''
-  })
-  showWriteoffDialog.value = true
-}
-
-const handleSubmitWriteoff = async () => {
-  if (!writeoffFormRef.value) return
-  await writeoffFormRef.value.validate((valid) => {
-    if (valid) {
-      ElMessage.success('核销成功')
-      showWriteoffDialog.value = false
-    }
-  })
-}
-
-const handleOpenBadDebt = (row: any) => {
-  Object.assign(badDebtForm, {
-    receivableNo: row.receivableNo,
-    pendingAmount: row.pendingAmount,
-    badDebtAmount: row.pendingAmount,
-    badDebtDate: new Date().toISOString().slice(0, 10),
-    badDebtReason: '',
-    remark: ''
-  })
-  showBadDebtDialog.value = true
-}
-
-const handleSubmitBadDebt = async () => {
-  if (!badDebtFormRef.value) return
-  await badDebtFormRef.value.validate((valid) => {
-    if (valid) {
-      ElMessage.success('坏账处理成功')
-      showBadDebtDialog.value = false
-    }
-  })
-}
-
-const handlePrint = (row: any) => {
-  ElMessage.info('打印应收单')
-}
-
-const handleBatchConfirm = () => {
-  ElMessageBox.confirm(`确认选中的 ${selectedRows.value.length} 条应收单吗？`, '批量确认', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    ElMessage.success('批量确认成功')
-  }).catch(() => {})
-}
-
-const handleBatchCollection = () => {
-  if (selectedRows.value.length === 1) {
-    handleOpenCollection(selectedRows.value[0])
-  } else {
-    ElMessage.info('请选择一条记录进行收款')
-  }
-}
-
-const handleBatchWriteoff = () => {
-  if (selectedRows.value.length === 1) {
-    handleOpenWriteoff(selectedRows.value[0])
-  } else {
-    ElMessage.info('请选择一条记录进行核销')
-  }
-}
-
-const handleBatchBadDebt = () => {
-  if (selectedRows.value.length === 1) {
-    handleOpenBadDebt(selectedRows.value[0])
-  } else {
-    ElMessage.info('请选择一条记录进行坏账处理')
-  }
-}
-
-const handleSelectAll = (val: boolean) => {
-  selectedRows.value = val ? [...tableData.value] : []
-}
-
-const handleDrawerClose = () => {
-  showDetailDrawer.value = false
-  currentRow.value = null
-}
-
-const handleSizeChange = (val: number) => {
-  pagination.pageSize = val
-  pagination.page = 1
-}
-
-const handleCurrentChange = (val: number) => {
-  pagination.page = val
+// 分页变化
+const handlePageChange = () => {
+  loading.value = true
+  setTimeout(() => {
+    loading.value = false
+  }, 300)
 }
 </script>
 
@@ -911,31 +693,6 @@ const handleCurrentChange = (val: number) => {
   min-height: 100%;
 }
 
-.action-header {
-  background: #fff;
-  padding: 16px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #eee;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-}
-
-.header-left .page-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #303133;
-}
-
-.header-right {
-  display: flex;
-  gap: 12px;
-}
-
 .statistics-cards {
   padding: 16px 20px;
 }
@@ -944,94 +701,73 @@ const handleCurrentChange = (val: number) => {
   background: #fff;
   border-radius: 8px;
   padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
 }
 
-.stat-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
+.stat-header {
+  margin-bottom: 16px;
 }
 
-.stat-icon.total {
-  background: #ecf5ff;
-  color: #409eff;
-}
-
-.stat-icon.received {
-  background: #f0f9eb;
-  color: #67c23a;
-}
-
-.stat-icon.pending {
-  background: #fdf6ec;
-  color: #e6a23c;
-}
-
-.stat-icon.overdue {
-  background: #fef0f0;
-  color: #f56c6c;
-}
-
-.stat-value {
-  font-size: 24px;
+.stat-title {
+  font-size: 16px;
   font-weight: 600;
   color: #303133;
 }
 
-.stat-label {
-  font-size: 14px;
-  color: #909399;
-  margin-top: 4px;
+.stat-values {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.search-panel {
-  background: #fff;
-  margin: 0 20px;
-  padding: 20px;
-  border-radius: 8px;
-}
-
-.search-form {
-  margin-bottom: 0;
-}
-
-.action-bar {
-  background: #fff;
-  margin: 16px 20px;
-  padding: 12px 16px;
-  border-radius: 8px;
+.stat-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.action-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.selected-count {
+.stat-label {
   font-size: 14px;
-  color: #606266;
+  color: #909399;
 }
 
-.action-right {
+.stat-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.revenue-card {
+  border-left: 4px solid #409eff;
+}
+
+.cost-card {
+  border-left: 4px solid #e6a23c;
+}
+
+.profit-card {
+  border-left: 4px solid #67c23a;
+}
+
+.search-panel {
+  background: #fff;
+  margin: 16px 20px;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.action-bar {
+  background: #fff;
+  margin: 0 20px;
+  padding: 12px 16px;
+  border-radius: 8px;
   display: flex;
-  gap: 8px;
+  gap: 10px;
 }
 
 .table-container {
   background: #fff;
-  margin: 0 20px;
+  margin: 16px 20px;
   padding: 20px;
   border-radius: 8px;
 }
@@ -1042,31 +778,30 @@ const handleCurrentChange = (val: number) => {
   justify-content: flex-end;
 }
 
-.detail-content {
-  padding: 0 10px;
+.custom-field-content {
+  padding: 10px 0;
 }
 
-.section-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #303133;
-  margin: 24px 0 12px;
-  padding-left: 12px;
-  border-left: 4px solid #409eff;
+.tip-text {
+  color: #909399;
+  font-size: 14px;
+  margin-bottom: 15px;
 }
 
-.drawer-footer {
+.field-list {
   display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.overdue {
-  color: #f56c6c;
+.field-checkbox-item {
+  width: 150px;
+  margin-right: 0;
 }
 
-.overdue-days {
-  color: #f56c6c;
-  font-weight: 500;
+.field-actions {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
 }
 </style>

@@ -1,79 +1,55 @@
 <template>
   <div class="quotation-customer-container">
-    <!-- 顶部操作栏 -->
     <div class="action-header">
-      <div class="header-left">
-        <span class="page-title">客户收入报价管理</span>
+      <div>
+        <div class="page-title">客户收入报价管理</div>
+        <p class="page-subtitle">围绕正式报价发布、H5 链接外发、客户反馈与行为追踪做一体化优化。</p>
       </div>
-      <div class="header-right">
+      <div class="header-actions">
         <el-button type="primary" @click="handleCreate">
           <el-icon><Plus /></el-icon>
           新建报价单
         </el-button>
-        <el-button @click="handleImport">
-          <el-icon><Upload /></el-icon>
-          批量导入
-        </el-button>
         <el-button @click="handleExport">
           <el-icon><Download /></el-icon>
-          导出
+          导出列表
         </el-button>
       </div>
     </div>
 
-    <!-- 统计卡片 -->
     <div class="statistics-cards">
-      <el-row :gutter="16">
-        <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-icon total"><el-icon><PriceTag /></el-icon></div>
-            <div class="stat-content">
-              <div class="stat-value">{{ statistics.total }}</div>
-              <div class="stat-label">报价单总数</div>
-            </div>
-          </div>
-        </el-col>
-        <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-icon active"><el-icon><CircleCheck /></el-icon></div>
-            <div class="stat-content">
-              <div class="stat-value">{{ statistics.active }}</div>
-              <div class="stat-label">生效中</div>
-            </div>
-          </div>
-        </el-col>
-        <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-icon pending"><el-icon><Clock /></el-icon></div>
-            <div class="stat-content">
-              <div class="stat-value">{{ statistics.pending }}</div>
-              <div class="stat-label">审核中</div>
-            </div>
-          </div>
-        </el-col>
-        <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-icon expiring"><el-icon><Warning /></el-icon></div>
-            <div class="stat-content">
-              <div class="stat-value">{{ statistics.expiring }}</div>
-              <div class="stat-label">即将过期</div>
-            </div>
-          </div>
-        </el-col>
-      </el-row>
+      <div class="stat-card stat-primary">
+        <div class="stat-label">报价单总数</div>
+        <div class="stat-value">{{ statistics.total }}</div>
+        <div class="stat-desc">客户收入报价全量视图</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">已发布 H5</div>
+        <div class="stat-value">{{ statistics.published }}</div>
+        <div class="stat-desc">审批通过后自动生成专属链接</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">沟通中报价</div>
+        <div class="stat-value">{{ statistics.negotiating }}</div>
+        <div class="stat-desc">含整单驳回、留言和明细异议</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">即将过期</div>
+        <div class="stat-value">{{ statistics.expiring }}</div>
+        <div class="stat-desc">需要续期或重新审批发布</div>
+      </div>
     </div>
 
-    <!-- 搜索筛选 -->
     <div class="search-panel">
       <el-form :inline="true" :model="searchForm" class="search-form">
         <el-form-item label="客户名称">
-          <el-input v-model="searchForm.customerName" placeholder="请输入客户名称" clearable style="width: 160px" />
+          <el-input v-model="searchForm.customerName" placeholder="请输入客户名称" clearable style="width: 180px" />
         </el-form-item>
         <el-form-item label="报价单号">
-          <el-input v-model="searchForm.quotationNo" placeholder="请输入报价单号" clearable style="width: 140px" />
+          <el-input v-model="searchForm.quotationNo" placeholder="请输入报价单号" clearable style="width: 150px" />
         </el-form-item>
         <el-form-item label="业务类型">
-          <el-select v-model="searchForm.businessType" placeholder="请选择" clearable style="width: 140px">
+          <el-select v-model="searchForm.businessType" placeholder="请选择" clearable style="width: 150px">
             <el-option label="仓储服务" value="storage" />
             <el-option label="运输服务" value="transport" />
             <el-option label="关务服务" value="customs" />
@@ -81,24 +57,21 @@
           </el-select>
         </el-form-item>
         <el-form-item label="报价状态">
-          <el-select v-model="searchForm.status" placeholder="请选择" clearable style="width: 120px">
+          <el-select v-model="searchForm.status" placeholder="请选择" clearable style="width: 130px">
             <el-option label="草稿" value="draft" />
             <el-option label="审核中" value="pending" />
             <el-option label="审核通过" value="approved" />
             <el-option label="生效" value="active" />
             <el-option label="过期" value="expired" />
-            <el-option label="作废" value="cancelled" />
           </el-select>
         </el-form-item>
-        <el-form-item label="生效日期">
-          <el-date-picker
-            v-model="searchForm.dateRange"
-            type="daterange"
-            range-separator="至"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
-            style="width: 240px"
-          />
+        <el-form-item label="客户动作">
+          <el-select v-model="searchForm.responseStatus" placeholder="请选择" clearable style="width: 140px">
+            <el-option label="待客户处理" value="pending" />
+            <el-option label="已接受报价" value="accepted" />
+            <el-option label="已驳回" value="rejected" />
+            <el-option label="沟通中" value="negotiating" />
+          </el-select>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">查询</el-button>
@@ -107,138 +80,208 @@
       </el-form>
     </div>
 
-    <!-- 数据表格 -->
     <div class="table-container">
-      <el-table :data="tableData" border stripe @row-click="handleRowClick">
-        <el-table-column prop="quotationNo" label="报价单号" width="150" />
-        <el-table-column prop="customerCode" label="客户编码" width="100" />
-        <el-table-column prop="customerName" label="客户名称" min-width="180" />
-        <el-table-column prop="businessType" label="业务类型" width="100">
+      <el-table :data="pagedData" border stripe @row-click="handleView">
+        <el-table-column prop="quotationNo" label="报价单号" min-width="150" />
+        <el-table-column prop="customerName" label="客户名称" min-width="190" />
+        <el-table-column prop="businessType" label="业务类型" width="120">
           <template #default="{ row }">
-            <el-tag size="small">{{ getBusinessTypeText(row.businessType) }}</el-tag>
+            <el-tag effect="plain">{{ getBusinessTypeText(row.businessType) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="version" label="版本" width="60" />
-        <el-table-column prop="effectiveDate" label="生效日期" width="110" />
-        <el-table-column prop="expiryDate" label="失效日期" width="110" />
-        <el-table-column prop="currency" label="币种" width="60" />
-        <el-table-column prop="taxRate" label="税率" width="70">
+        <el-table-column prop="version" label="版本" width="70" />
+        <el-table-column label="报价总额" width="140" align="right">
           <template #default="{ row }">
-            {{ row.taxRate }}%
+            {{ row.currency }} {{ getAmount(row).toLocaleString() }}
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="90">
+        <el-table-column prop="expiryDate" label="有效期至" width="120" />
+        <el-table-column prop="status" label="报价状态" width="110">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)" size="small">
-              {{ getStatusText(row.status) }}
-            </el-tag>
+            <el-tag :type="getStatusType(row.status)">{{ getStatusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="ruleCount" label="绑定规则数" width="90" align="center" />
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="客户动作" width="120">
+          <template #default="{ row }">
+            <el-tag :type="getResponseStatusType(row.responseStatus)">{{ getResponseStatusText(row.responseStatus) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="H5 发布" width="110">
+          <template #default="{ row }">
+            <el-tag :type="row.h5.enabled ? 'success' : 'info'">{{ row.h5.enabled ? '已发布' : '未发布' }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="访问/时长" width="150" align="center">
+          <template #default="{ row }">
+            {{ row.analytics.openCount }} 次 / {{ formatSeconds(row.analytics.totalViewSeconds) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="310" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link size="small" @click.stop="handleView(row)">查看</el-button>
+            <el-button type="primary" link size="small" @click.stop="previewH5(row)" :disabled="!row.h5.enabled">H5 预览</el-button>
+            <el-button type="primary" link size="small" @click.stop="copyH5Link(row)" :disabled="!row.h5.enabled">复制链接</el-button>
             <el-button type="primary" link size="small" @click.stop="handleEdit(row)">编辑</el-button>
-            <el-button type="primary" link size="small" @click.stop="handleVersion(row)">版本</el-button>
-            <el-button type="primary" link size="small" @click.stop="handleCopy(row)">复制</el-button>
+            <el-button type="warning" link size="small" @click.stop="approveAndPublish(row)" :disabled="row.h5.enabled || row.status === 'expired'">审核发布</el-button>
           </template>
         </el-table-column>
       </el-table>
 
-      <!-- 分页 -->
       <div class="pagination-container">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.pageSize"
-          :page-sizes="[10, 20, 50, 100]"
-          :total="pagination.total"
+          :page-sizes="[10, 20, 50]"
+          :total="filteredData.length"
           layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
         />
       </div>
     </div>
 
-    <!-- 详情抽屉 -->
-    <el-drawer v-model="showDetailDrawer" :title="`报价单详情 - ${currentQuotation?.quotationNo}`" size="900px">
-      <template #default>
-        <div class="detail-content" v-if="currentQuotation">
-          <el-tabs v-model="activeTab">
-            <el-tab-pane label="基本信息" name="basic">
-              <el-descriptions :column="2" border>
-                <el-descriptions-item label="报价单号">{{ currentQuotation.quotationNo }}</el-descriptions-item>
-                <el-descriptions-item label="客户编码">{{ currentQuotation.customerCode }}</el-descriptions-item>
-                <el-descriptions-item label="客户名称">{{ currentQuotation.customerName }}</el-descriptions-item>
-                <el-descriptions-item label="当前版本">V{{ currentQuotation.version }}</el-descriptions-item>
-                <el-descriptions-item label="业务类型">{{ getBusinessTypeText(currentQuotation.businessType) }}</el-descriptions-item>
-                <el-descriptions-item label="结算周期">{{ currentQuotation.settlementCycle }}</el-descriptions-item>
-                <el-descriptions-item label="生效日期">{{ currentQuotation.effectiveDate }}</el-descriptions-item>
-                <el-descriptions-item label="失效日期">{{ currentQuotation.expiryDate }}</el-descriptions-item>
-                <el-descriptions-item label="币种">{{ currentQuotation.currency }}</el-descriptions-item>
-                <el-descriptions-item label="税率">{{ currentQuotation.taxRate }}%</el-descriptions-item>
-                <el-descriptions-item label="报价状态">
-                  <el-tag :type="getStatusType(currentQuotation.status)" size="small">
-                    {{ getStatusText(currentQuotation.status) }}
-                  </el-tag>
-                </el-descriptions-item>
-                <el-descriptions-item label="创建时间">{{ currentQuotation.createTime }}</el-descriptions-item>
-                <el-descriptions-item label="创建人">{{ currentQuotation.creator }}</el-descriptions-item>
-                <el-descriptions-item label="审核人">{{ currentQuotation.reviewer || '-' }}</el-descriptions-item>
-              </el-descriptions>
-            </el-tab-pane>
-            <el-tab-pane label="绑定计费规则" name="rules">
-              <el-table :data="currentQuotation.rules" border size="small">
-                <el-table-column prop="ruleCode" label="规则编码" width="120" />
-                <el-table-column prop="ruleName" label="规则名称" min-width="150" />
-                <el-table-column prop="ruleType" label="规则类型" width="100">
-                  <template #default="{ row }">
-                    {{ getRuleTypeText(row.ruleType) }}
-                  </template>
-                </el-table-column>
-                <el-table-column prop="billingMode" label="计费模式" width="120">
-                  <template #default="{ row }">
-                    {{ getBillingModeText(row.billingMode) }}
-                  </template>
-                </el-table-column>
-                <el-table-column prop="priority" label="优先级" width="70" align="center" />
-                <el-table-column prop="unitPrice" label="单价" width="100" align="right">
-                  <template #default="{ row }">
-                    ¥{{ row.unitPrice?.toFixed(4) || '-' }}
-                  </template>
-                </el-table-column>
-              </el-table>
-              <el-empty v-if="!currentQuotation.rules?.length" description="暂未绑定计费规则" />
-            </el-tab-pane>
-            <el-tab-pane label="操作日志" name="logs">
-              <el-table :data="currentQuotation.logs" border size="small">
-                <el-table-column prop="actionTime" label="操作时间" width="160" />
-                <el-table-column prop="operator" label="操作人" width="100" />
-                <el-table-column prop="actionType" label="操作类型" width="100" />
-                <el-table-column prop="actionDetail" label="操作详情" min-width="300" />
-              </el-table>
-              <el-empty v-if="!currentQuotation.logs?.length" description="暂无操作记录" />
-            </el-tab-pane>
-          </el-tabs>
-        </div>
-      </template>
+    <el-drawer v-model="showDetailDrawer" :title="currentQuotation ? `报价单详情 - ${currentQuotation.quotationNo}` : '报价单详情'" size="960px">
+      <div v-if="currentQuotation" class="detail-content">
+        <el-tabs v-model="activeTab">
+          <el-tab-pane label="基本信息" name="basic">
+            <el-descriptions :column="2" border>
+              <el-descriptions-item label="报价单号">{{ currentQuotation.quotationNo }}</el-descriptions-item>
+              <el-descriptions-item label="客户名称">{{ currentQuotation.customerName }}</el-descriptions-item>
+              <el-descriptions-item label="业务类型">{{ getBusinessTypeText(currentQuotation.businessType) }}</el-descriptions-item>
+              <el-descriptions-item label="当前版本">V{{ currentQuotation.version }}</el-descriptions-item>
+              <el-descriptions-item label="有效期">{{ currentQuotation.effectiveDate }} 至 {{ currentQuotation.expiryDate }}</el-descriptions-item>
+              <el-descriptions-item label="结算周期">{{ getSettlementCycleText(currentQuotation.settlementCycle) }}</el-descriptions-item>
+              <el-descriptions-item label="报价状态">
+                <el-tag :type="getStatusType(currentQuotation.status)">{{ getStatusText(currentQuotation.status) }}</el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="客户动作">
+                <el-tag :type="getResponseStatusType(currentQuotation.responseStatus)">{{ getResponseStatusText(currentQuotation.responseStatus) }}</el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="整单说明">{{ currentQuotation.quoteDescription }}</el-descriptions-item>
+              <el-descriptions-item label="付款方式">{{ currentQuotation.paymentTerms }}</el-descriptions-item>
+              <el-descriptions-item label="履约周期">{{ currentQuotation.performanceCycle }}</el-descriptions-item>
+              <el-descriptions-item label="售后保障">{{ currentQuotation.afterSales }}</el-descriptions-item>
+            </el-descriptions>
+          </el-tab-pane>
+
+          <el-tab-pane label="费用明细" name="items">
+            <el-table :data="currentQuotation.lineItems" border>
+              <el-table-column prop="feeName" label="费用名称" min-width="180" />
+              <el-table-column prop="unit" label="费用单位" width="90" />
+              <el-table-column prop="quantity" label="数量" width="100" />
+              <el-table-column prop="amount" label="报价金额" width="120">
+                <template #default="{ row }">
+                  {{ currentQuotation.currency }} {{ row.amount }}
+                </template>
+              </el-table-column>
+              <el-table-column label="单项备注" min-width="200" prop="remark" />
+              <el-table-column label="客户评论" width="100" align="center">
+                <template #default="{ row }">
+                  {{ row.comments.length }} 条
+                </template>
+              </el-table-column>
+            </el-table>
+
+            <div class="comment-block" v-for="item in currentQuotation.lineItems" :key="item.id">
+              <div class="comment-title">{{ item.feeName }} 的明细沟通</div>
+              <el-empty v-if="!item.comments.length" description="暂无明细评论" />
+              <div v-else class="comment-list">
+                <div v-for="comment in item.comments" :key="comment.id" class="comment-item">
+                  <div class="comment-meta">{{ comment.author }} · {{ comment.createdAt }}</div>
+                  <div>{{ comment.content }}</div>
+                </div>
+              </div>
+            </div>
+          </el-tab-pane>
+
+          <el-tab-pane label="H5 发布" name="h5">
+            <div class="h5-grid">
+              <div class="h5-card brand-card">
+                <div class="brand-mark">{{ currentQuotation.h5.branding.logoText }}</div>
+                <div>
+                  <div class="h5-card-title">品牌展示配置</div>
+                  <div class="h5-card-text">{{ currentQuotation.h5.branding.companyName }}</div>
+                  <div class="h5-card-text">{{ currentQuotation.h5.branding.contactName }} / {{ currentQuotation.h5.branding.contactPhone }}</div>
+                  <div class="h5-card-text">主色 {{ currentQuotation.h5.branding.primaryColor }}，辅色 {{ currentQuotation.h5.branding.secondaryColor }}</div>
+                </div>
+              </div>
+              <div class="h5-card">
+                <div class="h5-card-title">正式 H5 链接</div>
+                <div class="h5-link">{{ getPublicUrl(currentQuotation.h5.token) }}</div>
+                <div class="h5-card-text">生成时间：{{ currentQuotation.h5.generatedAt || '待审批通过后自动生成' }}</div>
+                <div class="h5-card-text">访问密码：{{ currentQuotation.h5.passwordEnabled ? currentQuotation.h5.password : '未启用' }}</div>
+                <div class="h5-card-actions">
+                  <el-button type="primary" plain :disabled="!currentQuotation.h5.enabled" @click="previewH5(currentQuotation)">打开客户页</el-button>
+                  <el-button :disabled="!currentQuotation.h5.enabled" @click="copyH5Link(currentQuotation)">复制链接</el-button>
+                </div>
+              </div>
+              <div class="h5-card qr-card">
+                <div class="h5-card-title">自动二维码</div>
+                <div class="qr-grid">
+                  <div
+                    v-for="(cell, index) in getQrMatrix(currentQuotation.h5.qrSeed)"
+                    :key="index"
+                    class="qr-cell"
+                    :class="{ filled: cell }"
+                  ></div>
+                </div>
+                <div class="h5-card-text">审批通过后自动生成，无需手工制作二维码。</div>
+              </div>
+            </div>
+          </el-tab-pane>
+
+          <el-tab-pane label="行为数据" name="analytics">
+            <div class="analytics-cards">
+              <div class="mini-card">
+                <span>打开次数</span>
+                <strong>{{ currentQuotation.analytics.openCount }}</strong>
+              </div>
+              <div class="mini-card">
+                <span>查看时长</span>
+                <strong>{{ formatSeconds(currentQuotation.analytics.totalViewSeconds) }}</strong>
+              </div>
+              <div class="mini-card">
+                <span>最后查看</span>
+                <strong>{{ currentQuotation.analytics.lastViewedAt || '暂无' }}</strong>
+              </div>
+            </div>
+            <el-table :data="currentQuotation.analytics.events" border>
+              <el-table-column prop="time" label="时间" width="180" />
+              <el-table-column prop="operator" label="操作人" width="120" />
+              <el-table-column prop="type" label="行为类型" width="120" />
+              <el-table-column prop="detail" label="记录内容" min-width="300" />
+            </el-table>
+          </el-tab-pane>
+
+          <el-tab-pane label="在线沟通" name="messages">
+            <div class="message-list">
+              <div v-for="message in currentQuotation.messages" :key="message.id" class="message-item">
+                <div class="message-meta">{{ message.author }} · {{ message.createdAt }}</div>
+                <div>{{ message.content }}</div>
+              </div>
+              <el-empty v-if="!currentQuotation.messages.length" description="暂无留言" />
+            </div>
+          </el-tab-pane>
+        </el-tabs>
+      </div>
+
       <template #footer>
         <div class="drawer-footer">
           <el-button @click="showDetailDrawer = false">关闭</el-button>
-          <el-button v-if="currentQuotation?.status === 'draft'" type="primary" @click="handleEdit(currentQuotation)">编辑</el-button>
-          <el-button v-if="currentQuotation?.status === 'draft'" type="warning" @click="handleSubmit(currentQuotation)">提交审核</el-button>
+          <template v-if="currentQuotation">
+            <el-button @click="handleEdit(currentQuotation)">编辑</el-button>
+            <el-button type="warning" :disabled="currentQuotation.h5.enabled || currentQuotation.status === 'expired'" @click="approveAndPublish(currentQuotation)">审核通过并发布 H5</el-button>
+          </template>
         </div>
       </template>
     </el-drawer>
 
-    <!-- 新建/编辑对话框 -->
-    <el-dialog v-model="showDialog" :title="isEdit ? '编辑报价单' : '新建报价单'" width="950px" :close-on-click-modal="false">
-      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
+    <el-dialog v-model="showDialog" :title="isEdit ? '编辑报价单' : '新建报价单'" width="1080px" :close-on-click-modal="false">
+      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="110px">
         <el-divider content-position="left">基本信息</el-divider>
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="客户" prop="customerId">
               <el-select v-model="formData.customerId" placeholder="请选择客户" style="width: 100%" filterable>
-                <el-option v-for="c in customerList" :key="c.id" :label="c.name" :value="c.id" />
+                <el-option v-for="customer in customerDirectory" :key="customer.id" :label="customer.name" :value="customer.id" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -256,19 +299,19 @@
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="生效日期" prop="effectiveDate">
-              <el-date-picker v-model="formData.effectiveDate" type="date" placeholder="选择日期" style="width: 100%" />
+              <el-date-picker v-model="formData.effectiveDate" value-format="YYYY-MM-DD" type="date" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="失效日期" prop="expiryDate">
-              <el-date-picker v-model="formData.expiryDate" type="date" placeholder="选择日期" style="width: 100%" />
+              <el-date-picker v-model="formData.expiryDate" value-format="YYYY-MM-DD" type="date" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="16">
           <el-col :span="8">
             <el-form-item label="结算周期" prop="settlementCycle">
-              <el-select v-model="formData.settlementCycle" placeholder="请选择" style="width: 100%">
+              <el-select v-model="formData.settlementCycle" style="width: 100%">
                 <el-option label="月结" value="monthly" />
                 <el-option label="季度结" value="quarterly" />
                 <el-option label="年结" value="yearly" />
@@ -278,17 +321,15 @@
           </el-col>
           <el-col :span="8">
             <el-form-item label="币种" prop="currency">
-              <el-select v-model="formData.currency" placeholder="请选择" style="width: 100%">
+              <el-select v-model="formData.currency" style="width: 100%">
                 <el-option label="人民币" value="CNY" />
                 <el-option label="美元" value="USD" />
-                <el-option label="港币" value="HKD" />
-                <el-option label="欧元" value="EUR" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="税率" prop="taxRate">
-              <el-select v-model="formData.taxRate" placeholder="请选择" style="width: 100%">
+              <el-select v-model="formData.taxRate" style="width: 100%">
                 <el-option label="0%" :value="0" />
                 <el-option label="3%" :value="3" />
                 <el-option label="6%" :value="6" />
@@ -299,222 +340,218 @@
           </el-col>
         </el-row>
 
-        <el-divider content-position="left">绑定计费规则</el-divider>
-        <div class="rules-section">
-          <div class="rules-header">
-            <span>已绑定 {{ formData.rules.length }} 条计费规则</span>
-            <el-button type="primary" size="small" @click="handleAddRule">
-              <el-icon><Plus /></el-icon>
-              添加规则
-            </el-button>
-          </div>
-          <el-table :data="formData.rules" border size="small" class="rules-table">
-            <el-table-column prop="ruleCode" label="规则编码" width="120" />
-            <el-table-column prop="ruleName" label="规则名称" min-width="150" />
-            <el-table-column prop="ruleType" label="规则类型" width="100">
-              <template #default="{ row }">
-                {{ getRuleTypeText(row.ruleType) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="billingMode" label="计费模式" width="120">
-              <template #default="{ row }">
-                {{ getBillingModeText(row.billingMode) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="priority" label="优先级" width="80">
-              <template #default="{ row }">
-                <el-input-number v-model="row.priority" :min="1" :max="100" size="small" controls-position="right" style="width: 70px" />
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="80">
-              <template #default="{ row, $index }">
-                <el-button type="danger" link size="small" @click="handleRemoveRule($index)">移除</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+        <el-divider content-position="left">报价说明</el-divider>
+        <el-form-item label="整单说明" prop="quoteDescription">
+          <el-input v-model="formData.quoteDescription" type="textarea" :rows="2" />
+        </el-form-item>
+        <el-row :gutter="16">
+          <el-col :span="8">
+            <el-form-item label="付款方式" prop="paymentTerms">
+              <el-input v-model="formData.paymentTerms" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="履约周期" prop="performanceCycle">
+              <el-input v-model="formData.performanceCycle" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="售后保障" prop="afterSales">
+              <el-input v-model="formData.afterSales" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-divider content-position="left">H5 品牌与安全</el-divider>
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="企业名称">
+              <el-input v-model="formData.branding.companyName" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="LOGO 文案">
+              <el-input v-model="formData.branding.logoText" maxlength="3" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="16">
+          <el-col :span="8">
+            <el-form-item label="负责人">
+              <el-input v-model="formData.branding.contactName" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="联系电话">
+              <el-input v-model="formData.branding.contactPhone" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="联系邮箱">
+              <el-input v-model="formData.branding.contactEmail" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="16">
+          <el-col :span="8">
+            <el-form-item label="主品牌色">
+              <el-input v-model="formData.branding.primaryColor" placeholder="#155EEF" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="辅品牌色">
+              <el-input v-model="formData.branding.secondaryColor" placeholder="#7C3AED" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="访问密码">
+              <div class="password-row">
+                <el-switch v-model="formData.passwordEnabled" />
+                <el-input v-model="formData.password" :disabled="!formData.passwordEnabled" placeholder="启用后输入密码" />
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-divider content-position="left">报价明细</el-divider>
+        <div class="editor-toolbar">
+          <span>客户端将严格展示费用名称、费用单位、数量、报价金额与单项备注。</span>
+          <el-button type="primary" plain @click="addFormLineItem">新增费用项</el-button>
         </div>
+        <el-table :data="formData.lineItems" border class="form-table">
+          <el-table-column label="费用名称" min-width="180">
+            <template #default="{ row }">
+              <el-input v-model="row.feeName" />
+            </template>
+          </el-table-column>
+          <el-table-column label="费用单位" width="100">
+            <template #default="{ row }">
+              <el-input v-model="row.unit" />
+            </template>
+          </el-table-column>
+          <el-table-column label="数量" width="120">
+            <template #default="{ row }">
+              <el-input-number v-model="row.quantity" :min="0" :precision="0" style="width: 100%" />
+            </template>
+          </el-table-column>
+          <el-table-column label="报价金额" width="140">
+            <template #default="{ row }">
+              <el-input-number v-model="row.amount" :min="0" :precision="2" style="width: 100%" />
+            </template>
+          </el-table-column>
+          <el-table-column label="单项备注" min-width="220">
+            <template #default="{ row }">
+              <el-input v-model="row.remark" />
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="90">
+            <template #default="{ $index }">
+              <el-button type="danger" link @click="removeFormLineItem($index)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
       </el-form>
       <template #footer>
         <el-button @click="showDialog = false">取消</el-button>
-        <el-button @click="handleSaveDraft">保存草稿</el-button>
-        <el-button type="primary" @click="handleSubmitForm">提交审核</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 规则选择对话框 -->
-    <el-dialog v-model="showRuleDialog" title="选择计费规则" width="800px">
-      <div class="search-panel" style="padding: 0; margin-bottom: 16px;">
-        <el-form :inline="true" :model="ruleSearchForm">
-          <el-form-item label="规则名称">
-            <el-input v-model="ruleSearchForm.name" placeholder="请输入规则名称" clearable style="width: 160px" />
-          </el-form-item>
-          <el-form-item label="规则类型">
-            <el-select v-model="ruleSearchForm.ruleType" placeholder="请选择" clearable style="width: 120px">
-              <el-option label="收入规则" value="income" />
-              <el-option label="成本规则" value="cost" />
-            </el-select>
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" @click="handleSearchRules">搜索</el-button>
-          </el-form-item>
-        </el-form>
-      </div>
-      <el-table :data="availableRules" border size="small" @selection-change="handleRuleSelection">
-        <el-table-column type="selection" width="50" />
-        <el-table-column prop="ruleCode" label="规则编码" width="120" />
-        <el-table-column prop="ruleName" label="规则名称" min-width="150" />
-        <el-table-column prop="ruleType" label="规则类型" width="100">
-          <template #default="{ row }">
-            <el-tag size="small" :type="row.ruleType === 'income' ? 'success' : 'warning'">
-              {{ row.ruleType === 'income' ? '收入规则' : '成本规则' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="billingMode" label="计费模式" width="120">
-          <template #default="{ row }">
-            {{ getBillingModeText(row.billingMode) }}
-          </template>
-        </el-table-column>
-      </el-table>
-      <template #footer>
-        <el-button @click="showRuleDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleConfirmRuleSelection">确认选择</el-button>
+        <el-button @click="saveQuotation('draft')">保存草稿</el-button>
+        <el-button type="primary" @click="saveQuotation('pending')">提交审核</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import dayjs from 'dayjs'
+import { computed, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { Plus, Upload, Download, PriceTag, CircleCheck, Clock, Warning } from '@element-plus/icons-vue'
+import { Download, Plus } from '@element-plus/icons-vue'
+import {
+  buildQrMatrix,
+  businessTypeTextMap,
+  customerDirectory,
+  getQuotationAmount,
+  getQuotationPublicPath,
+  publishQuotationH5,
+  quotationRecords,
+  responseStatusTextMap,
+  responseStatusTypeMap,
+  settlementCycleTextMap,
+  statusTextMap,
+  statusTypeMap,
+  type QuotationRecord,
+  type QuotationStatus
+} from '../../mock/quotationH5'
 
-// 统计数据
-const statistics = reactive({
-  total: 156,
-  active: 89,
-  pending: 12,
-  expiring: 8
-})
+type EditableLineItem = {
+  id: number
+  feeName: string
+  unit: string
+  quantity: number
+  amount: number
+  remark: string
+  comments: Array<any>
+}
 
-// 搜索表单
+const router = useRouter()
+const showDetailDrawer = ref(false)
+const showDialog = ref(false)
+const isEdit = ref(false)
+const activeTab = ref('basic')
+const formRef = ref<FormInstance>()
+const editingId = ref<number | null>(null)
+const selectedId = ref<number | null>(null)
+
 const searchForm = reactive({
   customerName: '',
   quotationNo: '',
   businessType: '',
   status: '',
-  dateRange: []
+  responseStatus: ''
 })
 
-// 表格数据
-const tableData = ref([
-  {
-    id: 1,
-    quotationNo: 'QT2026040001',
-    customerCode: 'KH001',
-    customerName: '深圳市腾讯科技有限公司',
-    businessType: 'storage',
-    version: 1,
-    effectiveDate: '2026-04-01',
-    expiryDate: '2027-03-31',
-    currency: 'CNY',
-    taxRate: 6,
-    settlementCycle: 'monthly',
-    status: 'active',
-    ruleCount: 5,
-    createTime: '2026-03-28 10:30:00',
-    creator: '张三',
-    reviewer: '李经理',
-    rules: [
-      { ruleCode: 'R001', ruleName: '仓储入库费', ruleType: 'income', billingMode: 'fixed', priority: 1, unitPrice: 2.5 },
-      { ruleCode: 'R002', ruleName: '仓储出库费', ruleType: 'income', billingMode: 'fixed', priority: 2, unitPrice: 3.0 }
-    ],
-    logs: [
-      { actionTime: '2026-03-28 10:30:00', operator: '张三', actionType: '创建', actionDetail: '新建报价单' },
-      { actionTime: '2026-03-28 14:20:00', operator: '李经理', actionType: '审核', actionDetail: '审核通过' },
-      { actionTime: '2026-03-28 14:25:00', operator: '系统', actionType: '生效', actionDetail: '报价单生效' }
-    ]
-  },
-  {
-    id: 2,
-    quotationNo: 'QT2026040002',
-    customerCode: 'KH002',
-    customerName: '阿里巴巴（中国）有限公司',
-    businessType: 'transport',
-    version: 2,
-    effectiveDate: '2026-04-15',
-    expiryDate: '2027-04-14',
-    currency: 'CNY',
-    taxRate: 9,
-    settlementCycle: 'monthly',
-    status: 'pending',
-    ruleCount: 8,
-    createTime: '2026-04-20 09:15:00',
-    creator: '王五',
-    reviewer: null,
-    rules: [],
-    logs: [
-      { actionTime: '2026-04-20 09:15:00', operator: '王五', actionType: '创建', actionDetail: '新建报价单V2' },
-      { actionTime: '2026-04-20 09:15:00', operator: '王五', actionType: '提交', actionDetail: '提交审核' }
-    ]
-  },
-  {
-    id: 3,
-    quotationNo: 'QT2026030003',
-    customerCode: 'KH003',
-    customerName: '字节跳动科技有限公司',
-    businessType: 'customs',
-    version: 1,
-    effectiveDate: '2026-03-01',
-    expiryDate: '2026-08-31',
-    currency: 'CNY',
-    taxRate: 6,
-    settlementCycle: 'quarterly',
-    status: 'expired',
-    ruleCount: 3,
-    createTime: '2026-02-20 16:45:00',
-    creator: '赵六',
-    reviewer: '孙经理',
-    rules: [],
-    logs: []
-  }
-])
-
-// 客户列表
-const customerList = ref([
-  { id: 1, code: 'KH001', name: '深圳市腾讯科技有限公司' },
-  { id: 2, code: 'KH002', name: '阿里巴巴（中国）有限公司' },
-  { id: 3, code: 'KH003', name: '字节跳动科技有限公司' }
-])
-
-// 分页
 const pagination = reactive({
   page: 1,
-  pageSize: 10,
-  total: 3
+  pageSize: 10
 })
 
-// 详情抽屉
-const showDetailDrawer = ref(false)
-const currentQuotation = ref<any>(null)
-const activeTab = ref('basic')
+const createEmptyLineItem = (): EditableLineItem => ({
+  id: Date.now() + Math.floor(Math.random() * 1000),
+  feeName: '',
+  unit: '',
+  quantity: 0,
+  amount: 0,
+  remark: '',
+  comments: []
+})
 
-// 对话框
-const showDialog = ref(false)
-const showRuleDialog = ref(false)
-const isEdit = ref(false)
-const formRef = ref<FormInstance>()
-
-const formData = reactive({
+const createDefaultForm = () => ({
   customerId: null as number | null,
   businessType: '',
-  effectiveDate: '',
-  expiryDate: '',
+  effectiveDate: dayjs().format('YYYY-MM-DD'),
+  expiryDate: dayjs().add(30, 'day').format('YYYY-MM-DD'),
   settlementCycle: 'monthly',
   currency: 'CNY',
   taxRate: 6,
-  rules: [] as Array<any>
+  quoteDescription: '',
+  paymentTerms: '',
+  performanceCycle: '',
+  afterSales: '',
+  passwordEnabled: false,
+  password: '',
+  branding: {
+    companyName: '泓明供应链管理有限公司',
+    logoText: 'HM',
+    primaryColor: '#155EEF',
+    secondaryColor: '#7C3AED',
+    contactName: '',
+    contactPhone: '',
+    contactEmail: ''
+  },
+  lineItems: [createEmptyLineItem()] as EditableLineItem[]
 })
+
+const formData = reactive(createDefaultForm())
 
 const formRules: FormRules = {
   customerId: [{ required: true, message: '请选择客户', trigger: 'change' }],
@@ -523,285 +560,350 @@ const formRules: FormRules = {
   expiryDate: [{ required: true, message: '请选择失效日期', trigger: 'change' }],
   settlementCycle: [{ required: true, message: '请选择结算周期', trigger: 'change' }],
   currency: [{ required: true, message: '请选择币种', trigger: 'change' }],
-  taxRate: [{ required: true, message: '请选择税率', trigger: 'change' }]
+  taxRate: [{ required: true, message: '请选择税率', trigger: 'change' }],
+  quoteDescription: [{ required: true, message: '请输入整单说明', trigger: 'blur' }],
+  paymentTerms: [{ required: true, message: '请输入付款方式', trigger: 'blur' }],
+  performanceCycle: [{ required: true, message: '请输入履约周期', trigger: 'blur' }],
+  afterSales: [{ required: true, message: '请输入售后保障', trigger: 'blur' }]
 }
 
-// 规则选择
-const ruleSearchForm = reactive({ name: '', ruleType: '' })
-const availableRules = ref([
-  { ruleCode: 'R001', ruleName: '仓储入库费', ruleType: 'income', billingMode: 'fixed' },
-  { ruleCode: 'R002', ruleName: '仓储出库费', ruleType: 'income', billingMode: 'fixed' },
-  { ruleCode: 'R003', ruleName: '仓储租仓费', ruleType: 'income', billingMode: 'period' },
-  { ruleCode: 'R004', ruleName: '干线运输费', ruleType: 'income', billingMode: 'weight' },
-  { ruleCode: 'R005', ruleName: '配送费', ruleType: 'income', billingMode: 'quantity' },
-  { ruleCode: 'R006', ruleName: '报关费', ruleType: 'income', billingMode: 'fixed' }
-])
-const selectedRules = ref<any[]>([])
+const filteredData = computed(() => {
+  return quotationRecords.filter(item => {
+    if (searchForm.customerName && !item.customerName.includes(searchForm.customerName)) return false
+    if (searchForm.quotationNo && !item.quotationNo.includes(searchForm.quotationNo)) return false
+    if (searchForm.businessType && item.businessType !== searchForm.businessType) return false
+    if (searchForm.status && item.status !== searchForm.status) return false
+    if (searchForm.responseStatus && item.responseStatus !== searchForm.responseStatus) return false
+    return true
+  })
+})
 
-// 方法
-const getBusinessTypeText = (type: string) => {
-  const texts: Record<string, string> = {
-    storage: '仓储服务',
-    transport: '运输服务',
-    customs: '关务服务',
-    integrated: '综合物流'
-  }
-  return texts[type] || type
+const pagedData = computed(() => {
+  const start = (pagination.page - 1) * pagination.pageSize
+  return filteredData.value.slice(start, start + pagination.pageSize)
+})
+
+const statistics = computed(() => ({
+  total: quotationRecords.length,
+  published: quotationRecords.filter(item => item.h5.enabled).length,
+  negotiating: quotationRecords.filter(item => item.responseStatus === 'negotiating' || item.responseStatus === 'rejected').length,
+  expiring: quotationRecords.filter(item => dayjs(item.expiryDate).diff(dayjs(), 'day') >= 0 && dayjs(item.expiryDate).diff(dayjs(), 'day') <= 30).length
+}))
+
+const currentQuotation = computed(() => quotationRecords.find(item => item.id === selectedId.value) || null)
+
+const resetForm = () => {
+  Object.assign(formData, createDefaultForm())
 }
 
-const getRuleTypeText = (type: string) => {
-  return type === 'income' ? '收入规则' : '成本规则'
+const getBusinessTypeText = (value: string) => businessTypeTextMap[value] || value
+const getStatusText = (value: keyof typeof statusTextMap) => statusTextMap[value] || value
+const getStatusType = (value: keyof typeof statusTypeMap) => statusTypeMap[value] || 'info'
+const getResponseStatusText = (value: keyof typeof responseStatusTextMap) => responseStatusTextMap[value] || value
+const getResponseStatusType = (value: keyof typeof responseStatusTypeMap) => responseStatusTypeMap[value] || 'info'
+const getSettlementCycleText = (value: string) => settlementCycleTextMap[value] || value
+const getAmount = (quotation: QuotationRecord) => getQuotationAmount(quotation)
+
+const formatSeconds = (seconds: number) => {
+  if (!seconds) return '0 秒'
+  if (seconds < 60) return `${seconds} 秒`
+  const minutes = Math.floor(seconds / 60)
+  const remain = seconds % 60
+  return `${minutes} 分 ${remain} 秒`
 }
 
-const getBillingModeText = (mode: string) => {
-  const texts: Record<string, string> = {
-    fixed: '固定单价',
-    weight: '按重量',
-    volume: '按体积',
-    quantity: '按数量',
-    period: '周期计费',
-    ladder: '阶梯计费'
-  }
-  return texts[mode] || mode
-}
+const getPublicUrl = (token: string) => `${window.location.origin}${getQuotationPublicPath(token)}`
+const getQrMatrix = (seed: string) => buildQrMatrix(seed).flat()
 
-const getStatusType = (status: string) => {
-  const types: Record<string, string> = {
-    draft: 'info',
-    pending: 'warning',
-    approved: 'primary',
-    active: 'success',
-    expired: 'danger',
-    cancelled: 'info'
-  }
-  return types[status] || 'info'
-}
+const fillForm = (quotation?: QuotationRecord | null) => {
+  resetForm()
+  if (!quotation) return
 
-const getStatusText = (status: string) => {
-  const texts: Record<string, string> = {
-    draft: '草稿',
-    pending: '审核中',
-    approved: '审核通过',
-    active: '生效',
-    expired: '过期',
-    cancelled: '作废'
-  }
-  return texts[status] || status
+  editingId.value = quotation.id
+  Object.assign(formData, {
+    customerId: quotation.customerId,
+    businessType: quotation.businessType,
+    effectiveDate: quotation.effectiveDate,
+    expiryDate: quotation.expiryDate,
+    settlementCycle: quotation.settlementCycle,
+    currency: quotation.currency,
+    taxRate: quotation.taxRate,
+    quoteDescription: quotation.quoteDescription,
+    paymentTerms: quotation.paymentTerms,
+    performanceCycle: quotation.performanceCycle,
+    afterSales: quotation.afterSales,
+    passwordEnabled: quotation.h5.passwordEnabled,
+    password: quotation.h5.password,
+    branding: { ...quotation.h5.branding },
+    lineItems: quotation.lineItems.map(item => ({ ...item, comments: [...item.comments] }))
+  })
 }
 
 const handleSearch = () => {
-  ElMessage.success('搜索报价单')
+  pagination.page = 1
 }
 
 const handleReset = () => {
-  Object.keys(searchForm).forEach(key => {
-    ;(searchForm as any)[key] = key === 'dateRange' ? [] : ''
-  })
-  ElMessage.info('已重置搜索条件')
+  searchForm.customerName = ''
+  searchForm.quotationNo = ''
+  searchForm.businessType = ''
+  searchForm.status = ''
+  searchForm.responseStatus = ''
+  pagination.page = 1
 }
 
 const handleCreate = () => {
   isEdit.value = false
-  Object.assign(formData, {
-    customerId: null,
-    businessType: '',
-    effectiveDate: '',
-    expiryDate: '',
-    settlementCycle: 'monthly',
-    currency: 'CNY',
-    taxRate: 6,
-    rules: []
-  })
+  editingId.value = null
+  resetForm()
   showDialog.value = true
 }
 
-const handleView = (row: any) => {
-  currentQuotation.value = row
+const handleView = (row: QuotationRecord) => {
+  selectedId.value = row.id
+  activeTab.value = 'basic'
   showDetailDrawer.value = true
 }
 
-const handleEdit = (row: any) => {
+const handleEdit = (row: QuotationRecord | null) => {
+  if (!row) return
   isEdit.value = true
+  fillForm(row)
   showDetailDrawer.value = false
-  Object.assign(formData, {
-    customerId: row.customerId,
-    businessType: row.businessType,
-    effectiveDate: row.effectiveDate,
-    expiryDate: row.expiryDate,
-    settlementCycle: row.settlementCycle,
-    currency: row.currency,
-    taxRate: row.taxRate,
-    rules: [...row.rules]
-  })
   showDialog.value = true
 }
 
-const handleVersion = (row: any) => {
-  ElMessage.info('查看版本历史: ' + row.quotationNo)
+const previewH5 = (row: QuotationRecord) => {
+  const href = router.resolve({ path: getQuotationPublicPath(row.h5.token) }).href
+  window.open(href, '_blank')
 }
 
-const handleCopy = (row: any) => {
-  ElMessage.success('已复制报价单: ' + row.quotationNo)
+const copyH5Link = async (row: QuotationRecord) => {
+  const link = getPublicUrl(row.h5.token)
+  try {
+    await navigator.clipboard.writeText(link)
+    ElMessage.success('H5 链接已复制')
+  }
+  catch {
+    ElMessage.error(`复制失败，请手动复制：${link}`)
+  }
 }
 
-const handleSubmit = (row: any) => {
-  ElMessage.success('已提交审核: ' + row.quotationNo)
+const approveAndPublish = (row: QuotationRecord) => {
+  if (row.h5.enabled || row.status === 'expired') return
+  publishQuotationH5(row, '审批中心')
+  ElMessage.success(`已审核通过并自动生成 H5：${row.quotationNo}`)
 }
 
-const handleSaveDraft = () => {
-  ElMessage.success('草稿保存成功')
-  showDialog.value = false
+const addFormLineItem = () => {
+  formData.lineItems.push(createEmptyLineItem())
 }
 
-const handleSubmitForm = async () => {
+const removeFormLineItem = (index: number) => {
+  if (formData.lineItems.length === 1) {
+    ElMessage.warning('至少保留一条费用明细')
+    return
+  }
+  formData.lineItems.splice(index, 1)
+}
+
+const saveQuotation = async (status: QuotationStatus) => {
   if (!formRef.value) return
-  await formRef.value.validate((valid) => {
-    if (valid) {
-      ElMessage.success('提交成功')
-      showDialog.value = false
+  await formRef.value.validate(valid => {
+    if (!valid) return
+
+    if (!formData.lineItems.every(item => item.feeName && item.unit)) {
+      ElMessage.warning('请补全费用明细名称与单位')
+      return
     }
-  })
-}
 
-const handleAddRule = () => {
-  selectedRules.value = []
-  showRuleDialog.value = true
-}
+    const customer = customerDirectory.find(item => item.id === formData.customerId)
+    if (!customer) return
 
-const handleRemoveRule = (index: number) => {
-  formData.rules.splice(index, 1)
-}
+    if (editingId.value) {
+      const target = quotationRecords.find(item => item.id === editingId.value)
+      if (!target) return
 
-const handleSearchRules = () => {
-  ElMessage.info('搜索规则')
-}
-
-const handleRuleSelection = (selection: any[]) => {
-  selectedRules.value = selection
-}
-
-const handleConfirmRuleSelection = () => {
-  selectedRules.value.forEach(rule => {
-    if (!formData.rules.find(r => r.ruleCode === rule.ruleCode)) {
-      formData.rules.push({ ...rule, priority: formData.rules.length + 1 })
+      target.customerId = customer.id
+      target.customerCode = customer.code
+      target.customerName = customer.name
+      target.businessType = formData.businessType
+      target.effectiveDate = formData.effectiveDate
+      target.expiryDate = formData.expiryDate
+      target.settlementCycle = formData.settlementCycle
+      target.currency = formData.currency
+      target.taxRate = formData.taxRate
+      target.quoteDescription = formData.quoteDescription
+      target.paymentTerms = formData.paymentTerms
+      target.performanceCycle = formData.performanceCycle
+      target.afterSales = formData.afterSales
+      target.status = status
+      target.lineItems = formData.lineItems.map(item => ({ ...item, comments: item.comments || [] }))
+      target.h5.passwordEnabled = formData.passwordEnabled
+      target.h5.password = formData.password
+      target.h5.branding = { ...formData.branding }
+      target.logs.unshift({
+        id: Date.now(),
+        time: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+        operator: '当前用户',
+        type: '更新',
+        detail: status === 'pending' ? '更新报价单并重新提交审核' : '更新报价单并保存草稿'
+      })
     }
+    else {
+      const nextIndex = quotationRecords.length + 1
+      const quotationNo = `QT${dayjs().format('YYYYMMDD')}${String(nextIndex).padStart(4, '0')}`
+      quotationRecords.unshift({
+        id: Date.now(),
+        quotationNo,
+        customerId: customer.id,
+        customerCode: customer.code,
+        customerName: customer.name,
+        businessType: formData.businessType,
+        version: 1,
+        effectiveDate: formData.effectiveDate,
+        expiryDate: formData.expiryDate,
+        currency: formData.currency,
+        taxRate: formData.taxRate,
+        settlementCycle: formData.settlementCycle,
+        status,
+        createTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+        creator: '当前用户',
+        reviewer: null,
+        quoteDescription: formData.quoteDescription,
+        paymentTerms: formData.paymentTerms,
+        performanceCycle: formData.performanceCycle,
+        afterSales: formData.afterSales,
+        responseStatus: 'pending',
+        responseReason: '',
+        lineItems: formData.lineItems.map(item => ({ ...item, comments: [] })),
+        messages: [],
+        logs: [{ id: Date.now() + 1, time: dayjs().format('YYYY-MM-DD HH:mm:ss'), operator: '当前用户', type: '创建', detail: status === 'pending' ? '创建报价单并提交审核' : '创建报价单草稿' }],
+        h5: {
+          token: `${quotationNo.toLowerCase()}-v1`,
+          enabled: false,
+          generatedAt: '',
+          passwordEnabled: formData.passwordEnabled,
+          password: formData.password,
+          qrSeed: `${quotationNo}|1|${customer.code}`,
+          branding: { ...formData.branding }
+        },
+        analytics: {
+          openCount: 0,
+          totalViewSeconds: 0,
+          lastViewedAt: '',
+          events: []
+        }
+      })
+    }
+
+    showDialog.value = false
+    ElMessage.success(status === 'pending' ? '报价单已提交审核' : '报价单草稿已保存')
   })
-  showRuleDialog.value = false
-  ElMessage.success(`已添加 ${selectedRules.value.length} 条规则`)
-}
-
-const handleSizeChange = (val: number) => {
-  pagination.pageSize = val
-  pagination.page = 1
-}
-
-const handleCurrentChange = (val: number) => {
-  pagination.page = val
-}
-
-const handleRowClick = (row: any) => {
-  // 点击行查看详情
-}
-
-const handleImport = () => {
-  ElMessage.info('打开批量导入功能')
 }
 
 const handleExport = () => {
-  ElMessage.success('导出报价单')
+  ElMessage.success('当前示例已完成前端优化，列表导出接口可继续接后端实现')
 }
 </script>
 
 <style scoped>
 .quotation-customer-container {
-  padding: 0;
-  background: #f5f7fa;
   min-height: 100%;
+  background: linear-gradient(180deg, #f4f7fb 0%, #eef3f8 100%);
+  padding: 20px;
+}
+
+.action-header,
+.search-panel,
+.table-container {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
 }
 
 .action-header {
-  background: #fff;
-  padding: 16px 20px;
+  padding: 24px 28px;
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #eee;
+  gap: 20px;
 }
 
-.header-left .page-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #303133;
+.page-title {
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: #0f172a;
 }
 
-.header-right {
+.page-subtitle {
+  margin: 8px 0 0;
+  color: #64748b;
+}
+
+.header-actions {
   display: flex;
   gap: 12px;
 }
 
 .statistics-cards {
-  padding: 16px 20px;
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .stat-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  border-radius: 24px;
+  padding: 22px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(148, 163, 184, 0.18);
 }
 
-.stat-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-}
-
-.stat-icon.total { background: #ecf5ff; color: #409eff; }
-.stat-icon.active { background: #f0f9eb; color: #67c23a; }
-.stat-icon.pending { background: #fdf6ec; color: #e6a23c; }
-.stat-icon.expiring { background: #fef0f0; color: #f56c6c; }
-
-.stat-value {
-  font-size: 24px;
-  font-weight: 600;
-  color: #303133;
+.stat-primary {
+  background: linear-gradient(135deg, #155eef, #7c3aed);
+  color: #fff;
 }
 
 .stat-label {
-  font-size: 14px;
-  color: #909399;
-  margin-top: 4px;
+  font-size: 13px;
+  color: inherit;
+  opacity: 0.82;
+}
+
+.stat-value {
+  margin-top: 12px;
+  font-size: 34px;
+  font-weight: 700;
+  color: inherit;
+}
+
+.stat-desc {
+  margin-top: 8px;
+  color: inherit;
+  opacity: 0.72;
+  line-height: 1.5;
 }
 
 .search-panel {
-  background: #fff;
-  margin: 0 20px;
-  padding: 20px;
-  border-radius: 8px;
+  margin-top: 18px;
+  padding: 20px 24px 4px;
 }
 
 .table-container {
-  background: #fff;
-  margin: 16px 20px;
-  padding: 20px;
-  border-radius: 8px;
+  margin-top: 18px;
+  padding: 20px 24px;
 }
 
 .pagination-container {
-  margin-top: 20px;
+  margin-top: 18px;
   display: flex;
   justify-content: flex-end;
 }
 
 .detail-content {
-  padding: 0 10px;
+  padding-right: 10px;
 }
 
 .drawer-footer {
@@ -810,22 +912,190 @@ const handleExport = () => {
   gap: 12px;
 }
 
-.rules-section {
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
+.comment-block {
+  margin-top: 18px;
   padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #f8fafc;
 }
 
-.rules-header {
+.comment-title,
+.h5-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 12px;
+}
+
+.comment-list,
+.message-list {
+  display: grid;
+  gap: 12px;
+}
+
+.comment-item,
+.message-item {
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+}
+
+.comment-meta,
+.message-meta,
+.h5-card-text {
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.h5-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.h5-card {
+  min-height: 220px;
+  border-radius: 20px;
+  padding: 18px;
+  border: 1px solid #dbe5f1;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+}
+
+.brand-card {
+  background: linear-gradient(160deg, #eff6ff, #f5f3ff);
+}
+
+.brand-mark {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #155eef, #7c3aed);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.h5-link {
+  margin-bottom: 12px;
+  word-break: break-all;
+  color: #155eef;
+}
+
+.h5-card-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 12px;
+}
+
+.qr-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.qr-grid {
+  display: grid;
+  grid-template-columns: repeat(13, 10px);
+  gap: 3px;
+  padding: 14px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid #dbe5f1;
+  margin-bottom: 14px;
+}
+
+.qr-cell {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: #e2e8f0;
+}
+
+.qr-cell.filled {
+  background: #0f172a;
+}
+
+.analytics-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.mini-card {
+  border-radius: 16px;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.mini-card span {
+  display: block;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.mini-card strong {
+  color: #0f172a;
+  font-size: 20px;
+}
+
+.password-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  width: 100%;
+  align-items: center;
+}
+
+.editor-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   margin-bottom: 12px;
-  font-size: 14px;
-  color: #606266;
+  color: #64748b;
 }
 
-.rules-table {
-  margin-top: 8px;
+.form-table {
+  margin-bottom: 8px;
+}
+
+@media (max-width: 1200px) {
+  .statistics-cards,
+  .h5-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .quotation-customer-container {
+    padding: 14px;
+  }
+
+  .action-header,
+  .editor-toolbar,
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .statistics-cards,
+  .h5-grid,
+  .analytics-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .h5-card-actions,
+  .header-actions {
+    flex-direction: column;
+  }
 }
 </style>

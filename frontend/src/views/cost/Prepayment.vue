@@ -1463,7 +1463,7 @@ const handleReset = () => {
 
 // 新增
 const handleCreate = () => {
-  router.push('/cost/prepayment/create')
+  router.push('/payable/prepayment/create')
 }
 
 // 导出
@@ -1504,7 +1504,7 @@ const handleViewSupplier = (supplierId: number) => {
 
 // 编辑
 const handleEdit = (row: any) => {
-  router.push(`/cost/prepayment/edit/${row.id}`)
+  router.push(`/payable/prepayment/edit/${row.id}`)
 }
 
 // 提交

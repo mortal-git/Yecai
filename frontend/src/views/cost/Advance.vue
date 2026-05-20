@@ -335,7 +335,7 @@ const handleReset = () => {
 
 // 新增
 const handleCreate = () => {
-  router.push('/cost/advance/create')
+  router.push('/payable/advance/create')
 }
 
 // 导出
@@ -366,7 +366,7 @@ const handleView = (row: any) => {
 
 // 编辑
 const handleEdit = (row: any) => {
-  router.push(`/cost/advance/edit/${row.id}`)
+  router.push(`/payable/advance/edit/${row.id}`)
 }
 
 // 提交审核

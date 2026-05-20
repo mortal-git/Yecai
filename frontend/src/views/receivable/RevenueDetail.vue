@@ -672,7 +672,7 @@ const handleSearch = () => {
   loading.value = true
   setTimeout(() => {
     loading.value = false
-    ElMessage.success('查询收入明细')
+    ElMessage.success('查询应收收入明细')
   }, 500)
   pagination.page = 1
 }

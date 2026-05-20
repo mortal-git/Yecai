@@ -9,6 +9,12 @@ const routes: Array<RouteRecordRaw> = [
     meta: { title: '登录', requiresAuth: false }
   },
   {
+    path: '/quotation/h5/:token',
+    name: 'QuotationPublic',
+    component: () => import('../views/quotation/Public.vue'),
+    meta: { title: '客户报价 H5', requiresAuth: false }
+  },
+  {
     path: '/',
     component: () => import('../layout/Layout.vue'),
     redirect: '/dashboard',
@@ -100,13 +106,31 @@ const routes: Array<RouteRecordRaw> = [
             path: 'list',
             name: 'ReceivableList',
             component: () => import('../views/receivable/List.vue'),
-            meta: { title: '应收单列表' }
+            meta: { title: '应收列表' }
           },
           {
             path: 'revenue-detail',
             name: 'RevenueDetail',
             component: () => import('../views/receivable/RevenueDetail.vue'),
-            meta: { title: '收入明细' }
+            meta: { title: '应收收入明细' }
+          },
+          {
+            path: 'order-revenue-detail',
+            name: 'OrderRevenueDetail',
+            component: () => import('../views/receivable/OrderRevenueDetail.vue'),
+            meta: { title: '订单收入明细' }
+          },
+          {
+            path: 'split-allocation',
+            name: 'SplitAllocation',
+            component: () => import('../views/receivable/SplitAllocation.vue'),
+            meta: { title: '拆单均摊' }
+          },
+          {
+            path: 'income/add',
+            name: 'ReceivableIncomeAdd',
+            component: () => import('../views/receivable/IncomeAdd.vue'),
+            meta: { title: '添加收入' }
           },
           {
             path: 'create',
@@ -548,7 +572,7 @@ const router = createRouter({
 })
 
 // 路由守卫
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, nextRoute, next) => {
   // 设置页面标题
   document.title = `${to.meta.title} - 业财管理系统`
 
@@ -559,6 +583,7 @@ router.beforeEach((to, from, next) => {
   // } else {
   //   next()
   // }
+  void nextRoute
   next()
 })
 
