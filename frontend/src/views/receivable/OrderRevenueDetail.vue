@@ -254,7 +254,7 @@
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.pageSize"
-          :page-sizes="[20, 50, 100, 200]"
+          :page-sizes="[100, 300, 500, 1000]"
           :total="pagination.total"
           layout="total, sizes, prev, pager, next, jumper"
           @size-change="handlePageChange"
@@ -281,6 +281,21 @@
       <template #footer>
         <el-button @click="showCustomFieldDialog = false">取消</el-button>
         <el-button type="primary" @click="handleConfirmFields">确认</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 拆单均摊弹窗 -->
+    <el-dialog v-model="showSplitAllocationDialog" title="拆单均摊" width="500px">
+      <el-form :model="splitForm" label-width="100px">
+        <el-form-item label="拆单维度" required>
+          <el-select v-model="splitForm.splitDimension" placeholder="请选择拆单维度" style="width: 100%;">
+            <el-option label="账单主体" value="账单主体" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showSplitAllocationDialog.value = false">取消</el-button>
+        <el-button type="primary" @click="handleConfirmSplit">确认</el-button>
       </template>
     </el-dialog>
   </div>
@@ -342,7 +357,7 @@ const warehouseList = ref([
 // 分页
 const pagination = reactive({
   page: 1,
-  pageSize: 20,
+  pageSize: 100,
   total: 0
 })
 
@@ -351,6 +366,12 @@ const selectedRows = ref<any[]>([])
 
 // 自定义字段弹窗
 const showCustomFieldDialog = ref(false)
+// 拆单均摊弹窗
+const showSplitAllocationDialog = ref(false)
+// 拆单表单
+const splitForm = reactive({
+  splitDimension: ''
+})
 
 // 所有字段 - 按需求列出
 const allFields = [
@@ -418,26 +439,26 @@ const defaultVisibleColumns: Record<string, boolean> = {
   revenueIncTaxTotal: true,
   costIncTaxTotal: true,
   profitIncTaxTotal: true,
-  revenueItem: false,
-  productL1: false,
-  productL2: false,
-  productL3: false,
-  currency: false,
-  amountExTax: false,
-  taxRate: false,
-  taxAmount: false,
-  amountIncTax: false,
-  exchangeRate: false,
-  amountExTaxCny: false,
-  amountIncTaxCny: false,
-  settlementUnit: false,
-  customerService: false,
-  remark: false,
-  reconciliationStatus: false,
-  createBy: false,
-  createTime: false,
-  updateBy: false,
-  updateTime: false
+  revenueItem: true,
+  productL1: true,
+  productL2: true,
+  productL3: true,
+  currency: true,
+  amountExTax: true,
+  taxRate: true,
+  taxAmount: true,
+  amountIncTax: true,
+  exchangeRate: true,
+  amountExTaxCny: true,
+  amountIncTaxCny: true,
+  settlementUnit: true,
+  customerService: true,
+  remark: true,
+  reconciliationStatus: true,
+  createBy: true,
+  createTime: true,
+  updateBy: true,
+  updateTime: true
 }
 
 // 可见列
@@ -451,7 +472,7 @@ const tableData = ref([
   {
     businessRefNo: 'PO2026050001',
     customerName: '深圳市腾讯科技有限公司',
-    billingEntity: '深圳泓明供应链有限公司',
+    billingEntity: '销售-SR,销售-CT',
     customerCmdNo: 'CMD2026050001',
     masterBillNo: 'MBL2026050001',
     houseBillNo: 'HBL2026050001',
@@ -491,9 +512,135 @@ const tableData = ref([
     updateTime: '2026-05-03 14:00:00'
   },
   {
+    businessRefNo: 'PO2026050001',
+    customerName: '深圳市腾讯科技有限公司',
+    billingEntity: '销售-SR,NCDR-CT',
+    customerCmdNo: 'CMD2026050001',
+    masterBillNo: 'MBL2026050001',
+    houseBillNo: 'HBL2026050001',
+    warehouse: '深圳仓',
+    businessMode: 'fob',
+    businessNo: 'YW2026050001',
+    flowSheetNo: 'LZ2026050001',
+    orderCreateTime: '2026-04-28 09:00:00',
+    orderFinishTime: '2026-05-05 18:00:00',
+    orderStatus: '已完成',
+    isSettled: 'yes',
+    revenueExTaxTotal: 50000.00,
+    costExTaxTotal: 35000.00,
+    profitExTaxTotal: 15000.00,
+    revenueIncTaxTotal: 56500.00,
+    costIncTaxTotal: 39550.00,
+    profitIncTaxTotal: 16950.00,
+    revenueItem: '运输费',
+    productL1: '物流服务',
+    productL2: '运输服务',
+    productL3: '海运运输',
+    currency: 'CNY',
+    amountExTax: 30000.00,
+    taxRate: 0.13,
+    taxAmount: 3900.00,
+    amountIncTax: 33900.00,
+    exchangeRate: 1.0,
+    amountExTaxCny: 30000.00,
+    amountIncTaxCny: 33900.00,
+    settlementUnit: '深圳分公司',
+    customerService: '张三',
+    remark: '20GP整柜从深圳到洛杉矶',
+    reconciliationStatus: '已对账',
+    createBy: '张三',
+    createTime: '2026-05-01 10:30:00',
+    updateBy: '李四',
+    updateTime: '2026-05-03 14:00:00'
+  },
+  {
+    businessRefNo: 'PO2026050001',
+    customerName: '深圳市腾讯科技有限公司',
+    billingEntity: '销售-SR,NCDR-DS',
+    customerCmdNo: 'CMD2026050001',
+    masterBillNo: 'MBL2026050001',
+    houseBillNo: 'HBL2026050001',
+    warehouse: '深圳仓',
+    businessMode: 'fob',
+    businessNo: 'YW2026050001',
+    flowSheetNo: 'LZ2026050001',
+    orderCreateTime: '2026-04-28 09:00:00',
+    orderFinishTime: '2026-05-05 18:00:00',
+    orderStatus: '已完成',
+    isSettled: 'yes',
+    revenueExTaxTotal: 50000.00,
+    costExTaxTotal: 35000.00,
+    profitExTaxTotal: 15000.00,
+    revenueIncTaxTotal: 56500.00,
+    costIncTaxTotal: 39550.00,
+    profitIncTaxTotal: 16950.00,
+    revenueItem: '报关费',
+    productL1: '物流服务',
+    productL2: '报关服务',
+    productL3: '出口报关',
+    currency: 'CNY',
+    amountExTax: 5000.00,
+    taxRate: 0.06,
+    taxAmount: 300.00,
+    amountIncTax: 5300.00,
+    exchangeRate: 1.0,
+    amountExTaxCny: 5000.00,
+    amountIncTaxCny: 5300.00,
+    settlementUnit: '深圳分公司',
+    customerService: '张三',
+    remark: '20GP整柜从深圳到洛杉矶',
+    reconciliationStatus: '已对账',
+    createBy: '张三',
+    createTime: '2026-05-01 10:30:00',
+    updateBy: '李四',
+    updateTime: '2026-05-03 14:00:00'
+  },
+  {
+    businessRefNo: 'PO2026050001',
+    customerName: '深圳市腾讯科技有限公司',
+    billingEntity: '销售-SR,销售-CT,NCDR-CT,NCDR-DS',
+    customerCmdNo: 'CMD2026050001',
+    masterBillNo: 'MBL2026050001',
+    houseBillNo: 'HBL2026050001',
+    warehouse: '深圳仓',
+    businessMode: 'fob',
+    businessNo: 'YW2026050001',
+    flowSheetNo: 'LZ2026050001',
+    orderCreateTime: '2026-04-28 09:00:00',
+    orderFinishTime: '2026-05-05 18:00:00',
+    orderStatus: '已完成',
+    isSettled: 'yes',
+    revenueExTaxTotal: 50000.00,
+    costExTaxTotal: 35000.00,
+    profitExTaxTotal: 15000.00,
+    revenueIncTaxTotal: 56500.00,
+    costIncTaxTotal: 39550.00,
+    profitIncTaxTotal: 16950.00,
+    revenueItem: '保险费',
+    productL1: '物流服务',
+    productL2: '保险服务',
+    productL3: '货物运输保险',
+    currency: 'CNY',
+    amountExTax: 2000.00,
+    taxRate: 0.06,
+    taxAmount: 120.00,
+    amountIncTax: 2120.00,
+    exchangeRate: 1.0,
+    amountExTaxCny: 2000.00,
+    amountIncTaxCny: 2120.00,
+    settlementUnit: '深圳分公司',
+    customerService: '张三',
+    remark: '20GP整柜从深圳到洛杉矶',
+    reconciliationStatus: '已对账',
+    createBy: '张三',
+    createTime: '2026-05-01 10:30:00',
+    updateBy: '李四',
+    updateTime: '2026-05-03 14:00:00'
+  },
+  {
     businessRefNo: 'PO2026050002',
     customerName: '阿里巴巴（中国）有限公司',
-    billingEntity: '上海泓明供应链有限公司',
+    billingEntity: '销售-CT,NCDR-CT',
     customerCmdNo: 'CMD2026050002',
     masterBillNo: 'MBL2026050002',
     houseBillNo: 'HBL2026050002',
@@ -529,6 +676,258 @@ const tableData = ref([
     reconciliationStatus: '待对账',
     createBy: '王五',
     createTime: '2026-05-02 11:00:00',
+    updateBy: '',
+    updateTime: ''
+  },
+  {
+    businessRefNo: 'PO2026050002',
+    customerName: '阿里巴巴（中国）有限公司',
+    billingEntity: '销售-CT,NCDR-DS',
+    customerCmdNo: 'CMD2026050002',
+    masterBillNo: 'MBL2026050002',
+    houseBillNo: 'HBL2026050002',
+    warehouse: '上海仓',
+    businessMode: 'cif',
+    businessNo: 'YW2026050002',
+    flowSheetNo: 'LZ2026050002',
+    orderCreateTime: '2026-04-25 08:00:00',
+    orderFinishTime: '2026-05-08 17:00:00',
+    orderStatus: '已完成',
+    isSettled: 'no',
+    revenueExTaxTotal: 80000.00,
+    costExTaxTotal: 55000.00,
+    profitExTaxTotal: 25000.00,
+    revenueIncTaxTotal: 90400.00,
+    costIncTaxTotal: 62150.00,
+    profitIncTaxTotal: 28250.00,
+    revenueItem: '仓储费',
+    productL1: '物流服务',
+    productL2: '仓储服务',
+    productL3: '普通仓储',
+    currency: 'USD',
+    amountExTax: 4225.35,
+    taxRate: 0.13,
+    taxAmount: 549.30,
+    amountIncTax: 4774.65,
+    exchangeRate: 7.1,
+    amountExTaxCny: 30000.00,
+    amountIncTaxCny: 33900.00,
+    settlementUnit: '上海分公司',
+    customerService: '李四',
+    remark: '500平仓储服务，租期3个月',
+    reconciliationStatus: '待对账',
+    createBy: '王五',
+    createTime: '2026-05-02 11:00:00',
+    updateBy: '',
+    updateTime: ''
+  },
+  {
+    businessRefNo: 'PO2026050003',
+    customerName: '字节跳动科技有限公司',
+    billingEntity: 'NCDR-CT,NCDR-DS',
+    customerCmdNo: 'CMD2026050003',
+    masterBillNo: 'MBL2026050003',
+    houseBillNo: 'HBL2026050003',
+    warehouse: '广州仓',
+    businessMode: 'ddp',
+    businessNo: 'YW2026050003',
+    flowSheetNo: 'LZ2026050003',
+    orderCreateTime: '2026-05-01 10:00:00',
+    orderFinishTime: '2026-05-10 16:30:00',
+    orderStatus: '执行中',
+    isSettled: 'no',
+    revenueExTaxTotal: 120000.00,
+    costExTaxTotal: 85000.00,
+    profitExTaxTotal: 35000.00,
+    revenueIncTaxTotal: 135600.00,
+    costIncTaxTotal: 96050.00,
+    profitIncTaxTotal: 39550.00,
+    revenueItem: '仓储费',
+    productL1: '物流服务',
+    productL2: '仓储服务',
+    productL3: '恒温仓储',
+    currency: 'CNY',
+    amountExTax: 60000.00,
+    taxRate: 0.13,
+    taxAmount: 7800.00,
+    amountIncTax: 67800.00,
+    exchangeRate: 1.0,
+    amountExTaxCny: 60000.00,
+    amountIncTaxCny: 67800.00,
+    settlementUnit: '广州分公司',
+    customerService: '赵六',
+    remark: '电子产品仓储服务，恒温恒湿',
+    reconciliationStatus: '待对账',
+    createBy: '赵六',
+    createTime: '2026-05-03 09:30:00',
+    updateBy: '',
+    updateTime: ''
+  },
+  {
+    businessRefNo: 'PO2026050003',
+    customerName: '字节跳动科技有限公司',
+    billingEntity: '销售-SR,销售-CT,NCDR-CT',
+    customerCmdNo: 'CMD2026050003',
+    masterBillNo: 'MBL2026050003',
+    houseBillNo: 'HBL2026050003',
+    warehouse: '广州仓',
+    businessMode: 'ddp',
+    businessNo: 'YW2026050003',
+    flowSheetNo: 'LZ2026050003',
+    orderCreateTime: '2026-05-01 10:00:00',
+    orderFinishTime: '2026-05-10 16:30:00',
+    orderStatus: '执行中',
+    isSettled: 'no',
+    revenueExTaxTotal: 120000.00,
+    costExTaxTotal: 85000.00,
+    profitExTaxTotal: 35000.00,
+    revenueIncTaxTotal: 135600.00,
+    costIncTaxTotal: 96050.00,
+    profitIncTaxTotal: 39550.00,
+    revenueItem: '配送费',
+    productL1: '物流服务',
+    productL2: '配送服务',
+    productL3: '同城配送',
+    currency: 'CNY',
+    amountExTax: 40000.00,
+    taxRate: 0.09,
+    taxAmount: 3600.00,
+    amountIncTax: 43600.00,
+    exchangeRate: 1.0,
+    amountExTaxCny: 40000.00,
+    amountIncTaxCny: 43600.00,
+    settlementUnit: '广州分公司',
+    customerService: '赵六',
+    remark: '电子产品仓储服务，恒温恒湿',
+    reconciliationStatus: '待对账',
+    createBy: '赵六',
+    createTime: '2026-05-03 09:30:00',
+    updateBy: '',
+    updateTime: ''
+  },
+  {
+    businessRefNo: 'PO2026050004',
+    customerName: '华为技术有限公司',
+    billingEntity: 'NCDR-DS,销售-SR',
+    customerCmdNo: 'CMD2026050004',
+    masterBillNo: 'MBL2026050004',
+    houseBillNo: 'HBL2026050004',
+    warehouse: '北京仓',
+    businessMode: 'exw',
+    businessNo: 'YW2026050004',
+    flowSheetNo: 'LZ2026050004',
+    orderCreateTime: '2026-05-05 14:00:00',
+    orderFinishTime: '2026-05-15 12:00:00',
+    orderStatus: '待执行',
+    isSettled: 'no',
+    revenueExTaxTotal: 200000.00,
+    costExTaxTotal: 140000.00,
+    profitExTaxTotal: 60000.00,
+    revenueIncTaxTotal: 226000.00,
+    costIncTaxTotal: 158200.00,
+    profitIncTaxTotal: 67800.00,
+    revenueItem: '运输费',
+    productL1: '物流服务',
+    productL2: '运输服务',
+    productL3: '航空运输',
+    currency: 'USD',
+    amountExTax: 14084.51,
+    taxRate: 0.13,
+    taxAmount: 1830.99,
+    amountIncTax: 15915.50,
+    exchangeRate: 7.1,
+    amountExTaxCny: 100000.00,
+    amountIncTaxCny: 113000.00,
+    settlementUnit: '北京分公司',
+    customerService: '孙七',
+    remark: '芯片运输，加急航空件',
+    reconciliationStatus: '待对账',
+    createBy: '孙七',
+    createTime: '2026-05-05 15:00:00',
+    updateBy: '',
+    updateTime: ''
+  },
+  {
+    businessRefNo: 'PO2026050004',
+    customerName: '华为技术有限公司',
+    billingEntity: '销售-CT,NCDR-CT,NCDR-DS',
+    customerCmdNo: 'CMD2026050004',
+    masterBillNo: 'MBL2026050004',
+    houseBillNo: 'HBL2026050004',
+    warehouse: '北京仓',
+    businessMode: 'exw',
+    businessNo: 'YW2026050004',
+    flowSheetNo: 'LZ2026050004',
+    orderCreateTime: '2026-05-05 14:00:00',
+    orderFinishTime: '2026-05-15 12:00:00',
+    orderStatus: '待执行',
+    isSettled: 'no',
+    revenueExTaxTotal: 200000.00,
+    costExTaxTotal: 140000.00,
+    profitExTaxTotal: 60000.00,
+    revenueIncTaxTotal: 226000.00,
+    costIncTaxTotal: 158200.00,
+    profitIncTaxTotal: 67800.00,
+    revenueItem: '报关费',
+    productL1: '物流服务',
+    productL2: '报关服务',
+    productL3: '进口报关',
+    currency: 'USD',
+    amountExTax: 7042.25,
+    taxRate: 0.06,
+    taxAmount: 422.54,
+    amountIncTax: 7464.79,
+    exchangeRate: 7.1,
+    amountExTaxCny: 50000.00,
+    amountIncTaxCny: 53000.00,
+    settlementUnit: '北京分公司',
+    customerService: '孙七',
+    remark: '芯片运输，加急航空件',
+    reconciliationStatus: '待对账',
+    createBy: '孙七',
+    createTime: '2026-05-05 15:00:00',
+    updateBy: '',
+    updateTime: ''
+  },
+  {
+    businessRefNo: 'PO2026050004',
+    customerName: '华为技术有限公司',
+    billingEntity: '销售-SR,销售-CT,NCDR-CT,NCDR-DS',
+    customerCmdNo: 'CMD2026050004',
+    masterBillNo: 'MBL2026050004',
+    houseBillNo: 'HBL2026050004',
+    warehouse: '北京仓',
+    businessMode: 'exw',
+    businessNo: 'YW2026050004',
+    flowSheetNo: 'LZ2026050004',
+    orderCreateTime: '2026-05-05 14:00:00',
+    orderFinishTime: '2026-05-15 12:00:00',
+    orderStatus: '待执行',
+    isSettled: 'no',
+    revenueExTaxTotal: 200000.00,
+    costExTaxTotal: 140000.00,
+    profitExTaxTotal: 60000.00,
+    revenueIncTaxTotal: 226000.00,
+    costIncTaxTotal: 158200.00,
+    profitIncTaxTotal: 67800.00,
+    revenueItem: '保险费',
+    productL1: '物流服务',
+    productL2: '保险服务',
+    productL3: '货物运输保险',
+    currency: 'USD',
+    amountExTax: 7042.25,
+    taxRate: 0.06,
+    taxAmount: 422.54,
+    amountIncTax: 7464.79,
+    exchangeRate: 7.1,
+    amountExTaxCny: 50000.00,
+    amountIncTaxCny: 53000.00,
+    settlementUnit: '北京分公司',
+    customerService: '孙七',
+    remark: '芯片运输，加急航空件',
+    reconciliationStatus: '待对账',
+    createBy: '孙七',
+    createTime: '2026-05-05 15:00:00',
     updateBy: '',
     updateTime: ''
   }
@@ -614,7 +1013,24 @@ const handleExport = () => {
 
 // 拆单均摊
 const handleSplitAllocation = () => {
-  ElMessage.success('拆单均摊功能开发中')
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请选择要拆单的数据')
+    return
+  }
+  // 重置表单
+  splitForm.splitDimension = ''
+  showSplitAllocationDialog.value = true
+}
+
+// 确认拆单
+const handleConfirmSplit = () => {
+  if (!splitForm.splitDimension) {
+    ElMessage.warning('请选择拆单维度')
+    return
+  }
+  // 后续拆单逻辑在这里实现
+  ElMessage.success(`已选择按【${splitForm.splitDimension}】维度拆单`)
+  showSplitAllocationDialog.value = false
 }
 
 // 自定义字段

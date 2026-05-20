@@ -124,7 +124,7 @@ const routes: Array<RouteRecordRaw> = [
             path: 'split-allocation',
             name: 'SplitAllocation',
             component: () => import('../views/receivable/SplitAllocation.vue'),
-            meta: { title: '拆单均摊' }
+            meta: { title: '拆单均摊明细' }
           },
           {
             path: 'income/add',
