@@ -185,12 +185,6 @@ const routes: Array<RouteRecordRaw> = [
             meta: { title: '新增应收单' }
           },
           {
-            path: 'collection',
-            name: 'ReceivableCollection',
-            component: () => import('../views/receivable/Collection.vue'),
-            meta: { title: '收款管理' }
-          },
-          {
             path: 'aging',
             name: 'ReceivableAging',
             component: () => import('../views/receivable/Aging.vue'),
@@ -217,16 +211,16 @@ const routes: Array<RouteRecordRaw> = [
             meta: { title: '应付单列表' }
           },
           {
+            path: 'cost-detail',
+            name: 'PayableCostDetail',
+            component: () => import('../views/payable/CostDetail.vue'),
+            meta: { title: '应付成本明细' }
+          },
+          {
             path: 'create',
             name: 'PayableCreate',
             component: () => import('../views/payable/Create.vue'),
             meta: { title: '新增应付单' }
-          },
-          {
-            path: 'payment',
-            name: 'PayablePayment',
-            component: () => import('../views/payable/Payment.vue'),
-            meta: { title: '付款管理' }
           },
           {
             path: 'aging',
@@ -296,6 +290,26 @@ const routes: Array<RouteRecordRaw> = [
           }
         ]
       },
+      // 资金管理模块
+      {
+        path: 'fund',
+        name: 'Fund',
+        meta: { title: '资金管理', icon: 'Coin' },
+        children: [
+          {
+            path: 'collection',
+            name: 'FundCollection',
+            component: () => import('../views/receivable/Collection.vue'),
+            meta: { title: '收款管理' }
+          },
+          {
+            path: 'payment',
+            name: 'FundPayment',
+            component: () => import('../views/payable/Payment.vue'),
+            meta: { title: '付款管理' }
+          }
+        ]
+      },
       // 对账单管理模块
       {
         path: 'statement',
@@ -319,6 +333,30 @@ const routes: Array<RouteRecordRaw> = [
             name: 'StatementDetail',
             component: () => import('../views/statement/Detail.vue'),
             meta: { title: '对账单详情' }
+          },
+          {
+            path: 'payable',
+            name: 'PayableStatementList',
+            component: () => import('../views/statement/payable/List.vue'),
+            meta: { title: '应付对账单' }
+          },
+          {
+            path: 'payable/create',
+            name: 'PayableStatementCreate',
+            component: () => import('../views/statement/payable/Create.vue'),
+            meta: { title: '新建应付对账单' }
+          },
+          {
+            path: 'payable/edit/:id',
+            name: 'PayableStatementEdit',
+            component: () => import('../views/statement/payable/Create.vue'),
+            meta: { title: '编辑应付对账单' }
+          },
+          {
+            path: 'payable/detail/:id',
+            name: 'PayableStatementDetail',
+            component: () => import('../views/statement/payable/Detail.vue'),
+            meta: { title: '应付对账单详情' }
           }
         ]
       },

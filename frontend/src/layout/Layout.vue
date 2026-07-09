@@ -106,7 +106,6 @@
             <el-menu-item index="/receivable/revenue-detail">应收收入明细</el-menu-item>
             <el-menu-item index="/receivable/order-revenue-detail">订单收入明细</el-menu-item>
             <el-menu-item index="/receivable/split-allocation">拆单均摊明细</el-menu-item>
-            <el-menu-item index="/receivable/collection">收款管理</el-menu-item>
             <el-menu-item index="/receivable/aging">账龄分析</el-menu-item>
           </el-sub-menu>
 
@@ -116,11 +115,20 @@
               <span>应付管理</span>
             </template>
             <el-menu-item index="/payable/list">应付单列表</el-menu-item>
-            <el-menu-item index="/payable/payment">付款管理</el-menu-item>
+            <el-menu-item index="/payable/cost-detail">应付成本明细</el-menu-item>
             <el-menu-item index="/payable/aging">账龄分析</el-menu-item>
             <el-menu-item index="/payable/monthly">月结成本</el-menu-item>
             <el-menu-item index="/payable/prepayment">预付成本</el-menu-item>
             <el-menu-item index="/payable/advance">垫付成本</el-menu-item>
+          </el-sub-menu>
+
+          <el-sub-menu index="fund">
+            <template #title>
+              <el-icon><Coin /></el-icon>
+              <span>资金管理</span>
+            </template>
+            <el-menu-item index="/fund/collection">收款管理</el-menu-item>
+            <el-menu-item index="/fund/payment">付款管理</el-menu-item>
           </el-sub-menu>
 
           <el-sub-menu index="statement">
@@ -130,6 +138,7 @@
             </template>
             <el-menu-item index="/statement/list">对账单列表</el-menu-item>
             <el-menu-item index="/statement/create">生成对账单</el-menu-item>
+            <el-menu-item index="/statement/payable">应付对账单</el-menu-item>
           </el-sub-menu>
 
           <el-sub-menu index="budget">
@@ -271,6 +280,7 @@ import {
   Ticket,
   Money,
   Wallet,
+  Coin,
   List,
   TrendCharts,
   PieChart,
@@ -354,6 +364,8 @@ const handleMenuSelect = (index: string) => {
     router.push('/receivable/list')
   } else if (index === 'payable') {
     router.push('/payable/list')
+  } else if (index === 'fund') {
+    router.push('/fund/collection')
   } else if (index === 'statement') {
     router.push('/statement/list')
   } else if (index === 'budget') {
