@@ -232,7 +232,7 @@ const updateDate = () => {
 
 const handleTodo = (item: any) => {
   const routes: Record<string, string> = {
-    '订单审核': '/order/list', '发票认证': '/invoice/list', '付款审批': '/payable/payment',
+    '订单审核': '/order/list', '发票认证': '/invoice/list', '付款审批': '/fund/payment',
     '对账单发送': '/statement/list', '逾期提醒': '/receivable/aging'
   }
   router.push(routes[item.title] || '/')

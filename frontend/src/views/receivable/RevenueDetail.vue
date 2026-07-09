@@ -76,9 +76,14 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="仓库">
+        <el-form-item label="仓库" required>
           <el-select v-model="searchForm.warehouseCode" placeholder="请选择仓库" clearable filterable style="width: 180px">
             <el-option v-for="w in warehouseList" :key="w.code" :label="w.name" :value="w.code" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="报价单名称" required>
+          <el-select v-model="searchForm.quoteId" placeholder="请选择报价单" clearable filterable style="width: 200px">
+            <el-option v-for="q in quoteList" :key="q.id" :label="q.name" :value="q.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="业务模式">
@@ -89,23 +94,14 @@
             <el-option label="EXW" value="exw" />
           </el-select>
         </el-form-item>
-        <el-form-item label="是否结算订单">
-          <el-select v-model="searchForm.isSettled" placeholder="请选择" clearable style="width: 140px">
-            <el-option label="是" value="yes" />
-            <el-option label="否" value="no" />
-          </el-select>
+        <el-form-item label="业务参考编号">
+          <el-input v-model="searchForm.businessRefNo" placeholder="请输入" clearable style="width: 180px" />
         </el-form-item>
-        <el-form-item label="收入项目">
-          <el-input v-model="searchForm.incomeItem" placeholder="请输入" clearable style="width: 160px" />
-        </el-form-item>
-        <el-form-item label="产品标准名L3">
-          <el-select v-model="searchForm.productL3" placeholder="请选择" clearable filterable style="width: 160px">
-            <el-option v-for="p in productL3List" :key="p.id" :label="p.name" :value="p.id" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="结算单位">
-          <el-select v-model="searchForm.settlementUnit" placeholder="请选择" clearable filterable style="width: 180px">
-            <el-option v-for="s in settlementUnitList" :key="s.id" :label="s.name" :value="s.id" />
+        <el-form-item label="订单状态">
+          <el-select v-model="searchForm.orderStatus" placeholder="请选择" clearable style="width: 140px">
+            <el-option label="已完成" value="已完成" />
+            <el-option label="进行中" value="进行中" />
+            <el-option label="已取消" value="已取消" />
           </el-select>
         </el-form-item>
         <el-form-item label="订单新建时间">
@@ -130,20 +126,64 @@
             style="width: 240px"
           />
         </el-form-item>
+        <el-form-item label="流转单编号">
+          <el-input v-model="searchForm.flowSheetNo" placeholder="请输入" clearable style="width: 160px" />
+        </el-form-item>
         <el-form-item label="客户指令号">
           <el-input v-model="searchForm.customerCmdNo" placeholder="请输入" clearable style="width: 160px" />
         </el-form-item>
-        <el-form-item label="总运单">
+        <el-form-item label="总运单号">
           <el-input v-model="searchForm.masterBillNo" placeholder="请输入" clearable style="width: 160px" />
         </el-form-item>
-        <el-form-item label="分运单">
+        <el-form-item label="分运单号">
           <el-input v-model="searchForm.houseBillNo" placeholder="请输入" clearable style="width: 160px" />
         </el-form-item>
         <el-form-item label="费率单编号">
           <el-input v-model="searchForm.rateSheetNo" placeholder="请输入" clearable style="width: 160px" />
         </el-form-item>
-        <el-form-item label="业务参考编号">
-          <el-input v-model="searchForm.businessRefNo" type="textarea" :rows="2" placeholder="支持多行" style="width: 200px" />
+        <el-form-item label="费率单状态">
+          <el-select v-model="searchForm.rateSheetStatus" placeholder="请选择" clearable style="width: 140px">
+            <el-option label="已确认" value="已确认" />
+            <el-option label="待确认" value="待确认" />
+            <el-option label="已驳回" value="已驳回" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="计费单据">
+          <el-select v-model="searchForm.billingDoc" placeholder="请选择" clearable style="width: 140px">
+            <el-option label="应收单" value="应收单" />
+            <el-option label="应付单" value="应付单" />
+            <el-option label="调整单" value="调整单" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="费率单类型">
+          <el-select v-model="searchForm.rateSheetType" placeholder="请选择" clearable style="width: 140px">
+            <el-option label="标准费率" value="标准费率" />
+            <el-option label="特殊费率" value="特殊费率" />
+            <el-option label="协议费率" value="协议费率" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="费率单创建时间">
+          <el-date-picker
+            v-model="searchForm.rateSheetCreateTime"
+            type="daterange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            value-format="YYYY-MM-DD"
+            style="width: 240px"
+          />
+        </el-form-item>
+        <el-form-item label="账单主体">
+          <el-select v-model="searchForm.billingEntity" placeholder="请选择账单主体" clearable filterable style="width: 180px">
+            <el-option v-for="b in billingEntityList" :key="b.id" :label="b.name" :value="b.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="收入项目对账状态">
+          <el-select v-model="searchForm.incomeReconcileStatus" placeholder="请选择" clearable style="width: 160px">
+            <el-option label="已对账" value="已对账" />
+            <el-option label="待对账" value="待对账" />
+            <el-option label="部分对账" value="部分对账" />
+          </el-select>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">
@@ -191,7 +231,7 @@
         <el-table-column v-if="visibleColumns.rateSheetCreateTime" prop="rateSheetCreateTime" label="费率单创建时间" min-width="160" />
         <el-table-column v-if="visibleColumns.businessRefNo" prop="businessRefNo" label="业务参考编号" min-width="150" />
         <el-table-column v-if="visibleColumns.billingDoc" prop="billingDoc" label="计费单据" min-width="120" />
-        <el-table-column v-if="visibleColumns.customerDept" prop="customerDept" label="客户部门" min-width="120" />
+        <el-table-column v-if="visibleColumns.customerDept" prop="customerDept" label="账单主体" min-width="120" />
         <el-table-column v-if="visibleColumns.customerCmdNo" prop="customerCmdNo" label="客户指令号" min-width="130" />
         <el-table-column v-if="visibleColumns.masterBillNo" prop="masterBillNo" label="总运单号" min-width="140" />
         <el-table-column v-if="visibleColumns.houseBillNo" prop="houseBillNo" label="分运单号" min-width="140" />
@@ -340,18 +380,23 @@ import { Search, Refresh, Download, Setting, Document } from '@element-plus/icon
 const searchForm = reactive({
   customerId: null as number | null,
   warehouseCode: '',
+  quoteId: null as number | null,
   businessMode: '',
   businessRefNo: '',
-  incomeItem: '',
-  productL3: null as number | null,
-  settlementUnit: null as number | null,
-  isSettled: '',
+  orderStatus: '',
   orderCreateTime: [] as string[],
   orderFinishTime: [] as string[],
+  flowSheetNo: '',
   customerCmdNo: '',
   masterBillNo: '',
   houseBillNo: '',
-  rateSheetNo: ''
+  rateSheetNo: '',
+  rateSheetStatus: '',
+  billingDoc: '',
+  rateSheetType: '',
+  rateSheetCreateTime: [] as string[],
+  billingEntity: null as number | null,
+  incomeReconcileStatus: ''
 })
 
 const loading = ref(false)
@@ -387,21 +432,22 @@ const warehouseList = ref([
   { code: 'WH005', name: '杭州仓' }
 ])
 
-// 产品三级列表
-const productL3List = ref([
-  { id: 1, name: '仓储服务' },
-  { id: 2, name: '装卸服务' },
-  { id: 3, name: '运输服务' },
-  { id: 4, name: '报关服务' },
-  { id: 5, name: '港杂服务' }
+// 账单主体列表
+const billingEntityList = ref([
+  { id: 1, name: '业务部' },
+  { id: 2, name: '销售部' },
+  { id: 3, name: '仓储部' },
+  { id: 4, name: '财务部' },
+  { id: 5, name: '电商事业部' }
 ])
 
-// 结算单位列表
-const settlementUnitList = ref([
-  { id: 1, name: '深圳分公司' },
-  { id: 2, name: '上海分公司' },
-  { id: 3, name: '广州分公司' },
-  { id: 4, name: '北京分公司' }
+// 报价单列表
+const quoteList = ref([
+  { id: 1, name: '2026年标准报价单-腾讯' },
+  { id: 2, name: '2026年特殊报价单-阿里' },
+  { id: 3, name: '2026年协议报价单-字节' },
+  { id: 4, name: '2026年标准报价单-华为' },
+  { id: 5, name: '2026年协议报价单-京东' }
 ])
 
 // 所有字段定义（按显示顺序）
@@ -411,7 +457,7 @@ const allFields = [
   { key: 'rateSheetCreateTime', label: '费率单创建时间' },
   { key: 'businessRefNo', label: '业务参考编号' },
   { key: 'billingDoc', label: '计费单据' },
-  { key: 'customerDept', label: '客户部门' },
+  { key: 'customerDept', label: '账单主体' },
   { key: 'customerCmdNo', label: '客户指令号' },
   { key: 'masterBillNo', label: '总运单号' },
   { key: 'houseBillNo', label: '分运单号' },
@@ -673,6 +719,14 @@ const handleSearch = () => {
     ElMessage.warning('请选择客户名称')
     return
   }
+  if (!searchForm.warehouseCode) {
+    ElMessage.warning('请选择仓库')
+    return
+  }
+  if (!searchForm.quoteId) {
+    ElMessage.warning('请选择报价单名称')
+    return
+  }
   loading.value = true
   setTimeout(() => {
     loading.value = false
@@ -686,18 +740,23 @@ const handleReset = () => {
   Object.assign(searchForm, {
     customerId: null,
     warehouseCode: '',
+    quoteId: null,
     businessMode: '',
     businessRefNo: '',
-    incomeItem: '',
-    productL3: null,
-    settlementUnit: null,
-    isSettled: '',
+    orderStatus: '',
     orderCreateTime: [],
     orderFinishTime: [],
+    flowSheetNo: '',
     customerCmdNo: '',
     masterBillNo: '',
     houseBillNo: '',
-    rateSheetNo: ''
+    rateSheetNo: '',
+    rateSheetStatus: '',
+    billingDoc: '',
+    rateSheetType: '',
+    rateSheetCreateTime: [],
+    billingEntity: null,
+    incomeReconcileStatus: ''
   })
   ElMessage.info('已重置搜索条件')
 }

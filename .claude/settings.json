@@ -14,5 +14,17 @@
       "C:\\Users\\甄德衡\\.claude\\skills",
       "D:\\泓明\\claude\\yecai\\frontend\\src\\types"
     ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash d:/泓明/claude/yecai/.claude/hooks/load-memory.sh"
+          }
+        ]
+      }
+    ]
   }
 }
