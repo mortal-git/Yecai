@@ -98,6 +98,12 @@
             <el-option label="否" value="no" />
           </el-select>
         </el-form-item>
+        <el-form-item label="是否拆单">
+          <el-select v-model="searchForm.isSplit" placeholder="请选择" clearable style="width: 140px">
+            <el-option label="是" value="yes" />
+            <el-option label="否" value="no" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="订单新建时间">
           <el-date-picker
             v-model="searchForm.orderCreateTime"
@@ -129,6 +135,19 @@
         <el-form-item label="分运单">
           <el-input v-model="searchForm.houseBillNo" placeholder="请输入" clearable style="width: 160px" />
         </el-form-item>
+        <el-form-item label="收入项目">
+          <el-input v-model="searchForm.revenueItem" placeholder="请输入" clearable style="width: 160px" />
+        </el-form-item>
+        <el-form-item label="产品标准名L3">
+          <el-select v-model="searchForm.productL3" placeholder="请选择" clearable filterable style="width: 180px">
+            <el-option v-for="item in productL3List" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="结算单位">
+          <el-select v-model="searchForm.settlementUnit" placeholder="请选择" clearable filterable style="width: 180px">
+            <el-option v-for="item in settlementUnitList" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">
             <el-icon><Search /></el-icon>
@@ -148,7 +167,7 @@
         <el-icon><Download /></el-icon>
         导出
       </el-button>
-      <el-button type="warning" @click="handleSplitAllocation" :disabled="selectedRows.length === 0 && !hasSearched">
+      <el-button type="warning" @click="handleSplitAllocation" :disabled="(selectedRows.length === 0 && !hasSearched) || hasSplitRow">
         <el-icon><Operation /></el-icon>
         拆单均摊
       </el-button>
@@ -170,6 +189,9 @@
       >
         <el-table-column type="selection" width="50" fixed />
         <el-table-column v-if="visibleColumns.businessRefNo" prop="businessRefNo" label="业务参考编号" min-width="150" fixed />
+        <el-table-column v-if="visibleColumns.isSplit" prop="isSplit" label="是否拆单" min-width="100">
+          <template #default="{ row }">{{ row.isSplit === 'yes' ? '是' : '否' }}</template>
+        </el-table-column>
         <el-table-column v-if="visibleColumns.customerName" prop="customerName" label="客户名称" min-width="160" />
         <el-table-column v-if="visibleColumns.billingEntity" prop="billingEntity" label="账单主体" min-width="150" />
         <el-table-column v-if="visibleColumns.customerCmdNo" prop="customerCmdNo" label="客户指令号" min-width="130" />
@@ -236,17 +258,6 @@
           <template #default="{ row }">¥{{ formatMoney(row.amountIncTaxCny) }}</template>
         </el-table-column>
         <el-table-column v-if="visibleColumns.settlementUnit" prop="settlementUnit" label="结算单位" min-width="150" />
-        <el-table-column v-if="visibleColumns.customerService" prop="customerService" label="客服" min-width="100" />
-        <el-table-column v-if="visibleColumns.remark" prop="remark" label="备注" min-width="200" show-overflow-tooltip />
-        <el-table-column v-if="visibleColumns.reconciliationStatus" prop="reconciliationStatus" label="对账状态" min-width="100">
-          <template #default="{ row }">
-            <el-tag :type="getReconciliationStatusType(row.reconciliationStatus)" size="small">{{ row.reconciliationStatus }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column v-if="visibleColumns.createBy" prop="createBy" label="创建人" min-width="100" />
-        <el-table-column v-if="visibleColumns.createTime" prop="createTime" label="创建时间" min-width="160" />
-        <el-table-column v-if="visibleColumns.updateBy" prop="updateBy" label="修改人" min-width="100" />
-        <el-table-column v-if="visibleColumns.updateTime" prop="updateTime" label="修改时间" min-width="160" />
       </el-table>
 
       <!-- 分页 -->
@@ -329,11 +340,15 @@ const searchForm = reactive({
   businessMode: '',
   businessRefNo: '',
   isSettled: '',
+  isSplit: '',
   orderCreateTime: [] as string[],
   orderFinishTime: [] as string[],
   customerCmdNo: '',
   masterBillNo: '',
-  houseBillNo: ''
+  houseBillNo: '',
+  revenueItem: '',
+  productL3: '',
+  settlementUnit: ''
 })
 
 // 客户列表
@@ -354,6 +369,27 @@ const warehouseList = ref([
   { code: 'WH005', name: '杭州仓' }
 ])
 
+// 产品标准名L3列表
+const productL3List = ref([
+  { value: '海运运输', label: '海运运输' },
+  { value: '出口报关', label: '出口报关' },
+  { value: '货物运输保险', label: '货物运输保险' },
+  { value: '普通仓储', label: '普通仓储' },
+  { value: '恒温仓储', label: '恒温仓储' },
+  { value: '同城配送', label: '同城配送' },
+  { value: '航空运输', label: '航空运输' },
+  { value: '进口报关', label: '进口报关' }
+])
+
+// 结算单位列表
+const settlementUnitList = ref([
+  { value: '深圳分公司', label: '深圳分公司' },
+  { value: '上海分公司', label: '上海分公司' },
+  { value: '广州分公司', label: '广州分公司' },
+  { value: '北京分公司', label: '北京分公司' },
+  { value: '杭州分公司', label: '杭州分公司' }
+])
+
 // 分页
 const pagination = reactive({
   page: 1,
@@ -363,6 +399,11 @@ const pagination = reactive({
 
 // 选中行
 const selectedRows = ref<any[]>([])
+
+// 判断选中的行中是否有已拆单的记录
+const hasSplitRow = computed(() => {
+  return selectedRows.value.some(row => row.isSplit === 'yes')
+})
 
 // 自定义字段弹窗
 const showCustomFieldDialog = ref(false)
@@ -376,6 +417,7 @@ const splitForm = reactive({
 // 所有字段 - 按需求列出
 const allFields = [
   { key: 'businessRefNo', label: '业务参考编号' },
+  { key: 'isSplit', label: '是否拆单' },
   { key: 'customerName', label: '客户名称' },
   { key: 'billingEntity', label: '账单主体' },
   { key: 'customerCmdNo', label: '客户指令号' },
@@ -407,14 +449,7 @@ const allFields = [
   { key: 'exchangeRate', label: '汇率' },
   { key: 'amountExTaxCny', label: '不含税(折合CNY)' },
   { key: 'amountIncTaxCny', label: '含税(折合CNY)' },
-  { key: 'settlementUnit', label: '结算单位' },
-  { key: 'customerService', label: '客服' },
-  { key: 'remark', label: '备注' },
-  { key: 'reconciliationStatus', label: '对账状态' },
-  { key: 'createBy', label: '创建人' },
-  { key: 'createTime', label: '创建时间' },
-  { key: 'updateBy', label: '修改人' },
-  { key: 'updateTime', label: '修改时间' }
+  { key: 'settlementUnit', label: '结算单位' }
 ]
 
 // 默认显示的字段
@@ -433,6 +468,7 @@ const defaultVisibleColumns: Record<string, boolean> = {
   orderFinishTime: true,
   orderStatus: true,
   isSettled: true,
+  isSplit: true,
   revenueExTaxTotal: true,
   costExTaxTotal: true,
   profitExTaxTotal: true,
@@ -451,14 +487,7 @@ const defaultVisibleColumns: Record<string, boolean> = {
   exchangeRate: true,
   amountExTaxCny: true,
   amountIncTaxCny: true,
-  settlementUnit: true,
-  customerService: true,
-  remark: true,
-  reconciliationStatus: true,
-  createBy: true,
-  createTime: true,
-  updateBy: true,
-  updateTime: true
+  settlementUnit: true
 }
 
 // 可见列
@@ -467,12 +496,12 @@ const visibleColumns = reactive<Record<string, boolean>>({ ...defaultVisibleColu
 // 已选字段
 const selectedFields = ref<string[]>(Object.keys(defaultVisibleColumns).filter(key => defaultVisibleColumns[key]))
 
-// 表格数据 - 模拟数据
-const tableData = ref([
+// 原始表格数据 - 模拟数据
+const originalTableData = [
   {
     businessRefNo: 'PO2026050001',
     customerName: '深圳市腾讯科技有限公司',
-    billingEntity: '销售-SR,销售-CT',
+    billingEntity: '销售-SR,销售-CT,NCDR-CT,NCDR-DS',
     customerCmdNo: 'CMD2026050001',
     masterBillNo: 'MBL2026050001',
     houseBillNo: 'HBL2026050001',
@@ -484,48 +513,7 @@ const tableData = ref([
     orderFinishTime: '2026-05-05 18:00:00',
     orderStatus: '已完成',
     isSettled: 'yes',
-    revenueExTaxTotal: 50000.00,
-    costExTaxTotal: 35000.00,
-    profitExTaxTotal: 15000.00,
-    revenueIncTaxTotal: 56500.00,
-    costIncTaxTotal: 39550.00,
-    profitIncTaxTotal: 16950.00,
-    revenueItem: '仓储费',
-    productL1: '物流服务',
-    productL2: '仓储服务',
-    productL3: '普通仓储',
-    currency: 'CNY',
-    amountExTax: 50000.00,
-    taxRate: 0.13,
-    taxAmount: 6500.00,
-    amountIncTax: 56500.00,
-    exchangeRate: 1.0,
-    amountExTaxCny: 50000.00,
-    amountIncTaxCny: 56500.00,
-    settlementUnit: '深圳分公司',
-    customerService: '张三',
-    remark: '20GP整柜从深圳到洛杉矶',
-    reconciliationStatus: '已对账',
-    createBy: '张三',
-    createTime: '2026-05-01 10:30:00',
-    updateBy: '李四',
-    updateTime: '2026-05-03 14:00:00'
-  },
-  {
-    businessRefNo: 'PO2026050001',
-    customerName: '深圳市腾讯科技有限公司',
-    billingEntity: '销售-SR,NCDR-CT',
-    customerCmdNo: 'CMD2026050001',
-    masterBillNo: 'MBL2026050001',
-    houseBillNo: 'HBL2026050001',
-    warehouse: '深圳仓',
-    businessMode: 'fob',
-    businessNo: 'YW2026050001',
-    flowSheetNo: 'LZ2026050001',
-    orderCreateTime: '2026-04-28 09:00:00',
-    orderFinishTime: '2026-05-05 18:00:00',
-    orderStatus: '已完成',
-    isSettled: 'yes',
+    isSplit: 'yes',
     revenueExTaxTotal: 50000.00,
     costExTaxTotal: 35000.00,
     profitExTaxTotal: 15000.00,
@@ -556,7 +544,7 @@ const tableData = ref([
   {
     businessRefNo: 'PO2026050001',
     customerName: '深圳市腾讯科技有限公司',
-    billingEntity: '销售-SR,NCDR-DS',
+    billingEntity: '销售-SR,销售-CT,NCDR-CT,NCDR-DS',
     customerCmdNo: 'CMD2026050001',
     masterBillNo: 'MBL2026050001',
     houseBillNo: 'HBL2026050001',
@@ -568,6 +556,7 @@ const tableData = ref([
     orderFinishTime: '2026-05-05 18:00:00',
     orderStatus: '已完成',
     isSettled: 'yes',
+    isSplit: 'no',
     revenueExTaxTotal: 50000.00,
     costExTaxTotal: 35000.00,
     profitExTaxTotal: 15000.00,
@@ -610,6 +599,7 @@ const tableData = ref([
     orderFinishTime: '2026-05-05 18:00:00',
     orderStatus: '已完成',
     isSettled: 'yes',
+    isSplit: 'no',
     revenueExTaxTotal: 50000.00,
     costExTaxTotal: 35000.00,
     profitExTaxTotal: 15000.00,
@@ -652,6 +642,7 @@ const tableData = ref([
     orderFinishTime: '2026-05-08 17:00:00',
     orderStatus: '已完成',
     isSettled: 'no',
+    isSplit: 'no',
     revenueExTaxTotal: 80000.00,
     costExTaxTotal: 55000.00,
     profitExTaxTotal: 25000.00,
@@ -694,6 +685,7 @@ const tableData = ref([
     orderFinishTime: '2026-05-08 17:00:00',
     orderStatus: '已完成',
     isSettled: 'no',
+    isSplit: 'yes',
     revenueExTaxTotal: 80000.00,
     costExTaxTotal: 55000.00,
     profitExTaxTotal: 25000.00,
@@ -736,6 +728,7 @@ const tableData = ref([
     orderFinishTime: '2026-05-10 16:30:00',
     orderStatus: '执行中',
     isSettled: 'no',
+    isSplit: 'no',
     revenueExTaxTotal: 120000.00,
     costExTaxTotal: 85000.00,
     profitExTaxTotal: 35000.00,
@@ -778,6 +771,7 @@ const tableData = ref([
     orderFinishTime: '2026-05-10 16:30:00',
     orderStatus: '执行中',
     isSettled: 'no',
+    isSplit: 'no',
     revenueExTaxTotal: 120000.00,
     costExTaxTotal: 85000.00,
     profitExTaxTotal: 35000.00,
@@ -820,6 +814,7 @@ const tableData = ref([
     orderFinishTime: '2026-05-15 12:00:00',
     orderStatus: '待执行',
     isSettled: 'no',
+    isSplit: 'no',
     revenueExTaxTotal: 200000.00,
     costExTaxTotal: 140000.00,
     profitExTaxTotal: 60000.00,
@@ -862,6 +857,7 @@ const tableData = ref([
     orderFinishTime: '2026-05-15 12:00:00',
     orderStatus: '待执行',
     isSettled: 'no',
+    isSplit: 'yes',
     revenueExTaxTotal: 200000.00,
     costExTaxTotal: 140000.00,
     profitExTaxTotal: 60000.00,
@@ -904,6 +900,7 @@ const tableData = ref([
     orderFinishTime: '2026-05-15 12:00:00',
     orderStatus: '待执行',
     isSettled: 'no',
+    isSplit: 'no',
     revenueExTaxTotal: 200000.00,
     costExTaxTotal: 140000.00,
     profitExTaxTotal: 60000.00,
@@ -931,7 +928,10 @@ const tableData = ref([
     updateBy: '',
     updateTime: ''
   }
-])
+]
+
+// 表格数据
+const tableData = ref([...originalTableData])
 
 // 设置分页总数
 pagination.total = tableData.value.length
@@ -963,15 +963,6 @@ const getOrderStatusType = (status: string) => {
   return types[status] || 'info'
 }
 
-// 获取对账状态类型
-const getReconciliationStatusType = (status: string) => {
-  const types: Record<string, string> = {
-    '已对账': 'success',
-    '待对账': 'warning',
-    '部分对账': 'warning'
-  }
-  return types[status] || 'info'
-}
 
 // 搜索
 const handleSearch = () => {
@@ -981,6 +972,85 @@ const handleSearch = () => {
   }
   loading.value = true
   setTimeout(() => {
+    // 根据查询条件过滤数据
+    let filteredData = [...originalTableData]
+
+    // 客户名称过滤
+    if (searchForm.customerId) {
+      const customerMap: Record<number, string> = {
+        1: '深圳市腾讯科技有限公司',
+        2: '阿里巴巴（中国）有限公司',
+        3: '字节跳动科技有限公司',
+        4: '华为技术有限公司',
+        5: '京东集团股份有限公司'
+      }
+      filteredData = filteredData.filter(item => item.customerName === customerMap[searchForm.customerId])
+    }
+
+    // 仓库过滤
+    if (searchForm.warehouseCode) {
+      const warehouseMap: Record<string, string> = {
+        'WH001': '深圳仓',
+        'WH002': '上海仓',
+        'WH003': '广州仓',
+        'WH004': '北京仓',
+        'WH005': '杭州仓'
+      }
+      filteredData = filteredData.filter(item => item.warehouse === warehouseMap[searchForm.warehouseCode])
+    }
+
+    // 业务模式过滤
+    if (searchForm.businessMode) {
+      filteredData = filteredData.filter(item => item.businessMode === searchForm.businessMode)
+    }
+
+    // 业务参考编号过滤
+    if (searchForm.businessRefNo) {
+      filteredData = filteredData.filter(item => item.businessRefNo.includes(searchForm.businessRefNo))
+    }
+
+    // 是否结算订单过滤
+    if (searchForm.isSettled) {
+      filteredData = filteredData.filter(item => item.isSettled === searchForm.isSettled)
+    }
+
+    // 是否拆单过滤
+    if (searchForm.isSplit) {
+      filteredData = filteredData.filter(item => item.isSplit === searchForm.isSplit)
+    }
+
+    // 客户指令号过滤
+    if (searchForm.customerCmdNo) {
+      filteredData = filteredData.filter(item => item.customerCmdNo.includes(searchForm.customerCmdNo))
+    }
+
+    // 总运单过滤
+    if (searchForm.masterBillNo) {
+      filteredData = filteredData.filter(item => item.masterBillNo.includes(searchForm.masterBillNo))
+    }
+
+    // 分运单过滤
+    if (searchForm.houseBillNo) {
+      filteredData = filteredData.filter(item => item.houseBillNo.includes(searchForm.houseBillNo))
+    }
+
+    // 收入项目过滤
+    if (searchForm.revenueItem) {
+      filteredData = filteredData.filter(item => item.revenueItem.includes(searchForm.revenueItem))
+    }
+
+    // 产品标准名L3过滤
+    if (searchForm.productL3) {
+      filteredData = filteredData.filter(item => item.productL3 === searchForm.productL3)
+    }
+
+    // 结算单位过滤
+    if (searchForm.settlementUnit) {
+      filteredData = filteredData.filter(item => item.settlementUnit === searchForm.settlementUnit)
+    }
+
+    tableData.value = filteredData
+    pagination.total = filteredData.length
     loading.value = false
     hasSearched.value = true
     ElMessage.success('查询订单收入明细成功')
@@ -999,6 +1069,9 @@ const handleReset = () => {
   })
   searchForm.customerId = null
   hasSearched.value = false
+  // 恢复原始数据
+  tableData.value = [...originalTableData]
+  pagination.total = originalTableData.length
   ElMessage.info('已重置搜索条件')
 }
 
@@ -1015,6 +1088,10 @@ const handleExport = () => {
 const handleSplitAllocation = () => {
   if (selectedRows.value.length === 0) {
     ElMessage.warning('请选择要拆单的数据')
+    return
+  }
+  if (hasSplitRow.value) {
+    ElMessage.warning('选中的数据中包含已拆单的记录，不能进行拆单操作')
     return
   }
   // 重置表单

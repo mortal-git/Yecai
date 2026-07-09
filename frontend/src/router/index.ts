@@ -26,6 +26,52 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import('../views/Dashboard.vue'),
         meta: { title: '首页', icon: 'House' }
       },
+      // 智能体模块
+      {
+        path: 'agent',
+        name: 'Agent',
+        meta: { title: '智能体', icon: 'MagicStick' },
+        children: [
+          {
+            path: '',
+            name: 'AgentChat',
+            component: () => import('../views/agent/Index.vue'),
+            meta: { title: '对话工作台' }
+          },
+          {
+            path: 'models',
+            name: 'AgentModels',
+            component: () => import('../views/agent/ModelConfig.vue'),
+            meta: { title: '模型配置' }
+          }
+        ]
+      },
+      // 合同管理模块
+      {
+        path: 'contract',
+        name: 'Contract',
+        meta: { title: '合同管理', icon: 'Notebook' },
+        children: [
+          {
+            path: 'list',
+            name: 'ContractList',
+            component: () => import('../views/contract/List.vue'),
+            meta: { title: '合同列表' }
+          },
+          {
+            path: 'upload',
+            name: 'ContractUpload',
+            component: () => import('../views/contract/Upload.vue'),
+            meta: { title: '合同上传' }
+          },
+          {
+            path: 'draft',
+            name: 'ContractDraft',
+            component: () => import('../views/contract/Draft.vue'),
+            meta: { title: '起草拟定' }
+          }
+        ]
+      },
       // 订单管理模块
       {
         path: 'order',

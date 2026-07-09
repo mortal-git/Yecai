@@ -3,7 +3,12 @@
     "allow": [
       "Read(//c/Users/甄德衡/.claude/skills/web-access/**)",
       "Bash(rm -rf web-access)",
-      "Bash(mkdir -p \"D:/泓明/claude/yecai/frontend/src/types\" \"D:/泓明/claude/yecai/frontend/src/store\" \"D:/泓明/claude/yecai/frontend/src/composables\" \"D:/泓明/claude/yecai/frontend/src/components/workflow/nodes\" \"D:/泓明/claude/yecai/frontend/src/components/workflow/condition\")"
+      "Bash(mkdir -p \"D:/泓明/claude/yecai/frontend/src/types\" \"D:/泓明/claude/yecai/frontend/src/store\" \"D:/泓明/claude/yecai/frontend/src/composables\" \"D:/泓明/claude/yecai/frontend/src/components/workflow/nodes\" \"D:/泓明/claude/yecai/frontend/src/components/workflow/condition\")",
+      "Bash(curl -s \"http://localhost:5173/agent\" -o /dev/null -w \"HTTP %{http_code}\\\\n\")",
+      "Bash(npx vue-tsc *)",
+      "Bash(echo \"exit=$?\")",
+      "Read(//tmp/**)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:5173/agent)"
     ],
     "additionalDirectories": [
       "C:\\Users\\甄德衡\\.claude\\skills",

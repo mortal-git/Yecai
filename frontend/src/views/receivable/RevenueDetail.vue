@@ -164,6 +164,10 @@
         <el-icon><Download /></el-icon>
         导出
       </el-button>
+      <el-button type="primary" @click="handleGenerateStatement" :disabled="selectedRows.length === 0">
+        <el-icon><Document /></el-icon>
+        生成对账单
+      </el-button>
       <el-button @click="handleCustomFields">
         <el-icon><Setting /></el-icon>
         自定义字段
@@ -330,7 +334,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Search, Refresh, Download, Setting } from '@element-plus/icons-vue'
+import { Search, Refresh, Download, Setting, Document } from '@element-plus/icons-vue'
 
 // 搜索表单
 const searchForm = reactive({
@@ -705,6 +709,16 @@ const handleExport = () => {
     return
   }
   ElMessage.success(`导出 ${selectedRows.value.length} 条数据`)
+}
+
+// 生成对账单
+const handleGenerateStatement = () => {
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请选择要生成对账单的数据')
+    return
+  }
+  // 后续生成对账单的逻辑在这里实现
+  ElMessage.success(`正在为 ${selectedRows.value.length} 条数据生成对账单`)
 }
 
 // 自定义字段

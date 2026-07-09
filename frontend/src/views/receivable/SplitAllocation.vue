@@ -105,13 +105,6 @@
             style="width: 220px"
           />
         </el-form-item>
-        <el-form-item label="对账状态">
-          <el-select v-model="searchForm.reconciliationStatus" placeholder="请选择" clearable style="width: 150px">
-            <el-option label="未对账" value="unreconciled" />
-            <el-option label="对账中" value="reconciling" />
-            <el-option label="已对账" value="reconciled" />
-          </el-select>
-        </el-form-item>
         <el-form-item label="是否结算订单">
           <el-select v-model="searchForm.isSettled" placeholder="请选择" clearable style="width: 150px">
             <el-option label="是" value="yes" />
@@ -149,6 +142,19 @@
         <el-form-item label="分运单">
           <el-input v-model="searchForm.houseWaybillNo" placeholder="请输入" clearable style="width: 180px" />
         </el-form-item>
+        <el-form-item label="收入项目">
+          <el-input v-model="searchForm.incomeItem" placeholder="请输入" clearable style="width: 180px" />
+        </el-form-item>
+        <el-form-item label="产品标准名L3">
+          <el-select v-model="searchForm.productL3" placeholder="请选择" clearable filterable style="width: 180px">
+            <el-option v-for="item in productL3List" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="结算单位">
+          <el-select v-model="searchForm.settlementUnit" placeholder="请选择" clearable filterable style="width: 180px">
+            <el-option v-for="item in settlementUnitList" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">
             <el-icon><Search /></el-icon>
@@ -162,6 +168,8 @@
       </el-form>
     </div>
 
+
+
     <!-- 操作按钮区域 -->
     <div class="action-bar">
       <el-button type="primary" @click="handleExportSelected" :disabled="selectedRows.length === 0">
@@ -172,7 +180,7 @@
 
     <!-- 待分摊订单列表 -->
     <div class="table-container">
-      <div class="table-title">待分摊订单列表</div>
+      <div class="table-title"></div>
       <el-table
         ref="tableRef"
         :data="orderList"
@@ -263,19 +271,6 @@
           <template #default="{ row }">¥{{ formatMoney(row.amountIncTaxCny) }}</template>
         </el-table-column>
         <el-table-column prop="settlementUnit" label="结算单位" min-width="150" />
-        <el-table-column prop="customerService" label="客服" min-width="100" />
-        <el-table-column prop="remark" label="备注" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="reconciliationStatus" label="对账状态" min-width="100">
-          <template #default="{ row }">
-            <el-tag :type="getReconciliationStatusType(row.reconciliationStatus)" size="small">
-              {{ getReconciliationStatusText(row.reconciliationStatus) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="createBy" label="创建人" min-width="100" />
-        <el-table-column prop="createTime" label="创建时间" min-width="160" />
-        <el-table-column prop="updateBy" label="修改人" min-width="100" />
-        <el-table-column prop="updateTime" label="修改时间" min-width="160" />
         <el-table-column prop="splitBy" label="拆单人" min-width="100" />
         <el-table-column prop="splitTime" label="拆单时间" min-width="160" />
       </el-table>
@@ -418,13 +413,15 @@ const searchForm = reactive({
   warehouse: '',
   businessMode: '',
   businessRefNo: '',
-  reconciliationStatus: '',
   isSettled: '',
   orderCreateTime: [] as string[],
   orderCompleteTime: [] as string[],
   customerInstructionNo: '',
   masterWaybillNo: '',
-  houseWaybillNo: ''
+  houseWaybillNo: '',
+  incomeItem: '',
+  productL3: '',
+  settlementUnit: ''
 })
 
 // 客户列表
@@ -434,6 +431,29 @@ const customerList = ref([
   { id: 3, name: '字节跳动科技有限公司' },
   { id: 4, name: '华为技术有限公司' },
   { id: 5, name: '京东集团股份有限公司' }
+])
+
+// 产品标准名L3列表
+const productL3List = ref([
+  { value: '海运', label: '海运' },
+  { value: '空运', label: '空运' },
+  { value: '铁路运输', label: '铁路运输' },
+  { value: '卡航', label: '卡航' },
+  { value: '出口报关', label: '出口报关' },
+  { value: '货物运输保险', label: '货物运输保险' },
+  { value: '普通仓储', label: '普通仓储' },
+  { value: '恒温仓储', label: '恒温仓储' },
+  { value: '同城配送', label: '同城配送' },
+  { value: '进口报关', label: '进口报关' }
+])
+
+// 结算单位列表
+const settlementUnitList = ref([
+  { value: '深圳市腾讯科技有限公司', label: '深圳市腾讯科技有限公司' },
+  { value: '阿里巴巴（中国）有限公司', label: '阿里巴巴（中国）有限公司' },
+  { value: '字节跳动科技有限公司', label: '字节跳动科技有限公司' },
+  { value: '华为技术有限公司', label: '华为技术有限公司' },
+  { value: '京东集团股份有限公司', label: '京东集团股份有限公司' }
 ])
 
 // 分页
@@ -460,7 +480,7 @@ const orderList = ref([
     id: 1,
     businessRefNo: 'PO2024050001',
     customerName: '深圳市腾讯科技有限公司',
-    billingEntity: '深圳泓明',
+    billingEntity: '销售-SR',
     customerInstructionNo: 'CI2024050001',
     masterWaybillNo: 'MWB2024050001',
     houseWaybillNo: 'HWB2024050001',
@@ -503,9 +523,9 @@ const orderList = ref([
   },
   {
     id: 2,
-    businessRefNo: 'PO2024050002',
+    businessRefNo: 'PO2024050001',
     customerName: '阿里巴巴（中国）有限公司',
-    billingEntity: '上海泓明',
+    billingEntity: '销售-CT',
     customerInstructionNo: 'CI2024050002',
     masterWaybillNo: 'MWB2024050002',
     houseWaybillNo: 'HWB2024050002',
@@ -545,6 +565,96 @@ const orderList = ref([
     updateTime: '2024-05-15 10:00:00',
     splitBy: '赵六',
     splitTime: '2024-05-16 14:00:00'
+  },
+  {
+    id: 3,
+    businessRefNo: 'PO2024050001',
+    customerName: '字节跳动科技有限公司',
+    billingEntity: 'NCDR-CT',
+    customerInstructionNo: 'CI2024050003',
+    masterWaybillNo: 'MWB2024050003',
+    houseWaybillNo: 'HWB2024050003',
+    warehouse: '广州仓库',
+    businessMode: 'ddp',
+    businessNo: 'BUS2024050003',
+    transferOrderNo: 'TR2024050003',
+    orderCreateTime: '2024-05-03 09:15:00',
+    orderCompleteTime: '2024-05-18 11:20:00',
+    orderStatus: '已完成',
+    isSettled: 'no',
+    incomeExTaxTotal: 185840.71,
+    costExTaxTotal: 129911.50,
+    profitExTaxTotal: 55929.21,
+    incomeIncTaxTotal: 210000.00,
+    costIncTaxTotal: 146800.00,
+    profitIncTaxTotal: 63200.00,
+    incomeItem: '国际货运代理',
+    productL1: '物流服务',
+    productL2: '国际货运',
+    productL3: '铁路运输',
+    currency: 'CNY',
+    amountExTax: 185840.71,
+    taxRate: 13,
+    taxAmount: 24159.29,
+    amountIncTax: 210000.00,
+    exchangeRate: 1.0000,
+    amountExTaxCny: 185840.71,
+    amountIncTaxCny: 210000.00,
+    settlementUnit: '字节跳动科技有限公司',
+    customerService: '孙七',
+    remark: '广州到欧洲铁路运输订单',
+    reconciliationStatus: 'unreconciled',
+    createBy: '管理员',
+    createTime: '2024-05-03 08:30:00',
+    updateBy: '管理员',
+    updateTime: '2024-05-18 12:00:00',
+    splitBy: '周八',
+    splitTime: '2024-05-19 09:30:00'
+  },
+  {
+    id: 4,
+    businessRefNo: 'PO2024050001',
+    customerName: '华为技术有限公司',
+    billingEntity: 'NCDR-DS',
+    customerInstructionNo: 'CI2024050004',
+    masterWaybillNo: 'MWB2024050004',
+    houseWaybillNo: 'HWB2024050004',
+    warehouse: '北京仓库',
+    businessMode: 'exw',
+    businessNo: 'BUS2024050004',
+    transferOrderNo: 'TR2024050004',
+    orderCreateTime: '2024-05-04 16:40:00',
+    orderCompleteTime: '2024-05-22 15:10:00',
+    orderStatus: '已完成',
+    isSettled: 'yes',
+    incomeExTaxTotal: 318584.07,
+    costExTaxTotal: 229858.41,
+    profitExTaxTotal: 88725.66,
+    incomeIncTaxTotal: 360000.00,
+    costIncTaxTotal: 259740.00,
+    profitIncTaxTotal: 100260.00,
+    incomeItem: '国际货运代理',
+    productL1: '物流服务',
+    productL2: '国际货运',
+    productL3: '卡航',
+    currency: 'CNY',
+    amountExTax: 318584.07,
+    taxRate: 13,
+    taxAmount: 41415.93,
+    amountIncTax: 360000.00,
+    exchangeRate: 1.0000,
+    amountExTaxCny: 318584.07,
+    amountIncTaxCny: 360000.00,
+    settlementUnit: '华为技术有限公司',
+    customerService: '吴九',
+    remark: '北京到东南亚卡航订单',
+    reconciliationStatus: 'reconciled',
+    createBy: '管理员',
+    createTime: '2024-05-04 15:30:00',
+    updateBy: '管理员',
+    updateTime: '2024-05-22 16:00:00',
+    splitBy: '郑十',
+    splitTime: '2024-05-23 11:15:00'
   }
 ])
 
@@ -618,25 +728,6 @@ const getOrderStatusType = (status: string) => {
   return types[status] || 'info'
 }
 
-// 获取对账状态文本
-const getReconciliationStatusText = (status: string) => {
-  const texts: Record<string, string> = {
-    unreconciled: '未对账',
-    reconciling: '对账中',
-    reconciled: '已对账'
-  }
-  return texts[status] || status
-}
-
-// 获取对账状态类型
-const getReconciliationStatusType = (status: string) => {
-  const types: Record<string, string> = {
-    unreconciled: 'warning',
-    reconciling: 'primary',
-    reconciled: 'success'
-  }
-  return types[status] || 'info'
-}
 
 // 计算金额
 const calculateAmount = (row: any) => {
@@ -665,6 +756,78 @@ const handleSearch = () => {
   }
   loading.value = true
   setTimeout(() => {
+    // 根据查询条件过滤数据
+    let filteredData = [...orderList.value]
+
+    // 客户名称过滤
+    if (searchForm.customerId) {
+      const customerMap: Record<number, string> = {
+        1: '深圳市腾讯科技有限公司',
+        2: '阿里巴巴（中国）有限公司',
+        3: '字节跳动科技有限公司',
+        4: '华为技术有限公司',
+        5: '京东集团股份有限公司'
+      }
+      filteredData = filteredData.filter(item => item.customerName === customerMap[searchForm.customerId])
+    }
+
+    // 账单主体过滤
+    if (searchForm.billingEntity) {
+      filteredData = filteredData.filter(item => item.billingEntity.includes(searchForm.billingEntity))
+    }
+
+    // 仓库过滤
+    if (searchForm.warehouse) {
+      filteredData = filteredData.filter(item => item.warehouse === searchForm.warehouse)
+    }
+
+    // 业务模式过滤
+    if (searchForm.businessMode) {
+      filteredData = filteredData.filter(item => item.businessMode === searchForm.businessMode)
+    }
+
+    // 业务参考编号过滤
+    if (searchForm.businessRefNo) {
+      filteredData = filteredData.filter(item => item.businessRefNo.includes(searchForm.businessRefNo))
+    }
+
+    // 是否结算订单过滤
+    if (searchForm.isSettled) {
+      filteredData = filteredData.filter(item => item.isSettled === searchForm.isSettled)
+    }
+
+    // 客户指令号过滤
+    if (searchForm.customerInstructionNo) {
+      filteredData = filteredData.filter(item => item.customerInstructionNo.includes(searchForm.customerInstructionNo))
+    }
+
+    // 总运单过滤
+    if (searchForm.masterWaybillNo) {
+      filteredData = filteredData.filter(item => item.masterWaybillNo.includes(searchForm.masterWaybillNo))
+    }
+
+    // 分运单过滤
+    if (searchForm.houseWaybillNo) {
+      filteredData = filteredData.filter(item => item.houseWaybillNo.includes(searchForm.houseWaybillNo))
+    }
+
+    // 收入项目过滤
+    if (searchForm.incomeItem) {
+      filteredData = filteredData.filter(item => item.incomeItem.includes(searchForm.incomeItem))
+    }
+
+    // 产品标准名L3过滤
+    if (searchForm.productL3) {
+      filteredData = filteredData.filter(item => item.productL3 === searchForm.productL3)
+    }
+
+    // 结算单位过滤
+    if (searchForm.settlementUnit) {
+      filteredData = filteredData.filter(item => item.settlementUnit === searchForm.settlementUnit)
+    }
+
+    orderList.value = filteredData
+    pagination.total = filteredData.length
     loading.value = false
     ElMessage.success('查询成功')
     pagination.page = 1

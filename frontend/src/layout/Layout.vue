@@ -20,6 +20,25 @@
             <template #title>首页</template>
           </el-menu-item>
 
+          <el-sub-menu index="agent">
+            <template #title>
+              <el-icon><MagicStick /></el-icon>
+              <span>智能体</span>
+            </template>
+            <el-menu-item index="/agent">对话工作台</el-menu-item>
+            <el-menu-item index="/agent/models">模型配置</el-menu-item>
+          </el-sub-menu>
+
+          <el-sub-menu index="contract">
+            <template #title>
+              <el-icon><Notebook /></el-icon>
+              <span>合同管理</span>
+            </template>
+            <el-menu-item index="/contract/list">合同列表</el-menu-item>
+            <el-menu-item index="/contract/draft">起草拟定</el-menu-item>
+            <el-menu-item index="/contract/upload">合同上传</el-menu-item>
+          </el-sub-menu>
+
           <el-sub-menu index="quotation">
             <template #title>
               <el-icon><PriceTag /></el-icon>
@@ -86,7 +105,7 @@
             <el-menu-item index="/receivable/list">应收列表</el-menu-item>
             <el-menu-item index="/receivable/revenue-detail">应收收入明细</el-menu-item>
             <el-menu-item index="/receivable/order-revenue-detail">订单收入明细</el-menu-item>
-            <el-menu-item index="/receivable/split-allocation">拆单均摊</el-menu-item>
+            <el-menu-item index="/receivable/split-allocation">拆单均摊明细</el-menu-item>
             <el-menu-item index="/receivable/collection">收款管理</el-menu-item>
             <el-menu-item index="/receivable/aging">账龄分析</el-menu-item>
           </el-sub-menu>
@@ -262,7 +281,9 @@ import {
   Bell,
   Expand,
   PriceTag,
-  Tickets
+  Tickets,
+  MagicStick,
+  Notebook
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -315,6 +336,10 @@ const handleMenuSelect = (index: string) => {
   // 父菜单跳转默认第一个子页面
   else if (index === 'quotation') {
     router.push('/quotation/customer')
+  } else if (index === 'agent') {
+    router.push('/agent')
+  } else if (index === 'contract') {
+    router.push('/contract/list')
   } else if (index === 'ruleEngine') {
     router.push('/ruleEngine/list')
   } else if (index === 'document') {
