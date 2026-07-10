@@ -18,12 +18,11 @@
         <el-button v-if="statement.status === 'draft'" type="primary" @click="handleSubmitAudit">提交审核</el-button>
         <el-button v-if="statement.status === 'pending'" type="success" @click="handleAudit(true)">审核通过</el-button>
         <el-button v-if="statement.status === 'pending'" type="warning" @click="handleAudit(false)">审核驳回</el-button>
-        <el-button v-if="statement.status === 'confirmed'" type="primary" @click="handleSend">发送对账单</el-button>
-        <el-button v-if="statement.status === 'sent'" @click="openPaymentDialog">关联付款/申请付款</el-button>
-        <el-button v-if="statement.status === 'sent'" @click="openInvoiceDialog">关联进项发票</el-button>
-        <el-button v-if="statement.status === 'sent'" type="warning" @click="openWriteOffDialog">核销</el-button>
+        <el-button v-if="statement.status === 'pending_payment'" type="primary" @click="openPaymentDialog">付款登记</el-button>
+        <el-button v-if="statement.status === 'pending_payment'" @click="openInvoiceDialog">关联进项发票</el-button>
+        <el-button v-if="statement.status === 'paid'" type="warning" @click="handleCancel">作废</el-button>
         <el-button @click="handlePrint">打印</el-button>
-        <el-button v-if="statement.status === 'draft' || statement.status === 'cancelled'" type="danger" @click="handleDelete">删除</el-button>
+        <el-button v-if="statement.status === 'draft'" type="danger" @click="handleDelete">删除</el-button>
       </div>
     </div>
 
@@ -48,8 +47,8 @@
         <el-descriptions-item label="对账单含税金额">
           <span class="amount">¥{{ formatMoney(statement.totalIncTaxCny) }}</span>
         </el-descriptions-item>
-        <el-descriptions-item label="未核销金额">
-          <span class="amount-unsettled">¥{{ formatMoney(unWrittenOffAmount) }}</span>
+        <el-descriptions-item label="未付款金额">
+          <span class="amount-unsettled">¥{{ formatMoney(unpaidAmount) }}</span>
         </el-descriptions-item>
         <el-descriptions-item label="备注" :span="3">{{ statement.remark || '-' }}</el-descriptions-item>
         <el-descriptions-item label="创建人">{{ statement.creator }}</el-descriptions-item>
@@ -102,8 +101,8 @@
 
         <el-tab-pane :label="`关联付款单 (${statement.payments.length})`" name="payments">
           <div class="tab-toolbar">
-            <span>付款合计：<b>¥{{ formatMoney(paymentTotal) }}</b>　已核销：<b>¥{{ formatMoney(writtenOffTotal) }}</b></span>
-            <el-button v-if="statement.status === 'sent'" type="primary" size="small" @click="openPaymentDialog">关联付款/申请付款</el-button>
+            <span>付款合计：<b>¥{{ formatMoney(paymentTotal) }}</b>　已付款：<b>¥{{ formatMoney(paidTotal) }}</b></span>
+            <el-button v-if="statement.status === 'pending_payment'" type="primary" size="small" @click="openPaymentDialog">付款登记</el-button>
           </div>
           <el-empty v-if="statement.payments.length === 0" description="暂无关联付款单" />
           <el-table v-else :data="statement.payments" border stripe size="small">
@@ -115,7 +114,7 @@
             <el-table-column prop="paymentMethod" label="付款方式" min-width="100" />
             <el-table-column prop="status" label="状态" min-width="80">
               <template #default="{ row }">
-                <el-tag :type="row.status === '已核销' ? 'success' : 'warning'" size="small">{{ row.status }}</el-tag>
+                <el-tag type="success" size="small">{{ row.status }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="remark" label="备注" min-width="160" show-overflow-tooltip />
@@ -125,7 +124,7 @@
         <el-tab-pane :label="`关联进项发票 (${statement.invoices.length})`" name="invoices">
           <div class="tab-toolbar">
             <span>发票价税合计：<b>¥{{ formatMoney(invoiceTotal) }}</b></span>
-            <el-button v-if="statement.status === 'sent'" type="primary" size="small" @click="openInvoiceDialog">关联进项发票</el-button>
+            <el-button v-if="statement.status === 'pending_payment'" type="primary" size="small" @click="openInvoiceDialog">关联进项发票</el-button>
           </div>
           <el-empty v-if="statement.invoices.length === 0" description="暂无关联发票" />
           <el-table v-else :data="statement.invoices" border stripe size="small">
@@ -145,7 +144,7 @@
             </el-table-column>
             <el-table-column prop="status" label="状态" min-width="80">
               <template #default="{ row }">
-                <el-tag :type="row.status === '已核销' ? 'success' : 'warning'" size="small">{{ row.status }}</el-tag>
+                <el-tag type="success" size="small">{{ row.status }}</el-tag>
               </template>
             </el-table-column>
           </el-table>
@@ -170,7 +169,6 @@
     <!-- 弹窗 -->
     <PaymentLinkDialog v-model="paymentDialogVisible" :statement="statement" @confirm="onPaymentLinked" />
     <InvoiceLinkDialog v-model="invoiceDialogVisible" :statement="statement" @confirm="onInvoiceLinked" />
-    <WriteOffDialog v-model="writeOffDialogVisible" :statement="statement" @confirm="onWrittenOff" />
   </div>
 
   <el-empty v-else description="对账单不存在或已删除" style="margin-top: 100px">
@@ -193,7 +191,6 @@ import {
 } from '../../../store/payableStatement'
 import PaymentLinkDialog from './components/PaymentLinkDialog.vue'
 import InvoiceLinkDialog from './components/InvoiceLinkDialog.vue'
-import WriteOffDialog from './components/WriteOffDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -206,11 +203,11 @@ const activeTab = ref('rows')
 const formatMoney = (value: number) => (value || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 const paymentTotal = computed(() => statement.value?.payments.reduce((s, p) => s + p.amount, 0) || 0)
-const writtenOffTotal = computed(() => statement.value?.payments.filter(p => p.status === '已核销').reduce((s, p) => s + p.amount, 0) || 0)
+const paidTotal = computed(() => statement.value?.payments.filter(p => p.status === '已付款').reduce((s, p) => s + p.amount, 0) || 0)
 const invoiceTotal = computed(() => statement.value?.invoices.reduce((s, i) => s + i.incTaxAmount, 0) || 0)
-const unWrittenOffAmount = computed(() => {
+const unpaidAmount = computed(() => {
   if (!statement.value) return 0
-  return Math.max(0, statement.value.totalIncTaxCny - writtenOffTotal.value)
+  return Math.max(0, statement.value.totalIncTaxCny - paidTotal.value)
 })
 
 const getRowsSummary = () => {
@@ -244,7 +241,7 @@ const handleAudit = (passed: boolean) => {
   ElMessageBox.confirm(`确认${passed ? '通过' : '驳回'}审核?`, '提示', { type: 'warning' })
     .then(() => {
       if (passed) {
-        store.changeStatus(statement.value!.id, 'confirmed', '审核通过')
+        store.changeStatus(statement.value!.id, 'pending_payment', '审核通过')
         ElMessage.success('审核已通过')
       } else {
         store.changeStatus(statement.value!.id, 'draft', '审核驳回')
@@ -254,11 +251,11 @@ const handleAudit = (passed: boolean) => {
     .catch(() => {})
 }
 
-const handleSend = () => {
-  ElMessageBox.confirm('确认发送对账单给供应商?', '提示', { type: 'warning' })
+const handleCancel = () => {
+  ElMessageBox.confirm('确认作废此对账单?作废后不可恢复', '警告', { type: 'warning' })
     .then(() => {
-      store.changeStatus(statement.value!.id, 'sent', '发送对账单', '通过邮件发送')
-      ElMessage.success('已发送')
+      store.changeStatus(statement.value!.id, 'cancelled', '作废对账单')
+      ElMessage.success('已作废')
     })
     .catch(() => {})
 }
@@ -280,29 +277,18 @@ const handlePrint = () => {
 // 弹窗
 const paymentDialogVisible = ref(false)
 const invoiceDialogVisible = ref(false)
-const writeOffDialogVisible = ref(false)
 
 const openPaymentDialog = () => { paymentDialogVisible.value = true }
 const openInvoiceDialog = () => { invoiceDialogVisible.value = true }
-const openWriteOffDialog = () => { writeOffDialogVisible.value = true }
 
 const onPaymentLinked = (payment: Omit<PaymentRecord, 'id'>) => {
   store.addPayment(statement.value!.id, payment)
-  ElMessage.success('关联付款单成功')
+  ElMessage.success('付款登记成功，对账单状态已变更为已付款')
 }
 
 const onInvoiceLinked = (invoice: Omit<InvoiceRecord, 'id'>) => {
   store.addInvoice(statement.value!.id, invoice)
   ElMessage.success('关联发票成功')
-}
-
-const onWrittenOff = (paymentIds: string[]) => {
-  paymentIds.forEach(pid => store.writeOffPayment(statement.value!.id, pid))
-  const cur = store.getById(statement.value!.id)
-  if (cur && cur.payments.length > 0 && cur.payments.every(p => p.status === '已核销')) {
-    store.changeStatus(cur.id, 'writtenOff', '核销完成，对账单已核销')
-  }
-  ElMessage.success(`已核销 ${paymentIds.length} 笔付款`)
 }
 
 onMounted(() => {

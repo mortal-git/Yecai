@@ -2,12 +2,11 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
 export type PayableStatementStatus =
-  | 'draft'      // 草稿
-  | 'pending'    // 待审核
-  | 'confirmed'  // 已确认
-  | 'sent'       // 已发送
-  | 'writtenOff' // 已核销
-  | 'cancelled'  // 已取消
+  | 'draft'           // 草稿
+  | 'pending'         // 待审核
+  | 'pending_payment' // 待付款
+  | 'paid'            // 已付款
+  | 'cancelled'       // 已作废
 
 export interface PayableStatementRow {
   rateSheetNo: string
@@ -40,7 +39,7 @@ export interface PaymentRecord {
   amount: number
   paymentDate: string
   paymentMethod: string
-  status: '已付款' | '待付款' | '已核销'
+  status: '已付款'
   remark?: string
 }
 
@@ -52,7 +51,7 @@ export interface InvoiceRecord {
   taxRate: number
   taxAmount: number
   incTaxAmount: number
-  status: '已关联' | '已核销'
+  status: '已关联'
   remark?: string
 }
 
@@ -88,18 +87,16 @@ export interface PayableStatement {
 export const STATUS_LABEL: Record<PayableStatementStatus, string> = {
   draft: '草稿',
   pending: '待审核',
-  confirmed: '已确认',
-  sent: '已发送',
-  writtenOff: '已核销',
-  cancelled: '已取消'
+  pending_payment: '待付款',
+  paid: '已付款',
+  cancelled: '已作废'
 }
 
 export const STATUS_TYPE: Record<PayableStatementStatus, string> = {
   draft: 'info',
   pending: 'warning',
-  confirmed: 'primary',
-  sent: 'success',
-  writtenOff: 'success',
+  pending_payment: 'primary',
+  paid: 'success',
   cancelled: 'info'
 }
 
@@ -138,38 +135,35 @@ function buildMockData(): PayableStatement[] {
     {
       id: uid('ps_'), statementNo: 'PS2026070001', name: '2026年6月深圳仓仓储费对账单',
       supplier: '深圳盐田国际集装箱码头有限公司', settlementUnit: '深圳分公司', settleDate: '2026-07-05',
-      totalExTaxCny: 50000, totalIncTaxCny: 56500, status: 'writtenOff', remark: '已核销完成',
+      totalExTaxCny: 50000, totalIncTaxCny: 56500, status: 'paid', remark: '已完成付款登记',
       rows,
-      payments: [{ id: uid('p_'), paymentNo: 'PAY2026070001', amount: 56500, paymentDate: '2026-07-10', paymentMethod: '银行转账', status: '已核销' }],
-      invoices: [{ id: uid('inv_'), invoiceNo: 'INV2026070001', invoiceDate: '2026-07-06', amount: 50000, taxRate: 13, taxAmount: 6500, incTaxAmount: 56500, status: '已核销' }],
+      payments: [{ id: uid('p_'), paymentNo: 'PAY2026070001', amount: 56500, paymentDate: '2026-07-10', paymentMethod: '银行转账', status: '已付款' }],
+      invoices: [{ id: uid('inv_'), invoiceNo: 'INV2026070001', invoiceDate: '2026-07-06', amount: 50000, taxRate: 13, taxAmount: 6500, incTaxAmount: 56500, status: '已关联' }],
       logs: [
         { id: uid('log_'), action: '创建对账单', operator: '张三', operateTime: '2026-07-01 10:30:00' },
         { id: uid('log_'), action: '提交审核', operator: '张三', operateTime: '2026-07-01 14:00:00' },
         { id: uid('log_'), action: '审核通过', operator: '王经理', operateTime: '2026-07-02 09:00:00' },
-        { id: uid('log_'), action: '发送对账单', operator: '张三', operateTime: '2026-07-03 10:00:00' },
-        { id: uid('log_'), action: '关联付款单', operator: '张三', operateTime: '2026-07-08 11:00:00' },
-        { id: uid('log_'), action: '核销完成', operator: '李会计', operateTime: '2026-07-10 16:00:00' }
+        { id: uid('log_'), action: '付款登记', operator: '张三', operateTime: '2026-07-10 16:00:00', remark: '付款单号 PAY2026070001' }
       ],
       creator: '张三', createTime: '2026-07-01 10:30:00', updater: '李会计', updateTime: '2026-07-10 16:00:00'
     },
     {
       id: uid('ps_'), statementNo: 'PS2026070002', name: '2026年6月海运运输费对账单',
       supplier: '上海中远海运集装箱运输有限公司', settlementUnit: '上海分公司', settleDate: '2026-07-08',
-      totalExTaxCny: 80000, totalIncTaxCny: 90400, status: 'sent', remark: '已发送供应商待回执',
+      totalExTaxCny: 80000, totalIncTaxCny: 90400, status: 'pending_payment', remark: '待付款登记',
       rows: [rows[1]],
       payments: [], invoices: [],
       logs: [
         { id: uid('log_'), action: '创建对账单', operator: '李四', operateTime: '2026-07-03 11:00:00' },
         { id: uid('log_'), action: '提交审核', operator: '李四', operateTime: '2026-07-03 15:00:00' },
-        { id: uid('log_'), action: '审核通过', operator: '王经理', operateTime: '2026-07-04 09:30:00' },
-        { id: uid('log_'), action: '发送对账单', operator: '李四', operateTime: '2026-07-05 10:00:00' }
+        { id: uid('log_'), action: '审核通过', operator: '王经理', operateTime: '2026-07-04 09:30:00' }
       ],
-      creator: '李四', createTime: '2026-07-03 11:00:00', updater: '李四', updateTime: '2026-07-05 10:00:00'
+      creator: '李四', createTime: '2026-07-03 11:00:00', updater: '王经理', updateTime: '2026-07-04 09:30:00'
     },
     {
       id: uid('ps_'), statementNo: 'PS2026070003', name: '2026年7月首周费用对账单',
       supplier: '北京华贸物流股份有限公司', settlementUnit: '北京分公司', settleDate: '2026-07-07',
-      totalExTaxCny: 35000, totalIncTaxCny: 39550, status: 'confirmed', remark: '',
+      totalExTaxCny: 35000, totalIncTaxCny: 39550, status: 'pending_payment', remark: '',
       rows: [],
       payments: [], invoices: [],
       logs: [
@@ -201,6 +195,21 @@ function buildMockData(): PayableStatement[] {
         { id: uid('log_'), action: '创建对账单', operator: '张三', operateTime: '2026-07-09 09:00:00' }
       ],
       creator: '张三', createTime: '2026-07-09 09:00:00'
+    },
+    {
+      id: uid('ps_'), statementNo: 'PS2026070006', name: '2026年5月垫付费用对账单（已作废）',
+      supplier: '深圳盐田国际集装箱码头有限公司', settlementUnit: '深圳分公司', settleDate: '2026-06-20',
+      totalExTaxCny: 18000, totalIncTaxCny: 20340, status: 'cancelled', remark: '数据重复，已作废重开',
+      rows: [],
+      payments: [], invoices: [],
+      logs: [
+        { id: uid('log_'), action: '创建对账单', operator: '张三', operateTime: '2026-06-22 10:00:00' },
+        { id: uid('log_'), action: '提交审核', operator: '张三', operateTime: '2026-06-22 14:00:00' },
+        { id: uid('log_'), action: '审核通过', operator: '王经理', operateTime: '2026-06-23 09:00:00' },
+        { id: uid('log_'), action: '付款登记', operator: '张三', operateTime: '2026-06-28 11:00:00' },
+        { id: uid('log_'), action: '作废对账单', operator: '王经理', operateTime: '2026-07-05 15:00:00', remark: '数据重复' }
+      ],
+      creator: '张三', createTime: '2026-06-22 10:00:00', updater: '王经理', updateTime: '2026-07-05 15:00:00'
     }
   ]
 }
@@ -214,8 +223,8 @@ export const usePayableStatementStore = defineStore('payableStatement', () => {
     return {
       total: s.length,
       pending: s.filter(i => i.status === 'pending').length,
-      confirmed: s.filter(i => i.status === 'confirmed').length,
-      writtenOff: s.filter(i => i.status === 'writtenOff').length,
+      pendingPayment: s.filter(i => i.status === 'pending_payment').length,
+      paid: s.filter(i => i.status === 'paid').length,
       totalExTaxCny: s.reduce((sum, i) => sum + i.totalExTaxCny, 0),
       totalIncTaxCny: s.reduce((sum, i) => sum + i.totalIncTaxCny, 0)
     }
@@ -286,8 +295,10 @@ export const usePayableStatementStore = defineStore('payableStatement', () => {
     const item = getById(id)
     if (!item) return
     item.payments.push({ ...payment, id: uid('p_') })
-    item.logs.push({ id: uid('log_'), action: '关联付款单', operator: '当前用户', operateTime: now(), remark: `付款单号 ${payment.paymentNo}` })
+    item.status = 'paid'
+    item.logs.push({ id: uid('log_'), action: '付款登记', operator: '当前用户', operateTime: now(), remark: `付款单号 ${payment.paymentNo}` })
     item.updateTime = now()
+    item.updater = '当前用户'
   }
 
   function addInvoice(id: string, invoice: Omit<InvoiceRecord, 'id'>) {
@@ -295,15 +306,6 @@ export const usePayableStatementStore = defineStore('payableStatement', () => {
     if (!item) return
     item.invoices.push({ ...invoice, id: uid('inv_') })
     item.logs.push({ id: uid('log_'), action: '关联进项发票', operator: '当前用户', operateTime: now(), remark: `发票号 ${invoice.invoiceNo}` })
-    item.updateTime = now()
-  }
-
-  function writeOffPayment(id: string, paymentId: string) {
-    const item = getById(id)
-    if (!item) return
-    const p = item.payments.find(i => i.id === paymentId)
-    if (p) p.status = '已核销'
-    item.logs.push({ id: uid('log_'), action: '核销账单', operator: '当前用户', operateTime: now(), remark: `核销付款单 ${p?.paymentNo}` })
     item.updateTime = now()
   }
 
@@ -320,7 +322,6 @@ export const usePayableStatementStore = defineStore('payableStatement', () => {
     addLog,
     changeStatus,
     addPayment,
-    addInvoice,
-    writeOffPayment
+    addInvoice
   }
 })

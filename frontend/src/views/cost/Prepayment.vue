@@ -208,18 +208,19 @@
             {{ formatDateTime(scope.row.applyDate) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="240" fixed="right">
+        <el-table-column label="操作" width="180" fixed="right">
           <template #default="scope">
             <el-button type="success" size="small" link @click.stop="handleEdit(scope.row)" :disabled="!canEdit(scope.row)">编辑</el-button>
-            <el-button type="warning" size="small" link @click.stop="handleSubmit(scope.row)" :disabled="!canSubmit(scope.row)">提交</el-button>
+            <el-button type="danger" size="small" link @click.stop="handleDelete(scope.row)" :disabled="!canDelete(scope.row)">删除</el-button>
             <el-dropdown trigger="hover" @command="(command: string) => handleMoreAction(command, scope.row)">
               <span class="more-dropdown-link">
                 <el-button type="info" size="small" link>更多<el-icon><ArrowDown /></el-icon></el-button>
               </span>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="cancel" :disabled="!canCancel(scope.row)">作废</el-dropdown-item>
+                  <el-dropdown-item command="submit" :disabled="!canSubmit(scope.row)">提交审批</el-dropdown-item>
                   <el-dropdown-item command="audit" :disabled="!canAudit(scope.row)">审核</el-dropdown-item>
+                  <el-dropdown-item command="applyPayment" :disabled="!canApplyPayment(scope.row)">申请付款</el-dropdown-item>
                   <el-dropdown-item command="payment" :disabled="!canPayment(scope.row)">付款登记</el-dropdown-item>
                   <el-dropdown-item command="bindInvoice" :disabled="!canBindInvoice(scope.row)">绑定发票</el-dropdown-item>
                   <el-dropdown-item command="writeoff" :disabled="!canWriteoff(scope.row)">核销</el-dropdown-item>
@@ -1414,8 +1415,9 @@ const getRowClassName = ({ row }: any) => {
 // 操作权限判断
 const canEdit = (row: any) => ['draft', 'rejected'].includes(row.prepaymentStatus)
 const canSubmit = (row: any) => row.prepaymentStatus === 'draft'
-const canCancel = (row: any) => ['pending'].includes(row.prepaymentStatus)
+const canDelete = (row: any) => row.prepaymentStatus === 'draft'
 const canAudit = (row: any) => row.prepaymentStatus === 'pending'
+const canApplyPayment = (row: any) => row.prepaymentStatus === 'approved'
 const canPayment = (row: any) => row.prepaymentStatus === 'approved'
 const canBindInvoice = (row: any) => row.prepaymentStatus === 'invoiced' && row.balanceAmount > 0
 const canWriteoff = (row: any) => row.prepaymentStatus === 'partial_writeoff' && row.balanceAmount > 0
@@ -1527,11 +1529,14 @@ const handleSubmit = async (row: any) => {
 // 更多操作
 const handleMoreAction = (command: string, row: any) => {
   switch (command) {
-    case 'cancel':
-      handleCancel(row)
+    case 'submit':
+      handleSubmit(row)
       break
     case 'audit':
       openAuditDialog(row)
+      break
+    case 'applyPayment':
+      handleApplyPayment(row)
       break
     case 'payment':
       handlePayment(row)
@@ -1557,16 +1562,24 @@ const handleMoreAction = (command: string, row: any) => {
   }
 }
 
-// 作废
-const handleCancel = async (row: any) => {
+// 删除
+const handleDelete = async (row: any) => {
   try {
-    await ElMessageBox.confirm('确定要作废该预付款吗？', '警告', { type: 'warning' })
-    const item = tableData.value.find(t => t.id === row.id)
-    if (item) {
-      item.prepaymentStatus = 'cancelled'
+    await ElMessageBox.confirm('确定要删除该预付款吗？删除后不可恢复。', '警告', { type: 'warning' })
+    const index = tableData.value.findIndex(t => t.id === row.id)
+    if (index > -1) {
+      tableData.value.splice(index, 1)
     }
-    ElMessage.success('作废成功')
+    ElMessage.success('删除成功')
     filterDataByStatus()
+  } catch {}
+}
+
+// 申请付款
+const handleApplyPayment = async (row: any) => {
+  try {
+    await ElMessageBox.confirm('确定要对该预付款申请付款吗？', '提示', { type: 'info' })
+    ElMessage.success('申请付款成功')
   } catch {}
 }
 

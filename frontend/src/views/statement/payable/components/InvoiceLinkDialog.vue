@@ -58,7 +58,7 @@
         </el-table-column>
         <el-table-column prop="status" label="状态" min-width="80">
           <template #default="{ row }">
-            <el-tag :type="row.status === '已核销' ? 'success' : 'warning'" size="small">{{ row.status }}</el-tag>
+            <el-tag type="success" size="small">{{ row.status }}</el-tag>
           </template>
         </el-table-column>
       </el-table>

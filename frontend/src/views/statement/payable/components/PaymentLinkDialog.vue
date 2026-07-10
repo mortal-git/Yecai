@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="visible" title="关联付款单 / 申请付款" width="640px" destroy-on-close>
+  <el-dialog v-model="visible" title="付款登记" width="640px" destroy-on-close>
     <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
       <el-form-item label="对账单号">
         <span>{{ statement?.statementNo }}</span>
@@ -7,9 +7,9 @@
       <el-form-item label="对账含税金额">
         <span class="amount">¥{{ formatMoney(statement?.totalIncTaxCny || 0) }}</span>
       </el-form-item>
-      <el-form-item label="已关联付款">
+      <el-form-item label="已登记付款">
         <span class="amount">¥{{ formatMoney(linkedTotal) }}</span>
-        <span class="sub">（未核销 ¥{{ formatMoney(statement!.totalIncTaxCny - linkedTotal) }}）</span>
+        <span class="sub">（未付款 ¥{{ formatMoney(statement!.totalIncTaxCny - linkedTotal) }}）</span>
       </el-form-item>
 
       <el-divider content-position="left">付款信息</el-divider>
@@ -39,7 +39,7 @@
     </el-form>
 
     <div v-if="statement && statement.payments.length > 0" class="linked-list">
-      <div class="linked-title">已关联付款单</div>
+      <div class="linked-title">已登记付款记录</div>
       <el-table :data="statement.payments" border size="small">
         <el-table-column prop="paymentNo" label="付款单号" min-width="140" />
         <el-table-column prop="amount" label="金额" min-width="120" align="right">
@@ -49,7 +49,7 @@
         <el-table-column prop="paymentMethod" label="付款方式" min-width="100" />
         <el-table-column prop="status" label="状态" min-width="80">
           <template #default="{ row }">
-            <el-tag :type="row.status === '已核销' ? 'success' : 'warning'" size="small">{{ row.status }}</el-tag>
+            <el-tag type="success" size="small">{{ row.status }}</el-tag>
           </template>
         </el-table-column>
       </el-table>
@@ -57,7 +57,7 @@
 
     <template #footer>
       <el-button @click="visible = false">取消</el-button>
-      <el-button type="primary" @click="confirm">确认关联</el-button>
+      <el-button type="primary" @click="confirm">确认登记</el-button>
     </template>
   </el-dialog>
 </template>
@@ -121,7 +121,7 @@ const confirm = async () => {
       amount: form.amount,
       paymentDate: form.paymentDate,
       paymentMethod: form.paymentMethod,
-      status: '待付款',
+      status: '已付款',
       remark: form.remark
     })
     visible.value = false

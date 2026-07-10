@@ -74,10 +74,6 @@
         <el-icon><Check /></el-icon>
         批量审核
       </el-button>
-      <el-button type="primary" @click="handleBatchSend" :disabled="selectedRows.length === 0">
-        <el-icon><Promotion /></el-icon>
-        批量发送
-      </el-button>
       <el-button type="info" @click="handleAgingAnalysis">
         <el-icon><DataAnalysis /></el-icon>
         账龄分析
@@ -90,10 +86,9 @@
         <el-radio-button value="all">全部</el-radio-button>
         <el-radio-button value="draft">草稿</el-radio-button>
         <el-radio-button value="pending">待审核</el-radio-button>
-        <el-radio-button value="confirmed">已确认</el-radio-button>
-        <el-radio-button value="sent">已发送</el-radio-button>
-        <el-radio-button value="writtenOff">已核销</el-radio-button>
-        <el-radio-button value="cancelled">已取消</el-radio-button>
+        <el-radio-button value="pending_payment">待付款</el-radio-button>
+        <el-radio-button value="paid">已付款</el-radio-button>
+        <el-radio-button value="cancelled">已作废</el-radio-button>
       </el-radio-group>
     </div>
 
@@ -142,15 +137,15 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="已核销金额" min-width="130" align="right">
+        <el-table-column label="已付款金额" min-width="130" align="right">
           <template #default="scope">
-            <span class="text-success">¥{{ formatMoney(writtenOffTotal(scope.row)) }}</span>
+            <span class="text-success">¥{{ formatMoney(paidTotal(scope.row)) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="未核销金额" min-width="130" align="right" sortable :sort-method="(a, b) => unWrittenOffAmount(a) - unWrittenOffAmount(b)">
+        <el-table-column label="未付款金额" min-width="130" align="right" sortable :sort-method="(a, b) => unpaidAmount(a) - unpaidAmount(b)">
           <template #default="scope">
-            <span :class="unWrittenOffAmount(scope.row) > 0 ? 'text-danger' : 'text-success'">
-              ¥{{ formatMoney(unWrittenOffAmount(scope.row)) }}
+            <span :class="unpaidAmount(scope.row) > 0 ? 'text-danger' : 'text-success'">
+              ¥{{ formatMoney(unpaidAmount(scope.row)) }}
             </span>
           </template>
         </el-table-column>
@@ -175,10 +170,8 @@
                 <el-dropdown-menu>
                   <el-dropdown-item command="view">查看详情</el-dropdown-item>
                   <el-dropdown-item command="audit" :disabled="!canAudit(scope.row)">审核</el-dropdown-item>
-                  <el-dropdown-item command="send" :disabled="!canSend(scope.row)">发送</el-dropdown-item>
-                  <el-dropdown-item command="linkPayment" :disabled="!canLinkPayment(scope.row)">关联付款/申请付款</el-dropdown-item>
+                  <el-dropdown-item command="pay" :disabled="!canPay(scope.row)">付款登记</el-dropdown-item>
                   <el-dropdown-item command="linkInvoice" :disabled="!canLinkInvoice(scope.row)">关联进项发票</el-dropdown-item>
-                  <el-dropdown-item command="writeoff" :disabled="!canWriteoff(scope.row)">核销</el-dropdown-item>
                   <el-dropdown-item command="print">打印</el-dropdown-item>
                   <el-dropdown-item command="cancel" :disabled="!canCancel(scope.row)">作废</el-dropdown-item>
                   <el-dropdown-item command="delete" :disabled="!canDelete(scope.row)">删除</el-dropdown-item>
@@ -241,30 +234,6 @@
       </template>
     </el-dialog>
 
-    <!-- 发送弹窗 -->
-    <el-dialog v-model="sendDialog.visible" title="发送对账单" width="600px" :close-on-click-modal="false">
-      <div class="send-form">
-        <el-form :model="sendDialog" label-width="100px">
-          <el-form-item label="对账单号">{{ sendDialog.row?.statementNo }}</el-form-item>
-          <el-form-item label="接收方">{{ sendDialog.row?.supplier }}</el-form-item>
-          <el-form-item label="发送方式" required>
-            <el-checkbox-group v-model="sendDialog.methods">
-              <el-checkbox value="email">邮件</el-checkbox>
-              <el-checkbox value="sms">短信</el-checkbox>
-              <el-checkbox value="paper">纸质</el-checkbox>
-            </el-checkbox-group>
-          </el-form-item>
-          <el-form-item label="备注">
-            <el-input v-model="sendDialog.remark" type="textarea" :rows="3" />
-          </el-form-item>
-        </el-form>
-      </div>
-      <template #footer>
-        <el-button @click="sendDialog.visible = false">取消</el-button>
-        <el-button type="primary" @click="confirmSend">发送</el-button>
-      </template>
-    </el-dialog>
-
     <!-- 批量审核弹窗 -->
     <el-dialog v-model="showBatchAudit" title="批量审核" width="600px">
       <div class="batch-audit-form">
@@ -290,33 +259,9 @@
       </template>
     </el-dialog>
 
-    <!-- 批量发送弹窗 -->
-    <el-dialog v-model="showBatchSend" title="批量发送" width="600px">
-      <div class="batch-send-form">
-        <el-form :model="batchSendForm" label-width="100px">
-          <el-form-item label="选中记录">{{ selectedRows.length }} 条对账单</el-form-item>
-          <el-form-item label="发送方式" required>
-            <el-checkbox-group v-model="batchSendForm.methods">
-              <el-checkbox value="email">邮件</el-checkbox>
-              <el-checkbox value="sms">短信</el-checkbox>
-              <el-checkbox value="paper">纸质</el-checkbox>
-            </el-checkbox-group>
-          </el-form-item>
-          <el-form-item label="备注">
-            <el-input v-model="batchSendForm.remark" type="textarea" :rows="3" />
-          </el-form-item>
-        </el-form>
-      </div>
-      <template #footer>
-        <el-button @click="showBatchSend = false">取消</el-button>
-        <el-button type="primary" @click="confirmBatchSend">确认发送</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 关联付款/发票/核销弹窗 -->
+    <!-- 付款登记 / 关联发票弹窗 -->
     <PaymentLinkDialog v-model="paymentDialogVisible" :statement="currentRow" @confirm="onPaymentLinked" />
     <InvoiceLinkDialog v-model="invoiceDialogVisible" :statement="currentRow" @confirm="onInvoiceLinked" />
-    <WriteOffDialog v-model="writeOffDialogVisible" :statement="currentRow" @confirm="onWrittenOff" />
 
     <!-- 账龄分析弹窗 -->
     <el-dialog v-model="showAgingAnalysis" title="应付对账单账龄分析" width="900px">
@@ -353,8 +298,8 @@
           <el-table-column prop="totalIncTaxCny" label="对账金额" min-width="130" align="right">
             <template #default="scope">¥{{ formatMoney(scope.row.totalIncTaxCny) }}</template>
           </el-table-column>
-          <el-table-column prop="unWrittenOff" label="未核销金额" min-width="130" align="right">
-            <template #default="scope">¥{{ formatMoney(scope.row.unWrittenOff) }}</template>
+          <el-table-column prop="unpaid" label="未付款金额" min-width="130" align="right">
+            <template #default="scope">¥{{ formatMoney(scope.row.unpaid) }}</template>
           </el-table-column>
           <el-table-column prop="agingDays" label="账龄(天)" width="100" />
           <el-table-column prop="agingLevel" label="账龄区间" width="120">
@@ -372,12 +317,11 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Refresh, Plus, Download, Check, Promotion, DataAnalysis, ArrowDown } from '@element-plus/icons-vue'
+import { Search, Refresh, Plus, Download, Check, DataAnalysis, ArrowDown } from '@element-plus/icons-vue'
 import { usePayableStatementStore, STATUS_LABEL, STATUS_TYPE, type PayableStatement, type PayableStatementStatus } from '../../../store/payableStatement'
 import PayableStatementDetailDrawer from './DetailDrawer.vue'
 import PaymentLinkDialog from './components/PaymentLinkDialog.vue'
 import InvoiceLinkDialog from './components/InvoiceLinkDialog.vue'
-import WriteOffDialog from './components/WriteOffDialog.vue'
 
 const router = useRouter()
 const store = usePayableStatementStore()
@@ -442,8 +386,8 @@ const formatDateTime = (dateStr: string) => dateStr || '-'
 
 const paymentTotal = (row: PayableStatement) => row.payments.reduce((s, p) => s + p.amount, 0)
 const invoiceTotal = (row: PayableStatement) => row.invoices.reduce((s, i) => s + i.incTaxAmount, 0)
-const writtenOffTotal = (row: PayableStatement) => row.payments.filter(p => p.status === '已核销').reduce((s, p) => s + p.amount, 0)
-const unWrittenOffAmount = (row: PayableStatement) => Math.max(0, row.totalIncTaxCny - writtenOffTotal(row))
+const paidTotal = (row: PayableStatement) => row.payments.filter(p => p.status === '已付款').reduce((s, p) => s + p.amount, 0)
+const unpaidAmount = (row: PayableStatement) => Math.max(0, row.totalIncTaxCny - paidTotal(row))
 
 // 行样式
 const getRowClassName = ({ row }: { row: PayableStatement }) => {
@@ -455,12 +399,10 @@ const getRowClassName = ({ row }: { row: PayableStatement }) => {
 const canEdit = (row: PayableStatement) => row.status === 'draft'
 const canSubmit = (row: PayableStatement) => row.status === 'draft'
 const canAudit = (row: PayableStatement) => row.status === 'pending'
-const canSend = (row: PayableStatement) => row.status === 'confirmed'
-const canLinkPayment = (row: PayableStatement) => row.status === 'sent'
-const canLinkInvoice = (row: PayableStatement) => row.status === 'sent'
-const canWriteoff = (row: PayableStatement) => row.status === 'sent' && row.payments.some(p => p.status !== '已核销')
-const canCancel = (row: PayableStatement) => ['draft', 'pending'].includes(row.status)
-const canDelete = (row: PayableStatement) => ['draft', 'cancelled'].includes(row.status)
+const canPay = (row: PayableStatement) => row.status === 'pending_payment'
+const canLinkInvoice = (row: PayableStatement) => row.status === 'pending_payment'
+const canCancel = (row: PayableStatement) => row.status === 'paid'
+const canDelete = (row: PayableStatement) => row.status === 'draft'
 
 const handleSearch = () => {
   loading.value = true
@@ -536,37 +478,13 @@ const handleAudit = (row: PayableStatement) => {
 const confirmAudit = () => {
   if (!auditDialog.row) return
   if (auditDialog.passed) {
-    store.changeStatus(auditDialog.row.id, 'confirmed', '审核通过', auditDialog.remark)
+    store.changeStatus(auditDialog.row.id, 'pending_payment', '审核通过', auditDialog.remark)
     ElMessage.success('审核已通过')
   } else {
     store.changeStatus(auditDialog.row.id, 'draft', '审核驳回', auditDialog.remark)
     ElMessage.success('已驳回')
   }
   auditDialog.visible = false
-}
-
-// 发送弹窗
-const sendDialog = reactive({
-  visible: false,
-  row: null as PayableStatement | null,
-  methods: ['email'] as string[],
-  remark: ''
-})
-const handleSend = (row: PayableStatement) => {
-  sendDialog.row = row
-  sendDialog.methods = ['email']
-  sendDialog.remark = ''
-  sendDialog.visible = true
-}
-const confirmSend = () => {
-  if (!sendDialog.row) return
-  if (sendDialog.methods.length === 0) {
-    ElMessage.warning('请选择发送方式')
-    return
-  }
-  store.changeStatus(sendDialog.row.id, 'sent', '发送对账单', `方式: ${sendDialog.methods.join('、')}; ${sendDialog.remark}`)
-  ElMessage.success('对账单已发送')
-  sendDialog.visible = false
 }
 
 // 作废
@@ -602,20 +520,17 @@ const handleMoreAction = (command: string, row: PayableStatement) => {
   switch (command) {
     case 'view': handleView(row); break
     case 'audit': handleAudit(row); break
-    case 'send': handleSend(row); break
-    case 'linkPayment': openPaymentDialog(row); break
+    case 'pay': openPaymentDialog(row); break
     case 'linkInvoice': openInvoiceDialog(row); break
-    case 'writeoff': openWriteOffDialog(row); break
     case 'print': handlePrint(row); break
     case 'cancel': handleCancel(row); break
     case 'delete': handleDelete(row); break
   }
 }
 
-// 关联付款/发票/核销弹窗
+// 付款登记 / 关联发票弹窗
 const paymentDialogVisible = ref(false)
 const invoiceDialogVisible = ref(false)
-const writeOffDialogVisible = ref(false)
 
 const openPaymentDialog = (row: PayableStatement) => {
   currentRow.value = row
@@ -625,31 +540,17 @@ const openInvoiceDialog = (row: PayableStatement) => {
   currentRow.value = row
   invoiceDialogVisible.value = true
 }
-const openWriteOffDialog = (row: PayableStatement) => {
-  currentRow.value = row
-  writeOffDialogVisible.value = true
-}
 
 const onPaymentLinked = (payment: any) => {
   if (!currentRow.value) return
   store.addPayment(currentRow.value.id, payment)
-  ElMessage.success('关联付款单成功')
+  ElMessage.success('付款登记成功，对账单状态已变更为已付款')
   refreshCurrentRow()
 }
 const onInvoiceLinked = (invoice: any) => {
   if (!currentRow.value) return
   store.addInvoice(currentRow.value.id, invoice)
   ElMessage.success('关联进项发票成功')
-  refreshCurrentRow()
-}
-const onWrittenOff = (paymentIds: string[]) => {
-  if (!currentRow.value) return
-  paymentIds.forEach(pid => store.writeOffPayment(currentRow.value!.id, pid))
-  const cur = store.getById(currentRow.value.id)
-  if (cur && cur.payments.length > 0 && cur.payments.every(p => p.status === '已核销')) {
-    store.changeStatus(cur.id, 'writtenOff', '核销完成，对账单已核销')
-  }
-  ElMessage.success(`已核销 ${paymentIds.length} 笔付款`)
   refreshCurrentRow()
 }
 
@@ -672,35 +573,11 @@ const confirmBatchAudit = () => {
     ElMessage.warning('请输入驳回原因')
     return
   }
-  const newStatus = batchAuditForm.action === 'approve' ? 'confirmed' : 'draft'
+  const newStatus: PayableStatementStatus = batchAuditForm.action === 'approve' ? 'pending_payment' : 'draft'
   const action = batchAuditForm.action === 'approve' ? '批量审核通过' : '批量审核驳回'
   selectedRows.value.forEach(row => store.changeStatus(row.id, newStatus, action, batchAuditForm.remark || batchAuditForm.rejectReason))
   ElMessage.success(`批量${batchAuditForm.action === 'approve' ? '审核通过' : '驳回'}成功`)
   showBatchAudit.value = false
-  selectedRows.value = []
-}
-
-// 批量发送
-const showBatchSend = ref(false)
-const batchSendForm = reactive({ methods: ['email'], remark: '' })
-const handleBatchSend = () => {
-  const invalidRows = selectedRows.value.filter(r => r.status !== 'confirmed')
-  if (invalidRows.length > 0) {
-    ElMessage.warning('所选记录中存在非"已确认"状态，无法批量发送')
-    return
-  }
-  batchSendForm.methods = ['email']
-  batchSendForm.remark = ''
-  showBatchSend.value = true
-}
-const confirmBatchSend = () => {
-  if (batchSendForm.methods.length === 0) {
-    ElMessage.warning('请选择发送方式')
-    return
-  }
-  selectedRows.value.forEach(row => store.changeStatus(row.id, 'sent', '批量发送对账单', `方式: ${batchSendForm.methods.join('、')}`))
-  ElMessage.success('批量发送成功')
-  showBatchSend.value = false
   selectedRows.value = []
 }
 
@@ -723,18 +600,18 @@ const handleAgingAnalysis = () => {
   const levels = ['30天内', '31-60天', '61-90天', '90天以上']
   const buckets = [0, 0, 0, 0]
   const rows: any[] = []
-  store.list.filter(s => s.status === 'sent' || s.status === 'confirmed').forEach(s => {
+  store.list.filter(s => s.status === 'pending_payment').forEach(s => {
     const settle = new Date(s.settleDate)
     const days = Math.floor((now.getTime() - settle.getTime()) / (1000 * 60 * 60 * 24))
     const idx = days <= 30 ? 0 : days <= 60 ? 1 : days <= 90 ? 2 : 3
-    const unWritten = unWrittenOffAmount(s)
-    if (unWritten > 0) {
-      buckets[idx] += unWritten
+    const unpaid = unpaidAmount(s)
+    if (unpaid > 0) {
+      buckets[idx] += unpaid
       rows.push({
         supplier: s.supplier,
         statementNo: s.statementNo,
         totalIncTaxCny: s.totalIncTaxCny,
-        unWrittenOff: unWritten,
+        unpaid,
         agingDays: days,
         agingLevel: levels[idx]
       })

@@ -60,7 +60,7 @@
     <!-- 搜索筛选区域 -->
     <div class="search-panel">
       <el-form :model="searchForm" :inline="true" label-width="100px">
-        <el-form-item label="客户名称" required>
+        <el-form-item label="客户名称">
           <el-select
             v-model="searchForm.customerId"
             placeholder="请选择客户"
@@ -76,12 +76,12 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="仓库" required>
+        <el-form-item label="仓库">
           <el-select v-model="searchForm.warehouseCode" placeholder="请选择仓库" clearable filterable style="width: 180px">
             <el-option v-for="w in warehouseList" :key="w.code" :label="w.name" :value="w.code" />
           </el-select>
         </el-form-item>
-        <el-form-item label="报价单名称" required>
+        <el-form-item label="报价单名称">
           <el-select v-model="searchForm.quoteId" placeholder="请选择报价单" clearable filterable style="width: 200px">
             <el-option v-for="q in quoteList" :key="q.id" :label="q.name" :value="q.id" />
           </el-select>
@@ -715,18 +715,6 @@ const getRowClassName = ({ row }: any) => {
 
 // 搜索
 const handleSearch = () => {
-  if (!searchForm.customerId) {
-    ElMessage.warning('请选择客户名称')
-    return
-  }
-  if (!searchForm.warehouseCode) {
-    ElMessage.warning('请选择仓库')
-    return
-  }
-  if (!searchForm.quoteId) {
-    ElMessage.warning('请选择报价单名称')
-    return
-  }
   loading.value = true
   setTimeout(() => {
     loading.value = false

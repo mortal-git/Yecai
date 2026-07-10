@@ -122,15 +122,6 @@
             <el-menu-item index="/payable/advance">垫付成本</el-menu-item>
           </el-sub-menu>
 
-          <el-sub-menu index="fund">
-            <template #title>
-              <el-icon><Coin /></el-icon>
-              <span>资金管理</span>
-            </template>
-            <el-menu-item index="/fund/collection">收款管理</el-menu-item>
-            <el-menu-item index="/fund/payment">付款管理</el-menu-item>
-          </el-sub-menu>
-
           <el-sub-menu index="statement">
             <template #title>
               <el-icon><List /></el-icon>
@@ -139,6 +130,15 @@
             <el-menu-item index="/statement/list">对账单列表</el-menu-item>
             <el-menu-item index="/statement/create">生成对账单</el-menu-item>
             <el-menu-item index="/statement/payable">应付对账单</el-menu-item>
+          </el-sub-menu>
+
+          <el-sub-menu index="fund">
+            <template #title>
+              <el-icon><Coin /></el-icon>
+              <span>资金管理</span>
+            </template>
+            <el-menu-item index="/fund/collection">收款管理</el-menu-item>
+            <el-menu-item index="/fund/payment">付款管理</el-menu-item>
           </el-sub-menu>
 
           <el-sub-menu index="budget">

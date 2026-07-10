@@ -43,11 +43,11 @@
             ¥{{ formatMoney(invoiceTotal) }}
           </span>
         </el-descriptions-item>
-        <el-descriptions-item label="已核销金额">
-          <span class="text-success">¥{{ formatMoney(writtenOffTotal) }}</span>
+        <el-descriptions-item label="已付款金额">
+          <span class="text-success">¥{{ formatMoney(paidTotal) }}</span>
         </el-descriptions-item>
-        <el-descriptions-item label="未核销金额">
-          <span :class="unWrittenOffAmount > 0 ? 'text-danger' : 'text-success'">¥{{ formatMoney(unWrittenOffAmount) }}</span>
+        <el-descriptions-item label="未付款金额">
+          <span :class="unpaidAmount > 0 ? 'text-danger' : 'text-success'">¥{{ formatMoney(unpaidAmount) }}</span>
         </el-descriptions-item>
         <el-descriptions-item label="明细行数">{{ statement.rows.length }} 条</el-descriptions-item>
         <el-descriptions-item label="状态">
@@ -107,7 +107,7 @@
             <el-table-column prop="paymentMethod" label="付款方式" min-width="100" />
             <el-table-column prop="status" label="状态" min-width="80">
               <template #default="scope">
-                <el-tag :type="scope.row.status === '已核销' ? 'success' : 'warning'" size="small">{{ scope.row.status }}</el-tag>
+                <el-tag type="success" size="small">{{ scope.row.status }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="remark" label="备注" min-width="160" show-overflow-tooltip />
@@ -134,7 +134,7 @@
             </el-table-column>
             <el-table-column prop="status" label="状态" min-width="80">
               <template #default="scope">
-                <el-tag :type="scope.row.status === '已核销' ? 'success' : 'warning'" size="small">{{ scope.row.status }}</el-tag>
+                <el-tag type="success" size="small">{{ scope.row.status }}</el-tag>
               </template>
             </el-table-column>
           </el-table>
@@ -189,10 +189,10 @@ const formatDateTime = (dateStr: string) => dateStr || '-'
 
 const paymentTotal = computed(() => statement.value?.payments.reduce((s, p) => s + p.amount, 0) || 0)
 const invoiceTotal = computed(() => statement.value?.invoices.reduce((s, i) => s + i.incTaxAmount, 0) || 0)
-const writtenOffTotal = computed(() => statement.value?.payments.filter(p => p.status === '已核销').reduce((s, p) => s + p.amount, 0) || 0)
-const unWrittenOffAmount = computed(() => {
+const paidTotal = computed(() => statement.value?.payments.filter(p => p.status === '已付款').reduce((s, p) => s + p.amount, 0) || 0)
+const unpaidAmount = computed(() => {
   if (!statement.value) return 0
-  return Math.max(0, statement.value.totalIncTaxCny - writtenOffTotal.value)
+  return Math.max(0, statement.value.totalIncTaxCny - paidTotal.value)
 })
 
 const getRowsSummary = () => {
