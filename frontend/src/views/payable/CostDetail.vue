@@ -250,6 +250,7 @@
         <el-table-column v-if="visibleColumns.docId" prop="docId" label="单据ID" min-width="100" />
         <el-table-column v-if="visibleColumns.costType" prop="costType" label="成本类型" min-width="120" />
         <el-table-column v-if="visibleColumns.supplier" prop="supplier" label="供应商" min-width="160" />
+        <el-table-column v-if="visibleColumns.settlementUnit" prop="settlementUnit" label="结算单位" min-width="150" />
         <el-table-column v-if="visibleColumns.costItem" prop="costItem" label="成本项目" min-width="100" />
         <el-table-column v-if="visibleColumns.productL1" prop="productL1" label="产品标准名L1" min-width="120" />
         <el-table-column v-if="visibleColumns.productL2" prop="productL2" label="产品标准名L2" min-width="120" />
@@ -274,7 +275,6 @@
         <el-table-column v-if="visibleColumns.incTaxAmountCny" prop="incTaxAmountCny" label="含税(折合CNY)" min-width="150" align="right">
           <template #default="{ row }">¥{{ formatMoney(row.incTaxAmountCny) }}</template>
         </el-table-column>
-        <el-table-column v-if="visibleColumns.settlementUnit" prop="settlementUnit" label="结算单位" min-width="150" />
         <el-table-column v-if="visibleColumns.customerService" prop="customerService" label="客服" min-width="80" />
         <el-table-column v-if="visibleColumns.remark" prop="remark" label="备注" min-width="150" />
         <el-table-column v-if="visibleColumns.reconcileStatus" prop="reconcileStatus" label="对账状态" min-width="100">
@@ -449,6 +449,7 @@ const allFields = [
   { key: 'docId', label: '单据ID' },
   { key: 'costType', label: '成本类型' },
   { key: 'supplier', label: '供应商' },
+  { key: 'settlementUnit', label: '结算单位' },
   { key: 'costItem', label: '成本项目' },
   { key: 'productL1', label: '产品标准名L1' },
   { key: 'productL2', label: '产品标准名L2' },
@@ -461,7 +462,6 @@ const allFields = [
   { key: 'exchangeRate', label: '汇率' },
   { key: 'exTaxAmountCny', label: '不含税(折合CNY)' },
   { key: 'incTaxAmountCny', label: '含税(折合CNY)' },
-  { key: 'settlementUnit', label: '结算单位' },
   { key: 'customerService', label: '客服' },
   { key: 'remark', label: '备注' },
   { key: 'reconcileStatus', label: '对账状态' },
@@ -478,10 +478,10 @@ const defaultFieldOrder = [
   'billingDocNo', 'customerName', 'warehouse', 'businessMode', 'rateSheetType',
   'orderCreateTime', 'orderFinishTime', 'orderStatus', 'isSettled', 'customerQuoteNo',
   'businessNo', 'flowSheetNo', 'rateSheetCostStatus', 'rateSheetCostConfirmTime', 'approvalStatus',
-  'docId', 'costType', 'supplier', 'costItem',
+  'docId', 'costType', 'supplier', 'settlementUnit', 'costItem',
   'productL1', 'productL2', 'productL3', 'currency', 'exTaxAmount',
   'taxRate', 'taxAmount', 'incTaxAmount', 'exchangeRate', 'exTaxAmountCny',
-  'incTaxAmountCny', 'settlementUnit', 'customerService', 'remark', 'reconcileStatus',
+  'incTaxAmountCny', 'customerService', 'remark', 'reconcileStatus',
   'creator', 'createTime', 'updater', 'updateTime'
 ]
 

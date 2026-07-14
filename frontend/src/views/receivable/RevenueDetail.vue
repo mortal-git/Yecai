@@ -373,8 +373,13 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Search, Refresh, Download, Setting, Document } from '@element-plus/icons-vue'
+import { useReceivableStatementStore } from '../../store/receivableStatement'
+
+const router = useRouter()
+const receivableStatementStore = useReceivableStatementStore()
 
 // 搜索表单
 const searchForm = reactive({
@@ -764,8 +769,9 @@ const handleGenerateStatement = () => {
     ElMessage.warning('请选择要生成对账单的数据')
     return
   }
-  // 后续生成对账单的逻辑在这里实现
-  ElMessage.success(`正在为 ${selectedRows.value.length} 条数据生成对账单`)
+  receivableStatementStore.setSelectedRevenueRows(selectedRows.value)
+  ElMessage.success(`已选择 ${selectedRows.value.length} 条数据，正在跳转到新建对账单页面`)
+  router.push('/statement/receivable/create')
 }
 
 // 自定义字段

@@ -41,6 +41,11 @@ export interface PaymentRecord {
   paymentMethod: string
   status: '已付款'
   remark?: string
+  bankAccount?: string
+  transactionNo?: string
+  attachment?: { name: string; url: string }
+  payer?: string
+  paymentTime?: string
 }
 
 export interface InvoiceRecord {
@@ -53,6 +58,10 @@ export interface InvoiceRecord {
   incTaxAmount: number
   status: '已关联'
   remark?: string
+  invoiceType?: string
+  invoiceAmount?: number
+  bindAmount?: number
+  bindDate?: string
 }
 
 export interface OperationLog {
@@ -69,6 +78,8 @@ export interface PayableStatement {
   name: string
   supplier: string
   settlementUnit: string
+  settlementBank: string
+  settlementAccount: string
   settleDate: string
   totalExTaxCny: number
   totalIncTaxCny: number
@@ -134,11 +145,23 @@ function buildMockData(): PayableStatement[] {
   return [
     {
       id: uid('ps_'), statementNo: 'PS2026070001', name: '2026年6月深圳仓仓储费对账单',
-      supplier: '深圳盐田国际集装箱码头有限公司', settlementUnit: '深圳分公司', settleDate: '2026-07-05',
+      supplier: '深圳盐田国际集装箱码头有限公司', settlementUnit: '深圳分公司',
+      settlementBank: '中国工商银行', settlementAccount: '6222021234567890123',
+      settleDate: '2026-07-05',
       totalExTaxCny: 50000, totalIncTaxCny: 56500, status: 'paid', remark: '已完成付款登记',
       rows,
-      payments: [{ id: uid('p_'), paymentNo: 'PAY2026070001', amount: 56500, paymentDate: '2026-07-10', paymentMethod: '银行转账', status: '已付款' }],
-      invoices: [{ id: uid('inv_'), invoiceNo: 'INV2026070001', invoiceDate: '2026-07-06', amount: 50000, taxRate: 13, taxAmount: 6500, incTaxAmount: 56500, status: '已关联' }],
+      payments: [{
+        id: uid('p_'), paymentNo: 'PAY2026070001', amount: 56500, paymentDate: '2026-07-10',
+        paymentMethod: '银行转账', status: '已付款',
+        bankAccount: '中国工商银行 6222021234567890123', transactionNo: 'FT202607100001',
+        remark: '6月仓储费付款', attachment: { name: '付款凭证.pdf', url: '/files/voucher1.pdf' },
+        payer: '张三', paymentTime: '2026-07-10 16:00:00'
+      }],
+      invoices: [{
+        id: uid('inv_'), invoiceNo: 'INV2026070001', invoiceDate: '2026-07-06',
+        amount: 50000, taxRate: 13, taxAmount: 6500, incTaxAmount: 56500, status: '已关联',
+        invoiceType: '增值税专用发票', invoiceAmount: 56500, bindAmount: 56500, bindDate: '2026-07-08'
+      }],
       logs: [
         { id: uid('log_'), action: '创建对账单', operator: '张三', operateTime: '2026-07-01 10:30:00' },
         { id: uid('log_'), action: '提交审核', operator: '张三', operateTime: '2026-07-01 14:00:00' },
@@ -149,7 +172,9 @@ function buildMockData(): PayableStatement[] {
     },
     {
       id: uid('ps_'), statementNo: 'PS2026070002', name: '2026年6月海运运输费对账单',
-      supplier: '上海中远海运集装箱运输有限公司', settlementUnit: '上海分公司', settleDate: '2026-07-08',
+      supplier: '上海中远海运集装箱运输有限公司', settlementUnit: '上海分公司',
+      settlementBank: '中国农业银行', settlementAccount: '6225001234567890123',
+      settleDate: '2026-07-08',
       totalExTaxCny: 80000, totalIncTaxCny: 90400, status: 'pending_payment', remark: '待付款登记',
       rows: [rows[1]],
       payments: [], invoices: [],
@@ -162,7 +187,9 @@ function buildMockData(): PayableStatement[] {
     },
     {
       id: uid('ps_'), statementNo: 'PS2026070003', name: '2026年7月首周费用对账单',
-      supplier: '北京华贸物流股份有限公司', settlementUnit: '北京分公司', settleDate: '2026-07-07',
+      supplier: '北京华贸物流股份有限公司', settlementUnit: '北京分公司',
+      settlementBank: '中国银行', settlementAccount: '6217001234567890123',
+      settleDate: '2026-07-07',
       totalExTaxCny: 35000, totalIncTaxCny: 39550, status: 'pending_payment', remark: '',
       rows: [],
       payments: [], invoices: [],
@@ -175,7 +202,9 @@ function buildMockData(): PayableStatement[] {
     },
     {
       id: uid('ps_'), statementNo: 'PS2026070004', name: '2026年7月第二周费用对账单',
-      supplier: '广州白云国际机场物流有限公司', settlementUnit: '广州分公司', settleDate: '2026-07-12',
+      supplier: '广州白云国际机场物流有限公司', settlementUnit: '广州分公司',
+      settlementBank: '中国建设银行', settlementAccount: '6214001234567890123',
+      settleDate: '2026-07-12',
       totalExTaxCny: 22000, totalIncTaxCny: 24860, status: 'pending', remark: '待审核',
       rows: [],
       payments: [], invoices: [],
@@ -187,7 +216,9 @@ function buildMockData(): PayableStatement[] {
     },
     {
       id: uid('ps_'), statementNo: 'PS2026070005', name: '2026年7月第三周费用对账单（草稿）',
-      supplier: '中外运冷链物流有限公司', settlementUnit: '深圳分公司', settleDate: '2026-07-15',
+      supplier: '中外运冷链物流有限公司', settlementUnit: '深圳分公司',
+      settlementBank: '招商银行', settlementAccount: '6225001234567890123',
+      settleDate: '2026-07-15',
       totalExTaxCny: 12000, totalIncTaxCny: 13560, status: 'draft', remark: '',
       rows: [],
       payments: [], invoices: [],
@@ -198,7 +229,9 @@ function buildMockData(): PayableStatement[] {
     },
     {
       id: uid('ps_'), statementNo: 'PS2026070006', name: '2026年5月垫付费用对账单（已作废）',
-      supplier: '深圳盐田国际集装箱码头有限公司', settlementUnit: '深圳分公司', settleDate: '2026-06-20',
+      supplier: '深圳盐田国际集装箱码头有限公司', settlementUnit: '深圳分公司',
+      settlementBank: '中国工商银行', settlementAccount: '6222021234567890123',
+      settleDate: '2026-06-20',
       totalExTaxCny: 18000, totalIncTaxCny: 20340, status: 'cancelled', remark: '数据重复，已作废重开',
       rows: [],
       payments: [], invoices: [],
@@ -305,7 +338,7 @@ export const usePayableStatementStore = defineStore('payableStatement', () => {
     const item = getById(id)
     if (!item) return
     item.invoices.push({ ...invoice, id: uid('inv_') })
-    item.logs.push({ id: uid('log_'), action: '关联进项发票', operator: '当前用户', operateTime: now(), remark: `发票号 ${invoice.invoiceNo}` })
+    item.logs.push({ id: uid('log_'), action: '绑定发票', operator: '当前用户', operateTime: now(), remark: `发票号 ${invoice.invoiceNo}` })
     item.updateTime = now()
   }
 

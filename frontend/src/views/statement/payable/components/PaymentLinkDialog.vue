@@ -1,70 +1,114 @@
 <template>
-  <el-dialog v-model="visible" title="付款登记" width="640px" destroy-on-close>
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
-      <el-form-item label="对账单号">
-        <span>{{ statement?.statementNo }}</span>
-      </el-form-item>
-      <el-form-item label="对账含税金额">
-        <span class="amount">¥{{ formatMoney(statement?.totalIncTaxCny || 0) }}</span>
-      </el-form-item>
-      <el-form-item label="已登记付款">
-        <span class="amount">¥{{ formatMoney(linkedTotal) }}</span>
-        <span class="sub">（未付款 ¥{{ formatMoney(statement!.totalIncTaxCny - linkedTotal) }}）</span>
-      </el-form-item>
-
-      <el-divider content-position="left">付款信息</el-divider>
-
-      <el-form-item label="付款单号" prop="paymentNo">
-        <el-input v-model="form.paymentNo" placeholder="请输入付款单号" style="width: 240px" />
-        <el-button link type="primary" size="small" @click="genPaymentNo" style="margin-left: 8px">自动生成</el-button>
-      </el-form-item>
-      <el-form-item label="付款金额" prop="amount">
-        <el-input-number v-model="form.amount" :min="0" :precision="2" :step="1000" style="width: 240px" />
-        <el-button link type="primary" size="small" @click="form.amount = statement!.totalIncTaxCny - linkedTotal" style="margin-left: 8px">全额</el-button>
-      </el-form-item>
-      <el-form-item label="付款日期" prop="paymentDate">
-        <el-date-picker v-model="form.paymentDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 240px" />
-      </el-form-item>
-      <el-form-item label="付款方式" prop="paymentMethod">
-        <el-select v-model="form.paymentMethod" placeholder="请选择" style="width: 240px">
-          <el-option label="银行转账" value="银行转账" />
-          <el-option label="电汇" value="电汇" />
-          <el-option label="承兑汇票" value="承兑汇票" />
-          <el-option label="现金" value="现金" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="备注">
-        <el-input v-model="form.remark" type="textarea" :rows="2" placeholder="可填写付款说明" />
-      </el-form-item>
-    </el-form>
-
-    <div v-if="statement && statement.payments.length > 0" class="linked-list">
-      <div class="linked-title">已登记付款记录</div>
-      <el-table :data="statement.payments" border size="small">
-        <el-table-column prop="paymentNo" label="付款单号" min-width="140" />
-        <el-table-column prop="amount" label="金额" min-width="120" align="right">
-          <template #default="{ row }">¥{{ formatMoney(row.amount) }}</template>
-        </el-table-column>
-        <el-table-column prop="paymentDate" label="付款日期" min-width="110" />
-        <el-table-column prop="paymentMethod" label="付款方式" min-width="100" />
-        <el-table-column prop="status" label="状态" min-width="80">
-          <template #default="{ row }">
-            <el-tag type="success" size="small">{{ row.status }}</el-tag>
-          </template>
-        </el-table-column>
-      </el-table>
+  <el-dialog v-model="visible" title="付款登记" width="700px" :close-on-click-modal="false" destroy-on-close>
+    <div class="payment-form">
+      <el-form :model="form" label-width="120px">
+        <!-- 基本信息 -->
+        <div class="form-section-title">基本信息</div>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="对账单号">
+              {{ statement?.statementNo }}
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="供应商">
+              {{ statement?.supplier }}
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="结算单位">
+              {{ statement?.settlementUnit }}
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="对账含税金额">
+              <span class="text-primary">¥{{ formatMoney(statement?.totalIncTaxCny || 0) }}</span>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-divider />
+        <!-- 付款信息 -->
+        <div class="form-section-title">付款信息</div>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="付款金额" required>
+              <el-input-number v-model="form.amount" :min="0" :precision="2" :step="1000" style="width: 100%" />
+              <el-button link type="primary" size="small" @click="form.amount = fullAmount" style="margin-left: 8px">全额</el-button>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="付款日期" required>
+              <el-date-picker v-model="form.paymentDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="付款方式" required>
+              <el-select v-model="form.paymentMethod" placeholder="请选择" style="width: 100%">
+                <el-option label="银行转账" value="银行转账" />
+                <el-option label="承兑汇票" value="承兑汇票" />
+                <el-option label="现金" value="现金" />
+                <el-option label="支票" value="支票" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="银行账号">
+              <el-select v-model="form.bankAccountId" placeholder="请选择" style="width: 100%">
+                <el-option
+                  v-for="bank in bankAccounts"
+                  :key="bank.id"
+                  :label="`${bank.bankName} ${bank.accountNo}`"
+                  :value="bank.id"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="银行流水">
+              <el-input v-model="form.transactionNo" placeholder="请输入银行流水" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="备注">
+              <el-input v-model="form.remark" placeholder="请输入备注" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-divider />
+        <el-form-item label="附件上传">
+          <el-upload
+            action="#"
+            :auto-upload="false"
+            :file-list="form.fileList"
+            :on-change="handleFileChange"
+            :on-remove="handleFileRemove"
+            accept=".jpg,.png,.pdf"
+            multiple
+          >
+            <el-button size="small" type="primary">点击上传</el-button>
+            <template #tip>
+              <div class="el-upload__tip">支持JPG、PNG、PDF格式，单文件不超过10MB</div>
+            </template>
+          </el-upload>
+        </el-form-item>
+      </el-form>
     </div>
-
     <template #footer>
       <el-button @click="visible = false">取消</el-button>
-      <el-button type="primary" @click="confirm">确认登记</el-button>
+      <el-button type="primary" @click="confirm" :loading="loading">确认付款</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
-import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import type { PayableStatement, PaymentRecord } from '../../../../store/payableStatement'
 
 const props = defineProps<{
@@ -82,83 +126,115 @@ const visible = computed({
   set: v => emit('update:modelValue', v)
 })
 
-const formRef = ref<FormInstance>()
+const loading = ref(false)
+
 const form = reactive({
-  paymentNo: '',
   amount: 0,
   paymentDate: '',
-  paymentMethod: '银行转账',
-  remark: ''
+  paymentMethod: '',
+  bankAccountId: null as number | null,
+  transactionNo: '',
+  remark: '',
+  fileList: [] as any[]
 })
 
-const rules: FormRules = {
-  paymentNo: [{ required: true, message: '请输入付款单号', trigger: 'blur' }],
-  amount: [{ required: true, message: '请输入付款金额', trigger: 'blur' }],
-  paymentDate: [{ required: true, message: '请选择付款日期', trigger: 'change' }],
-  paymentMethod: [{ required: true, message: '请选择付款方式', trigger: 'change' }]
-}
+const bankAccounts = ref([
+  { id: 1, bankName: '中国工商银行', accountNo: '6222081234567890' },
+  { id: 2, bankName: '中国建设银行', accountNo: '6217001234567890' },
+  { id: 3, bankName: '中国农业银行', accountNo: '6228481234567890' },
+  { id: 4, bankName: '招商银行', accountNo: '6214831234567890' }
+])
 
 const linkedTotal = computed(() => props.statement?.payments.reduce((s, p) => s + p.amount, 0) || 0)
+const fullAmount = computed(() => props.statement ? Math.max(0, props.statement.totalIncTaxCny - linkedTotal.value) : 0)
 
 const formatMoney = (value: number) => (value || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 const genPaymentNo = () => {
   const seq = String((props.statement?.payments.length || 0) + 1).padStart(4, '0')
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '')
-  form.paymentNo = `PAY${dateStr}${seq}`
+  return `PAY${dateStr}${seq}`
+}
+
+const handleFileChange = (_file: any, fileList: any) => {
+  form.fileList = fileList
+}
+
+const handleFileRemove = (_file: any, fileList: any) => {
+  form.fileList = fileList
 }
 
 const confirm = async () => {
-  if (!formRef.value) return
-  await formRef.value.validate(valid => {
-    if (!valid) return
-    if (form.amount <= 0) {
-      ElMessage.warning('付款金额必须大于0')
-      return
-    }
+  if (!form.paymentDate) {
+    ElMessage.warning('请选择付款日期')
+    return
+  }
+  if (!form.paymentMethod) {
+    ElMessage.warning('请选择付款方式')
+    return
+  }
+  if (form.amount <= 0) {
+    ElMessage.warning('付款金额必须大于0')
+    return
+  }
+  loading.value = true
+  try {
+    await new Promise(resolve => setTimeout(resolve, 500))
+    const bank = bankAccounts.value.find(b => b.id === form.bankAccountId)
+    const bankAccount = bank ? `${bank.bankName} ${bank.accountNo}` : ''
+    const remarkParts: string[] = []
+    if (form.remark) remarkParts.push(form.remark)
+
+    const nowTime = new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-')
+    const attachment = form.fileList[0]
+      ? { name: form.fileList[0].name, url: form.fileList[0].url || `/files/${form.fileList[0].name}` }
+      : undefined
+
     emit('confirm', {
-      paymentNo: form.paymentNo,
+      paymentNo: genPaymentNo(),
       amount: form.amount,
       paymentDate: form.paymentDate,
       paymentMethod: form.paymentMethod,
       status: '已付款',
-      remark: form.remark
+      remark: remarkParts.join('；') || undefined,
+      bankAccount,
+      transactionNo: form.transactionNo || undefined,
+      attachment,
+      payer: '当前用户',
+      paymentTime: nowTime
     })
     visible.value = false
-  })
+  } finally {
+    loading.value = false
+  }
 }
 
 watch(() => props.modelValue, v => {
   if (v) {
-    form.paymentNo = ''
-    form.amount = props.statement ? Math.max(0, props.statement.totalIncTaxCny - linkedTotal.value) : 0
+    form.amount = fullAmount.value
     form.paymentDate = new Date().toISOString().slice(0, 10)
-    form.paymentMethod = '银行转账'
+    form.paymentMethod = ''
+    form.bankAccountId = null
+    form.transactionNo = ''
     form.remark = ''
+    form.fileList = []
   }
 })
 </script>
 
 <style scoped>
-.amount {
-  font-weight: 600;
-  color: #f56c6c;
-}
+.text-primary { color: #409eff; }
 
-.sub {
-  margin-left: 8px;
-  color: #909399;
-  font-size: 13px;
-}
-
-.linked-list {
-  margin-top: 16px;
-}
-
-.linked-title {
+.form-section-title {
   font-size: 14px;
   font-weight: 600;
   color: #303133;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
+  padding-left: 10px;
+  border-left: 3px solid #409eff;
+}
+
+.payment-form {
+  padding: 10px 0;
 }
 </style>

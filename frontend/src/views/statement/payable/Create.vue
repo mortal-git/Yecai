@@ -56,6 +56,22 @@
         </el-row>
         <el-row :gutter="16">
           <el-col :span="8">
+            <el-form-item label="结算银行" prop="settlementBank">
+              <el-select v-model="formData.settlementBank" placeholder="请选择结算银行" filterable style="width: 100%">
+                <el-option v-for="b in settlementBankList" :key="b" :label="b" :value="b" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="结算账号" prop="settlementAccount">
+              <el-select v-model="formData.settlementAccount" placeholder="请选择结算账号" filterable style="width: 100%">
+                <el-option v-for="a in settlementAccountList" :key="a" :label="a" :value="a" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="16">
+          <el-col :span="8">
             <el-form-item label="结算日" prop="settleDate">
               <el-date-picker
                 v-model="formData.settleDate"
@@ -197,6 +213,28 @@ const supplierList = [
   '中外运冷链物流有限公司'
 ]
 const settlementUnitList = ['深圳分公司', '上海分公司', '广州分公司', '北京分公司', '杭州分公司']
+const settlementBankList = [
+  '中国工商银行',
+  '中国农业银行',
+  '中国银行',
+  '中国建设银行',
+  '交通银行',
+  '招商银行',
+  '中信银行',
+  '中国民生银行',
+  '上海浦东发展银行',
+  '兴业银行'
+]
+const settlementAccountList = [
+  '6222021234567890123',
+  '6225001234567890123',
+  '6217001234567890123',
+  '6214001234567890123',
+  '6226001234567890123',
+  '6225881234567890123',
+  '6217001234567890456',
+  '6222001234567890789'
+]
 
 const formRef = ref<FormInstance>()
 const formData = reactive({
@@ -204,6 +242,8 @@ const formData = reactive({
   name: '',
   supplier: '',
   settlementUnit: '',
+  settlementBank: '',
+  settlementAccount: '',
   settleDate: '',
   remark: '',
   status: 'draft' as PayableStatement['status']
@@ -213,6 +253,8 @@ const formRules: FormRules = {
   name: [{ required: true, message: '请输入对账单名称', trigger: 'blur' }],
   supplier: [{ required: true, message: '请选择供应商', trigger: 'change' }],
   settlementUnit: [{ required: true, message: '请选择结算单位', trigger: 'change' }],
+  settlementBank: [{ required: true, message: '请选择结算银行', trigger: 'change' }],
+  settlementAccount: [{ required: true, message: '请选择结算账号', trigger: 'change' }],
   settleDate: [{ required: true, message: '请选择结算日', trigger: 'change' }]
 }
 
@@ -269,6 +311,8 @@ const validateBeforeSave = () => {
   if (!formData.name) { ElMessage.warning('请输入对账单名称'); return false }
   if (!formData.supplier) { ElMessage.warning('请选择供应商'); return false }
   if (!formData.settlementUnit) { ElMessage.warning('请选择结算单位'); return false }
+  if (!formData.settlementBank) { ElMessage.warning('请选择结算银行'); return false }
+  if (!formData.settlementAccount) { ElMessage.warning('请选择结算账号'); return false }
   if (!formData.settleDate) { ElMessage.warning('请选择结算日'); return false }
   if (detailRows.value.length === 0) {
     ElMessage.warning('请添加对账明细')
@@ -281,6 +325,8 @@ const buildStatementData = () => ({
   name: formData.name,
   supplier: formData.supplier,
   settlementUnit: formData.settlementUnit,
+  settlementBank: formData.settlementBank,
+  settlementAccount: formData.settlementAccount,
   settleDate: formData.settleDate,
   totalExTaxCny: totalExTaxCny.value,
   totalIncTaxCny: totalIncTaxCny.value,
@@ -345,6 +391,8 @@ onMounted(() => {
     formData.name = s.name
     formData.supplier = s.supplier
     formData.settlementUnit = s.settlementUnit
+    formData.settlementBank = s.settlementBank || ''
+    formData.settlementAccount = s.settlementAccount || ''
     formData.settleDate = s.settleDate
     formData.remark = s.remark || ''
     formData.status = s.status

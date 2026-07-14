@@ -2,9 +2,10 @@
   <div class="layout-container">
     <el-container style="height: 100vh; border: 1px solid #eee">
       <!-- 侧边栏 -->
-      <el-aside width="250px" style="background-color: #fff;">
-        <div class="logo" style="background-color: #409eff;">
-          <h2>业财管理系统</h2>
+      <el-aside :width="isCollapse ? '64px' : '250px'" class="side-aside" style="background-color: #fff; transition: width 0.28s;">
+        <div class="logo" :class="{ collapsed: isCollapse }">
+          <span v-if="!isCollapse">业财管理系统</span>
+          <span v-else class="logo-mini">业财</span>
         </div>
         <el-menu
           :default-active="$route.path"
@@ -88,15 +89,6 @@
             <el-menu-item index="/order/cos">账单主体</el-menu-item>
           </el-sub-menu>
 
-          <el-sub-menu index="invoice">
-            <template #title>
-              <el-icon><Ticket /></el-icon>
-              <span>发票管理</span>
-            </template>
-            <el-menu-item index="/invoice/list">发票列表</el-menu-item>
-            <el-menu-item index="/invoice/create">新增发票</el-menu-item>
-          </el-sub-menu>
-
           <el-sub-menu index="receivable">
             <template #title>
               <el-icon><Money /></el-icon>
@@ -130,6 +122,16 @@
             <el-menu-item index="/statement/list">对账单列表</el-menu-item>
             <el-menu-item index="/statement/create">生成对账单</el-menu-item>
             <el-menu-item index="/statement/payable">应付对账单</el-menu-item>
+            <el-menu-item index="/statement/receivable">应收对账单</el-menu-item>
+          </el-sub-menu>
+
+          <el-sub-menu index="invoice">
+            <template #title>
+              <el-icon><Ticket /></el-icon>
+              <span>发票管理</span>
+            </template>
+            <el-menu-item index="/invoice/list">发票列表</el-menu-item>
+            <el-menu-item index="/invoice/create">新增发票</el-menu-item>
           </el-sub-menu>
 
           <el-sub-menu index="fund">
@@ -196,7 +198,7 @@
           <div class="header-content">
             <el-button
               link
-              icon="Expand"
+              :icon="isCollapse ? Expand : Fold"
               @click="isCollapse = !isCollapse"
               style="margin-right: 20px"
             />
@@ -290,6 +292,7 @@ import {
   ArrowDown,
   Bell,
   Expand,
+  Fold,
   PriceTag,
   Tickets,
   MagicStick,
@@ -395,14 +398,53 @@ const handleMenuSelect = (index: string) => {
   font-size: 16px;
   font-weight: bold;
   border-bottom: 1px solid #e4e7ed;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.logo.collapsed {
+  font-size: 14px;
+}
+
+.logo-mini {
+  font-size: 14px;
+  letter-spacing: 0;
 }
 
 .el-aside {
   background-color: #fff;
   color: #303133;
   text-align: center;
-  line-height: 60px;
   border-right: 1px solid #e4e7ed;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.el-aside .logo {
+  flex-shrink: 0;
+}
+
+.side-aside :deep(.el-menu) {
+  border-right: none;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* 滚动条样式 */
+.side-aside :deep(.el-menu::-webkit-scrollbar) {
+  width: 6px;
+}
+
+.side-aside :deep(.el-menu::-webkit-scrollbar-thumb) {
+  background-color: #c0c4cc;
+  border-radius: 3px;
+}
+
+.side-aside :deep(.el-menu::-webkit-scrollbar-track) {
+  background-color: transparent;
 }
 
 .el-menu-vertical-demo {

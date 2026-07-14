@@ -357,6 +357,24 @@ const routes: Array<RouteRecordRaw> = [
             name: 'PayableStatementDetail',
             component: () => import('../views/statement/payable/Detail.vue'),
             meta: { title: '应付对账单详情' }
+          },
+          {
+            path: 'receivable',
+            name: 'ReceivableStatementList',
+            component: () => import('../views/statement/receivable/List.vue'),
+            meta: { title: '应收对账单' }
+          },
+          {
+            path: 'receivable/create',
+            name: 'ReceivableStatementCreate',
+            component: () => import('../views/statement/receivable/Create.vue'),
+            meta: { title: '新建应收对账单' }
+          },
+          {
+            path: 'receivable/edit/:id',
+            name: 'ReceivableStatementEdit',
+            component: () => import('../views/statement/receivable/Create.vue'),
+            meta: { title: '编辑应收对账单' }
           }
         ]
       },

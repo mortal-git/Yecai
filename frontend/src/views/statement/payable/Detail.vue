@@ -106,18 +106,20 @@
           </div>
           <el-empty v-if="statement.payments.length === 0" description="暂无关联付款单" />
           <el-table v-else :data="statement.payments" border stripe size="small">
-            <el-table-column prop="paymentNo" label="付款单号" min-width="140" />
-            <el-table-column prop="amount" label="付款金额" min-width="120" align="right">
-              <template #default="{ row }">¥{{ formatMoney(row.amount) }}</template>
-            </el-table-column>
-            <el-table-column prop="paymentDate" label="付款日期" min-width="110" />
             <el-table-column prop="paymentMethod" label="付款方式" min-width="100" />
-            <el-table-column prop="status" label="状态" min-width="80">
+            <el-table-column prop="bankAccount" label="银行账号" min-width="200" />
+            <el-table-column prop="transactionNo" label="银行流水" min-width="150" />
+            <el-table-column prop="remark" label="备注" min-width="150" show-overflow-tooltip />
+            <el-table-column prop="attachment" label="附件" min-width="120">
               <template #default="{ row }">
-                <el-tag type="success" size="small">{{ row.status }}</el-tag>
+                <el-link v-if="row.attachment" type="primary" @click="handleViewAttachment(row.attachment)">
+                  {{ row.attachment.name }}
+                </el-link>
+                <span v-else>-</span>
               </template>
             </el-table-column>
-            <el-table-column prop="remark" label="备注" min-width="160" show-overflow-tooltip />
+            <el-table-column prop="payer" label="付款人" min-width="100" />
+            <el-table-column prop="paymentTime" label="付款时间" min-width="160" />
           </el-table>
         </el-tab-pane>
 
@@ -128,24 +130,18 @@
           </div>
           <el-empty v-if="statement.invoices.length === 0" description="暂无关联发票" />
           <el-table v-else :data="statement.invoices" border stripe size="small">
-            <el-table-column prop="invoiceNo" label="发票号" min-width="140" />
-            <el-table-column prop="invoiceDate" label="发票日期" min-width="110" />
-            <el-table-column prop="amount" label="不含税金额" min-width="120" align="right">
-              <template #default="{ row }">¥{{ formatMoney(row.amount) }}</template>
+            <el-table-column prop="invoiceNo" label="发票号" min-width="150" />
+            <el-table-column prop="invoiceType" label="发票类型" min-width="120" />
+            <el-table-column prop="invoiceAmount" label="发票金额" min-width="130" align="right">
+              <template #default="{ row }">¥{{ formatMoney(row.invoiceAmount) }}</template>
             </el-table-column>
+            <el-table-column prop="bindAmount" label="绑定金额" min-width="130" align="right">
+              <template #default="{ row }">¥{{ formatMoney(row.bindAmount) }}</template>
+            </el-table-column>
+            <el-table-column prop="bindDate" label="绑定日期" min-width="120" />
+            <el-table-column prop="invoiceDate" label="开票日期" min-width="120" />
             <el-table-column prop="taxRate" label="税率" min-width="80" align="right">
               <template #default="{ row }">{{ row.taxRate }}%</template>
-            </el-table-column>
-            <el-table-column prop="taxAmount" label="税额" min-width="120" align="right">
-              <template #default="{ row }">¥{{ formatMoney(row.taxAmount) }}</template>
-            </el-table-column>
-            <el-table-column prop="incTaxAmount" label="价税合计" min-width="120" align="right">
-              <template #default="{ row }">¥{{ formatMoney(row.incTaxAmount) }}</template>
-            </el-table-column>
-            <el-table-column prop="status" label="状态" min-width="80">
-              <template #default="{ row }">
-                <el-tag type="success" size="small">{{ row.status }}</el-tag>
-              </template>
             </el-table-column>
           </el-table>
         </el-tab-pane>
@@ -272,6 +268,10 @@ const handleDelete = () => {
 
 const handlePrint = () => {
   window.print()
+}
+
+const handleViewAttachment = (file: { name: string, url: string }) => {
+  window.open(file.url, '_blank')
 }
 
 // 弹窗

@@ -19,6 +19,16 @@
             <el-option v-for="u in settlementUnitList" :key="u" :label="u" :value="u" />
           </el-select>
         </el-form-item>
+        <el-form-item label="结算银行">
+          <el-select v-model="searchForm.settlementBank" placeholder="请选择" clearable filterable style="width: 180px">
+            <el-option v-for="b in settlementBankList" :key="b" :label="b" :value="b" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="结算账号">
+          <el-select v-model="searchForm.settlementAccount" placeholder="请选择" clearable filterable style="width: 220px">
+            <el-option v-for="a in settlementAccountList" :key="a" :label="a" :value="a" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="对账单状态">
           <el-select v-model="searchForm.status" placeholder="请选择" clearable style="width: 140px">
             <el-option v-for="(label, key) in STATUS_LABEL" :key="key" :label="label" :value="key" />
@@ -116,6 +126,8 @@
           </template>
         </el-table-column>
         <el-table-column prop="settlementUnit" label="结算单位" min-width="120" />
+        <el-table-column prop="settlementBank" label="结算银行" min-width="120" />
+        <el-table-column prop="settlementAccount" label="结算账号" min-width="160" />
         <el-table-column prop="settleDate" label="结算日" min-width="110" sortable />
         <el-table-column prop="totalExTaxCny" label="不含税金额" min-width="130" align="right" sortable>
           <template #default="scope">¥{{ formatMoney(scope.row.totalExTaxCny) }}</template>
@@ -161,20 +173,19 @@
         <el-table-column label="操作" width="220" fixed="right">
           <template #default="scope">
             <el-button type="primary" size="small" link @click.stop="handleEdit(scope.row)" :disabled="!canEdit(scope.row)">编辑</el-button>
-            <el-button type="warning" size="small" link @click.stop="handleSubmit(scope.row)" :disabled="!canSubmit(scope.row)">提交</el-button>
+            <el-button type="danger" size="small" link @click.stop="handleDelete(scope.row)" :disabled="!canDelete(scope.row)">删除</el-button>
             <el-dropdown trigger="hover" @command="(command: string) => handleMoreAction(command, scope.row)">
               <span class="more-dropdown-link">
                 <el-button type="info" size="small" link>更多<el-icon><ArrowDown /></el-icon></el-button>
               </span>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="view">查看详情</el-dropdown-item>
+                  <el-dropdown-item command="submit" :disabled="!canSubmit(scope.row)">提交审批</el-dropdown-item>
                   <el-dropdown-item command="audit" :disabled="!canAudit(scope.row)">审核</el-dropdown-item>
+                  <el-dropdown-item command="applyPay" :disabled="!canApplyPayment(scope.row)">申请付款</el-dropdown-item>
                   <el-dropdown-item command="pay" :disabled="!canPay(scope.row)">付款登记</el-dropdown-item>
-                  <el-dropdown-item command="linkInvoice" :disabled="!canLinkInvoice(scope.row)">关联进项发票</el-dropdown-item>
-                  <el-dropdown-item command="print">打印</el-dropdown-item>
+                  <el-dropdown-item command="linkInvoice" :disabled="!canLinkInvoice(scope.row)">绑定发票</el-dropdown-item>
                   <el-dropdown-item command="cancel" :disabled="!canCancel(scope.row)">作废</el-dropdown-item>
-                  <el-dropdown-item command="delete" :disabled="!canDelete(scope.row)">删除</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -340,12 +351,36 @@ const supplierList = [
   '中外运冷链物流有限公司'
 ]
 const settlementUnitList = ['深圳分公司', '上海分公司', '广州分公司', '北京分公司', '杭州分公司']
+const settlementBankList = [
+  '中国工商银行',
+  '中国农业银行',
+  '中国银行',
+  '中国建设银行',
+  '交通银行',
+  '招商银行',
+  '中信银行',
+  '中国民生银行',
+  '上海浦东发展银行',
+  '兴业银行'
+]
+const settlementAccountList = [
+  '6222021234567890123',
+  '6225001234567890123',
+  '6217001234567890123',
+  '6214001234567890123',
+  '6226001234567890123',
+  '6225881234567890123',
+  '6217001234567890456',
+  '6222001234567890789'
+]
 
 const searchForm = reactive({
   statementNo: '',
   name: '',
   supplier: '',
   settlementUnit: '',
+  settlementBank: '',
+  settlementAccount: '',
   status: '',
   settleDateRange: [] as string[],
   createTimeRange: [] as string[],
@@ -362,6 +397,8 @@ const filteredData = computed(() => {
     if (searchForm.name && !item.name.toLowerCase().includes(searchForm.name.toLowerCase())) return false
     if (searchForm.supplier && item.supplier !== searchForm.supplier) return false
     if (searchForm.settlementUnit && item.settlementUnit !== searchForm.settlementUnit) return false
+    if (searchForm.settlementBank && item.settlementBank !== searchForm.settlementBank) return false
+    if (searchForm.settlementAccount && item.settlementAccount !== searchForm.settlementAccount) return false
     if (searchForm.status && item.status !== searchForm.status) return false
     if (searchForm.settleDateRange && searchForm.settleDateRange.length === 2) {
       if (item.settleDate < searchForm.settleDateRange[0] || item.settleDate > searchForm.settleDateRange[1]) return false
@@ -399,8 +436,9 @@ const getRowClassName = ({ row }: { row: PayableStatement }) => {
 const canEdit = (row: PayableStatement) => row.status === 'draft'
 const canSubmit = (row: PayableStatement) => row.status === 'draft'
 const canAudit = (row: PayableStatement) => row.status === 'pending'
+const canApplyPayment = (row: PayableStatement) => row.status === 'pending_payment'
 const canPay = (row: PayableStatement) => row.status === 'pending_payment'
-const canLinkInvoice = (row: PayableStatement) => row.status === 'pending_payment'
+const canLinkInvoice = (row: PayableStatement) => row.status === 'draft'
 const canCancel = (row: PayableStatement) => row.status === 'paid'
 const canDelete = (row: PayableStatement) => row.status === 'draft'
 
@@ -412,7 +450,7 @@ const handleSearch = () => {
 
 const handleReset = () => {
   Object.assign(searchForm, {
-    statementNo: '', name: '', supplier: '', settlementUnit: '', status: '',
+    statementNo: '', name: '', supplier: '', settlementUnit: '', settlementBank: '', settlementAccount: '', status: '',
     settleDateRange: [], createTimeRange: [], creator: ''
   })
   handleSearch()
@@ -507,10 +545,6 @@ const handleDelete = (row: PayableStatement) => {
     .catch(() => {})
 }
 
-const handlePrint = (row: PayableStatement) => {
-  router.push(`/statement/payable/detail/${row.id}?print=1`)
-}
-
 const handleExport = () => {
   ElMessage.success(`导出 ${selectedRows.value.length} 条对账单`)
 }
@@ -518,14 +552,23 @@ const handleExport = () => {
 // 更多操作
 const handleMoreAction = (command: string, row: PayableStatement) => {
   switch (command) {
-    case 'view': handleView(row); break
+    case 'submit': handleSubmit(row); break
     case 'audit': handleAudit(row); break
+    case 'applyPay': handleApplyPayment(row); break
     case 'pay': openPaymentDialog(row); break
     case 'linkInvoice': openInvoiceDialog(row); break
-    case 'print': handlePrint(row); break
     case 'cancel': handleCancel(row); break
-    case 'delete': handleDelete(row); break
   }
+}
+
+// 申请付款
+const handleApplyPayment = (row: PayableStatement) => {
+  ElMessageBox.confirm(`确认对账单 ${row.statementNo} 申请付款?申请金额 ¥${formatMoney(row.totalIncTaxCny)}`, '申请付款', { type: 'warning' })
+    .then(() => {
+      store.addLog(row.id, '申请付款', `申请付款金额 ¥${formatMoney(row.totalIncTaxCny)}`)
+      ElMessage.success('已提交付款申请')
+    })
+    .catch(() => {})
 }
 
 // 付款登记 / 关联发票弹窗
@@ -550,7 +593,7 @@ const onPaymentLinked = (payment: any) => {
 const onInvoiceLinked = (invoice: any) => {
   if (!currentRow.value) return
   store.addInvoice(currentRow.value.id, invoice)
-  ElMessage.success('关联进项发票成功')
+  ElMessage.success('发票绑定成功')
   refreshCurrentRow()
 }
 

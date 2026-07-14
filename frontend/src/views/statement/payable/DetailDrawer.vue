@@ -13,6 +13,8 @@
           <el-link type="primary">{{ statement.supplier }}</el-link>
         </el-descriptions-item>
         <el-descriptions-item label="结算单位">{{ statement.settlementUnit }}</el-descriptions-item>
+        <el-descriptions-item label="结算银行">{{ statement.settlementBank || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="结算账号">{{ statement.settlementAccount || '-' }}</el-descriptions-item>
         <el-descriptions-item label="结算日">{{ statement.settleDate }}</el-descriptions-item>
         <el-descriptions-item label="备注">{{ statement.remark || '-' }}</el-descriptions-item>
         <el-descriptions-item label="创建人">{{ statement.creator }}</el-descriptions-item>
@@ -99,43 +101,39 @@
         <el-tab-pane :label="`付款记录 (${statement.payments.length})`" name="payment">
           <el-empty v-if="statement.payments.length === 0" description="暂无关联付款单" />
           <el-table v-else :data="statement.payments" border stripe size="small">
-            <el-table-column prop="paymentNo" label="付款单号" min-width="140" />
-            <el-table-column prop="amount" label="付款金额" min-width="120" align="right">
-              <template #default="scope">¥{{ formatMoney(scope.row.amount) }}</template>
-            </el-table-column>
-            <el-table-column prop="paymentDate" label="付款日期" min-width="110" />
             <el-table-column prop="paymentMethod" label="付款方式" min-width="100" />
-            <el-table-column prop="status" label="状态" min-width="80">
+            <el-table-column prop="bankAccount" label="银行账号" min-width="200" />
+            <el-table-column prop="transactionNo" label="银行流水" min-width="150" />
+            <el-table-column prop="remark" label="备注" min-width="150" show-overflow-tooltip />
+            <el-table-column prop="attachment" label="附件" min-width="120">
               <template #default="scope">
-                <el-tag type="success" size="small">{{ scope.row.status }}</el-tag>
+                <el-link v-if="scope.row.attachment" type="primary" @click="handleViewAttachment(scope.row.attachment)">
+                  {{ scope.row.attachment.name }}
+                </el-link>
+                <span v-else>-</span>
               </template>
             </el-table-column>
-            <el-table-column prop="remark" label="备注" min-width="160" show-overflow-tooltip />
+            <el-table-column prop="payer" label="付款人" min-width="100" />
+            <el-table-column prop="paymentTime" label="付款时间" min-width="160" />
           </el-table>
         </el-tab-pane>
 
         <!-- 发票记录 -->
         <el-tab-pane :label="`发票记录 (${statement.invoices.length})`" name="invoice">
-          <el-empty v-if="statement.invoices.length === 0" description="暂无关联进项发票" />
+          <el-empty v-if="statement.invoices.length === 0" description="暂无绑定发票" />
           <el-table v-else :data="statement.invoices" border stripe size="small">
-            <el-table-column prop="invoiceNo" label="发票号" min-width="140" />
-            <el-table-column prop="invoiceDate" label="发票日期" min-width="110" />
-            <el-table-column prop="amount" label="不含税金额" min-width="120" align="right">
-              <template #default="scope">¥{{ formatMoney(scope.row.amount) }}</template>
+            <el-table-column prop="invoiceNo" label="发票号" min-width="150" />
+            <el-table-column prop="invoiceType" label="发票类型" min-width="120" />
+            <el-table-column prop="invoiceAmount" label="发票金额" min-width="130" align="right">
+              <template #default="scope">¥{{ formatMoney(scope.row.invoiceAmount) }}</template>
             </el-table-column>
+            <el-table-column prop="bindAmount" label="绑定金额" min-width="130" align="right">
+              <template #default="scope">¥{{ formatMoney(scope.row.bindAmount) }}</template>
+            </el-table-column>
+            <el-table-column prop="bindDate" label="绑定日期" min-width="120" />
+            <el-table-column prop="invoiceDate" label="开票日期" min-width="120" />
             <el-table-column prop="taxRate" label="税率" min-width="80" align="right">
               <template #default="scope">{{ scope.row.taxRate }}%</template>
-            </el-table-column>
-            <el-table-column prop="taxAmount" label="税额" min-width="120" align="right">
-              <template #default="scope">¥{{ formatMoney(scope.row.taxAmount) }}</template>
-            </el-table-column>
-            <el-table-column prop="incTaxAmount" label="价税合计" min-width="120" align="right">
-              <template #default="scope">¥{{ formatMoney(scope.row.incTaxAmount) }}</template>
-            </el-table-column>
-            <el-table-column prop="status" label="状态" min-width="80">
-              <template #default="scope">
-                <el-tag type="success" size="small">{{ scope.row.status }}</el-tag>
-              </template>
             </el-table-column>
           </el-table>
         </el-tab-pane>
@@ -208,6 +206,10 @@ const getRowsSummary = () => {
     `¥${formatMoney(rows.reduce((s, r) => s + r.incTaxAmountCny, 0))}`,
     ''
   ]
+}
+
+const handleViewAttachment = (file: { name: string, url: string }) => {
+  window.open(file.url, '_blank')
 }
 </script>
 
