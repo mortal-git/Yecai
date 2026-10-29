@@ -1,99 +1,31 @@
 <template>
-  <div class="payment-container">
-    <!-- 顶部操作栏 -->
-    <div class="action-header">
-      <div class="header-left">
-        <span class="page-title">付款管理</span>
-      </div>
-      <div class="header-right">
-        <el-button type="primary" @click="handleCreate">
-          <el-icon><Plus /></el-icon>
-          新增付款单
-        </el-button>
-        <el-button @click="handleExport">
-          <el-icon><Download /></el-icon>
-          导出
-        </el-button>
-      </div>
-    </div>
-
-    <!-- 统计卡片 -->
-    <div class="statistics-cards">
-      <el-row :gutter="16">
-        <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-icon total"><el-icon><Money /></el-icon></div>
-            <div class="stat-content">
-              <div class="stat-value">¥{{ statistics.totalPayment.toLocaleString() }}</div>
-              <div class="stat-label">付款总额</div>
-            </div>
-          </div>
-        </el-col>
-        <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-icon confirmed"><el-icon><CircleCheck /></el-icon></div>
-            <div class="stat-content">
-              <div class="stat-value">¥{{ statistics.confirmed.toLocaleString() }}</div>
-              <div class="stat-label">已确认付款</div>
-            </div>
-          </div>
-        </el-col>
-        <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-icon pending"><el-icon><Clock /></el-icon></div>
-            <div class="stat-content">
-              <div class="stat-value">¥{{ statistics.pendingConfirm.toLocaleString() }}</div>
-              <div class="stat-label">待确认</div>
-            </div>
-          </div>
-        </el-col>
-        <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-icon rejected"><el-icon><CloseBold /></el-icon></div>
-            <div class="stat-content">
-              <div class="stat-value">¥{{ statistics.rejected.toLocaleString() }}</div>
-              <div class="stat-label">已驳回</div>
-            </div>
-          </div>
-        </el-col>
-      </el-row>
-    </div>
-
-    <!-- 搜索筛选 -->
+  <div class="payment-apply-container">
+    <!-- 搜索筛选区域 -->
     <div class="search-panel">
-      <el-form :inline="true" :model="searchForm" class="search-form">
+      <el-form :model="searchForm" :inline="true" label-width="100px">
+        <el-form-item label="申请单号">
+          <el-input v-model="searchForm.applyNo" placeholder="请输入" clearable style="width: 180px" />
+        </el-form-item>
+        <el-form-item label="对账单号">
+          <el-input v-model="searchForm.statementNo" placeholder="请输入" clearable style="width: 180px" />
+        </el-form-item>
         <el-form-item label="供应商">
-          <el-select
-            v-model="searchForm.supplierId"
-            placeholder="请选择供应商"
-            clearable
-            filterable
-            style="width: 200px"
-          >
-            <el-option
-              v-for="supplier in supplierList"
-              :key="supplier.id"
-              :label="supplier.name"
-              :value="supplier.id"
-            />
+          <el-input v-model="searchForm.supplier" placeholder="请输入供应商名称" clearable style="width: 200px" />
+        </el-form-item>
+        <el-form-item label="结算单位">
+          <el-input v-model="searchForm.settlementUnit" placeholder="请输入" clearable style="width: 160px" />
+        </el-form-item>
+        <el-form-item label="申请状态">
+          <el-select v-model="searchForm.status" placeholder="请选择" clearable style="width: 140px">
+            <el-option v-for="(label, key) in APPLY_STATUS_LABEL" :key="key" :label="label" :value="key" />
           </el-select>
         </el-form-item>
-        <el-form-item label="付款单号">
-          <el-input
-            v-model="searchForm.paymentNo"
-            placeholder="请输入付款单号"
-            clearable
-            style="width: 180px"
-          />
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="searchForm.status" placeholder="请选择状态" clearable style="width: 140px">
-            <el-option label="待确认" value="pending" />
-            <el-option label="已确认" value="confirmed" />
-            <el-option label="已驳回" value="rejected" />
+        <el-form-item label="付款方式">
+          <el-select v-model="searchForm.paymentMethod" placeholder="请选择" clearable style="width: 140px">
+            <el-option v-for="opt in PAYMENT_METHOD_OPTIONS" :key="opt.value" :label="opt.label" :value="opt.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="付款日期">
+        <el-form-item label="申请日期">
           <el-date-picker
             v-model="searchForm.dateRange"
             type="daterange"
@@ -101,579 +33,754 @@
             start-placeholder="开始日期"
             end-placeholder="结束日期"
             value-format="YYYY-MM-DD"
-            style="width: 260px"
           />
         </el-form-item>
-        <el-form-item label="付款方式">
-          <el-select v-model="searchForm.paymentMethod" placeholder="请选择" clearable style="width: 140px">
-            <el-option label="银行转账" value="bank" />
-            <el-option label="承兑汇票" value="acceptance" />
-            <el-option label="商业汇票" value="trade_bill" />
-            <el-option label="现金" value="cash" />
-          </el-select>
-        </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">查询</el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <el-button type="primary" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><Refresh /></el-icon>
+            重置
+          </el-button>
         </el-form-item>
       </el-form>
     </div>
 
-    <!-- 数据表格 -->
+    <!-- 操作按钮区域 -->
+    <div class="action-bar">
+      <el-button type="primary" @click="handleCreate">
+        <el-icon><Plus /></el-icon>
+        新增付款申请
+      </el-button>
+      <el-button type="success" @click="handleExport" :disabled="!selectedRows.length">
+        <el-icon><Download /></el-icon>
+        导出
+      </el-button>
+      <el-button type="warning" @click="handleBatchPay" :disabled="!selectedRows.length">
+        <el-icon><Check /></el-icon>
+        批量确认付款
+      </el-button>
+      <el-button type="info" @click="handleAgingAnalysis">
+        <el-icon><DataAnalysis /></el-icon>
+        账龄分析
+      </el-button>
+    </div>
+
+    <!-- 状态 Tab 导航 -->
+    <div class="status-tabs">
+      <el-radio-group v-model="activeStatusTab" @change="handleStatusTabChange">
+        <el-radio-button value="all">全部</el-radio-button>
+        <el-radio-button value="pending">待付款</el-radio-button>
+        <el-radio-button value="paid">已付款</el-radio-button>
+        <el-radio-button value="cancelled">已作废</el-radio-button>
+      </el-radio-group>
+    </div>
+
+    <!-- 表格区域 -->
     <div class="table-container">
       <el-table
-        ref="tableRef"
-        :data="tableData"
+        :data="pagedData"
+        v-loading="loading"
         border
         stripe
+        @selection-change="handleSelectionChange"
         @row-click="handleRowClick"
       >
-        <el-table-column prop="paymentNo" label="付款单号" width="160" fixed />
-        <el-table-column prop="supplierName" label="供应商名称" min-width="160" />
-        <el-table-column prop="payableNo" label="关联应付单" width="160">
-          <template #default="{ row }">
-            <el-link type="primary" @click.prevent="handleViewPayable(row.payableId)">
-              {{ row.payableNo }}
-            </el-link>
+        <el-table-column type="selection" width="55" fixed />
+        <el-table-column prop="applyNo" label="申请单号" min-width="150" sortable fixed />
+        <el-table-column prop="statementNo" label="对账单号" min-width="140" fixed>
+          <template #default="scope">
+            <el-link type="primary" @click.stop="handleViewStatement(scope.row)">{{ scope.row.statementNo }}</el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="paymentAmount" label="付款金额" width="120" align="right">
-          <template #default="{ row }">¥{{ row.paymentAmount.toLocaleString() }}</template>
+        <el-table-column prop="supplier" label="供应商" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="settlementUnit" label="结算单位" min-width="120" />
+        <el-table-column prop="settlementBank" label="结算银行" min-width="120" />
+        <el-table-column prop="settlementAccount" label="结算账号" min-width="160" />
+        <el-table-column prop="statementTotalIncTax" label="对账含税金额" min-width="130" align="right">
+          <template #default="scope">¥{{ formatMoney(scope.row.statementTotalIncTax) }}</template>
         </el-table-column>
-        <el-table-column prop="actualAmount" label="实际付出" width="120" align="right">
-          <template #default="{ row }">¥{{ row.actualAmount.toLocaleString() }}</template>
-        </el-table-column>
-        <el-table-column prop="paymentDate" label="付款日期" width="110" />
-        <el-table-column prop="paymentMethod" label="付款方式" width="100">
-          <template #default="{ row }">
-            {{ getPaymentMethodText(row.paymentMethod) }}
+        <el-table-column prop="appliedBeforeAmount" label="此前已申请金额" min-width="140" align="right">
+          <template #default="scope">
+            <span :class="scope.row.appliedBeforeAmount > 0 ? 'text-warning' : 'text-info'">¥{{ formatMoney(scope.row.appliedBeforeAmount) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="bankAccount" label="付款账户" min-width="150" />
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)" size="small">
-              {{ getStatusText(row.status) }}
+        <el-table-column prop="applyAmount" label="本次申请金额" min-width="140" align="right" sortable>
+          <template #default="scope">
+            <span class="text-primary">¥{{ formatMoney(scope.row.applyAmount) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="remainingAmount" label="剩余可申请金额" min-width="140" align="right">
+          <template #default="scope">
+            <span :class="scope.row.remainingAmount > 0 ? 'text-success' : 'text-info'">¥{{ formatMoney(scope.row.remainingAmount) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="paymentMethod" label="付款方式" min-width="100" />
+        <el-table-column prop="bankAccount" label="付款账户" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="expectedPaymentDate" label="期望付款日期" min-width="120" />
+        <el-table-column prop="status" label="申请状态" width="100">
+          <template #default="scope">
+            <el-tag :type="APPLY_STATUS_TYPE[scope.row.status]" size="small">
+              {{ APPLY_STATUS_LABEL[scope.row.status] }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="confirmTime" label="确认时间" width="160" />
-        <el-table-column prop="remark" label="备注" min-width="150" />
-        <el-table-column label="操作" width="120" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" link size="small" @click.stop="handleView(row)">详情</el-button>
-            <el-button
-              v-if="row.status === 'pending'"
-              type="primary"
-              link
-              size="small"
-              @click.stop="handleConfirm(row)"
-            >
-              确认
-            </el-button>
+        <el-table-column prop="applicant" label="申请人" width="100" />
+        <el-table-column prop="applyDate" label="申请日期" min-width="120" />
+        <el-table-column label="操作" width="200" fixed="right">
+          <template #default="scope">
+            <el-button type="primary" size="small" link @click.stop="handleView(scope.row)">查看</el-button>
+            <el-button type="success" size="small" link @click.stop="handlePay(scope.row)" :disabled="scope.row.status !== 'pending'">确认付款</el-button>
+            <el-button type="danger" size="small" link @click.stop="handleCancel(scope.row)" :disabled="scope.row.status !== 'pending'">作废</el-button>
           </template>
         </el-table-column>
       </el-table>
 
       <!-- 分页 -->
       <div class="pagination-container">
+        <span class="pagination-info">共 {{ filteredData.length }} 条记录</span>
         <el-pagination
           v-model:current-page="pagination.page"
-          v-model:page-size="pagination.pageSize"
-          :page-sizes="[10, 20, 50, 100]"
-          :total="pagination.total"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
+          v-model:page-size="pagination.size"
+          :total="filteredData.length"
+          :page-sizes="[20, 50, 100, 200]"
+          layout="sizes, prev, pager, next, jumper"
+          @size-change="handlePageChange"
+          @current-change="handlePageChange"
         />
       </div>
     </div>
 
-    <!-- 详情抽屉 -->
-    <el-drawer
-      v-model="showDetailDrawer"
-      title="付款单详情"
-      size="600px"
+    <!-- 新增付款申请弹窗 -->
+    <el-dialog
+      v-model="showCreate"
+      title="新增付款申请"
+      width="800px"
+      :close-on-click-modal="false"
+      destroy-on-close
     >
-      <template #default>
-        <div class="detail-content" v-if="currentRow">
-          <el-descriptions :column="2" border>
-            <el-descriptions-item label="付款单号">{{ currentRow.paymentNo }}</el-descriptions-item>
-            <el-descriptions-item label="供应商名称">{{ currentRow.supplierName }}</el-descriptions-item>
-            <el-descriptions-item label="关联应付单">{{ currentRow.payableNo }}</el-descriptions-item>
-            <el-descriptions-item label="付款金额">¥{{ currentRow.paymentAmount.toLocaleString() }}</el-descriptions-item>
-            <el-descriptions-item label="实际付出金额">¥{{ currentRow.actualAmount.toLocaleString() }}</el-descriptions-item>
-            <el-descriptions-item label="付款日期">{{ currentRow.paymentDate }}</el-descriptions-item>
-            <el-descriptions-item label="付款方式">
-              {{ getPaymentMethodText(currentRow.paymentMethod) }}
-            </el-descriptions-item>
-            <el-descriptions-item label="付款账户">{{ currentRow.bankAccount }}</el-descriptions-item>
-            <el-descriptions-item label="状态">
-              <el-tag :type="getStatusType(currentRow.status)" size="small">
-                {{ getStatusText(currentRow.status) }}
-              </el-tag>
-            </el-descriptions-item>
-            <el-descriptions-item label="确认时间">{{ currentRow.confirmTime || '-' }}</el-descriptions-item>
-            <el-descriptions-item label="备注" :span="2">{{ currentRow.remark || '-' }}</el-descriptions-item>
-          </el-descriptions>
-        </div>
-      </template>
-      <template #footer>
-        <div class="drawer-footer">
-          <el-button @click="showDetailDrawer = false">关闭</el-button>
-        </div>
-      </template>
-    </el-drawer>
+      <div class="create-form">
+        <el-form :model="form" label-width="130px">
+          <!-- 选择对账单 -->
+          <div class="form-section-title">选择对账单</div>
+          <el-form-item label="应付对账单" required>
+            <el-select
+              v-model="form.statementId"
+              filterable
+              placeholder="请选择对账单（仅显示待付款/已付款）"
+              style="width: 100%"
+              @change="handleStatementChange"
+            >
+              <el-option
+                v-for="s in availableStatements"
+                :key="s.id"
+                :label="`${s.statementNo} - ${s.supplier} - 剩余可申请 ¥${formatMoney(getStatementRemaining(s.id))}`"
+                :value="s.id"
+              />
+            </el-select>
+          </el-form-item>
 
-    <!-- 新增付款对话框 -->
-    <el-dialog v-model="showCreateDialog" title="新增付款单" width="600px">
-      <el-form ref="createFormRef" :model="createForm" :rules="createRules" label-width="100px">
-        <el-form-item label="供应商" prop="supplierId">
-          <el-select
-            v-model="createForm.supplierId"
-            placeholder="请选择供应商"
-            filterable
-            style="width: 100%"
-            @change="handleSupplierChange"
-          >
-            <el-option
-              v-for="supplier in supplierList"
-              :key="supplier.id"
-              :label="supplier.name"
-              :value="supplier.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="关联应付单" prop="payableId">
-          <el-select
-            v-model="createForm.payableId"
-            placeholder="请选择应付单"
-            filterable
-            style="width: 100%"
-          >
-            <el-option
-              v-for="payable in payableList"
-              :key="payable.id"
-              :label="`${payable.payableNo} - ¥${payable.pendingAmount.toLocaleString()}`"
-              :value="payable.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="付款金额" prop="paymentAmount">
-          <el-input-number
-            v-model="createForm.paymentAmount"
-            :min="0.01"
-            :precision="2"
-            :controls="false"
-            style="width: 100%"
-          />
-        </el-form-item>
-        <el-form-item label="实际付出">
-          <el-input-number
-            v-model="createForm.actualAmount"
-            :min="0"
-            :precision="2"
-            :controls="false"
-            style="width: 100%"
-          />
-        </el-form-item>
-        <el-form-item label="付款日期" prop="paymentDate">
-          <el-date-picker
-            v-model="createForm.paymentDate"
-            type="date"
-            placeholder="选择日期"
-            value-format="YYYY-MM-DD"
-            style="width: 100%"
-          />
-        </el-form-item>
-        <el-form-item label="付款方式" prop="paymentMethod">
-          <el-select v-model="createForm.paymentMethod" placeholder="请选择" style="width: 100%">
-            <el-option label="银行转账" value="bank" />
-            <el-option label="承兑汇票" value="acceptance" />
-            <el-option label="商业汇票" value="trade_bill" />
-            <el-option label="现金" value="cash" />
-            <el-option label="其他" value="other" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="付款账户" prop="bankAccount">
-          <el-select v-model="createForm.bankAccount" placeholder="请选择" style="width: 100%">
-            <el-option label="基本户-中国银行" value="boc" />
-            <el-option label="一般户-工商银行" value="icbc" />
-            <el-option label="一般户-建设银行" value="ccb" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input v-model="createForm.remark" type="textarea" :rows="3" />
-        </el-form-item>
-      </el-form>
+          <!-- 对账单信息 -->
+          <template v-if="form.statementId && currentStatement">
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="对账单号">
+                  {{ currentStatement.statementNo }}
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="供应商">
+                  {{ currentStatement.supplier }}
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="结算单位">
+                  {{ currentStatement.settlementUnit }}
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="对账含税金额">
+                  <span class="text-primary">¥{{ formatMoney(currentStatement.totalIncTaxCny) }}</span>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="已申请付款金额">
+                  <span class="text-warning">¥{{ formatMoney(appliedAmount) }}</span>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="剩余可申请金额">
+                  <span class="text-success">¥{{ formatMoney(remainingAmount) }}</span>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-divider />
+          </template>
+
+          <!-- 付款信息 -->
+          <div class="form-section-title">付款信息</div>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="付款方式" required>
+                <el-select v-model="form.paymentMethod" placeholder="请选择" style="width: 100%">
+                  <el-option v-for="opt in PAYMENT_METHOD_OPTIONS" :key="opt.value" :label="opt.label" :value="opt.value" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="付款账户" required>
+                <el-select v-model="form.bankAccount" placeholder="请选择" style="width: 100%">
+                  <el-option v-for="opt in BANK_ACCOUNT_OPTIONS" :key="opt.value" :label="opt.label" :value="opt.value" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="期望付款日期" required>
+                <el-date-picker v-model="form.expectedPaymentDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 100%" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="本次申请金额" required>
+                <el-input-number
+                  v-model="form.applyAmount"
+                  :min="0.01"
+                  :max="remainingAmount"
+                  :precision="2"
+                  :step="1000"
+                  style="width: 100%"
+                />
+                <el-button link type="primary" size="small" @click="form.applyAmount = remainingAmount" style="margin-left: 8px">全额</el-button>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-form-item label="备注">
+            <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="请输入备注" />
+          </el-form-item>
+        </el-form>
+      </div>
       <template #footer>
-        <el-button @click="showCreateDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmitCreate">确认</el-button>
+        <el-button @click="showCreate = false">取消</el-button>
+        <el-button type="primary" @click="confirmCreate" :loading="createLoading">确认申请</el-button>
       </template>
+    </el-dialog>
+
+    <!-- 详情弹窗 -->
+    <el-dialog v-model="showDetail" title="付款申请详情" width="800px">
+      <div v-if="currentApply" class="detail-form">
+        <div class="form-section-title">基本信息</div>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <div class="detail-item"><span class="detail-label">申请单号：</span>{{ currentApply.applyNo }}</div>
+          </el-col>
+          <el-col :span="12">
+            <div class="detail-item"><span class="detail-label">申请状态：</span>
+              <el-tag :type="APPLY_STATUS_TYPE[currentApply.status]" size="small">{{ APPLY_STATUS_LABEL[currentApply.status] }}</el-tag>
+            </div>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <div class="detail-item"><span class="detail-label">对账单号：</span>{{ currentApply.statementNo }}</div>
+          </el-col>
+          <el-col :span="12">
+            <div class="detail-item"><span class="detail-label">供应商：</span>{{ currentApply.supplier }}</div>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <div class="detail-item"><span class="detail-label">结算单位：</span>{{ currentApply.settlementUnit }}</div>
+          </el-col>
+          <el-col :span="12">
+            <div class="detail-item"><span class="detail-label">期望付款日期：</span>{{ currentApply.expectedPaymentDate }}</div>
+          </el-col>
+        </el-row>
+        <el-divider />
+        <div class="form-section-title">金额明细</div>
+        <el-row :gutter="20">
+          <el-col :span="6">
+            <div class="detail-item"><span class="detail-label">对账含税金额：</span>¥{{ formatMoney(currentApply.statementTotalIncTax) }}</div>
+          </el-col>
+          <el-col :span="6">
+            <div class="detail-item"><span class="detail-label">此前已申请：</span>¥{{ formatMoney(currentApply.appliedBeforeAmount) }}</div>
+          </el-col>
+          <el-col :span="6">
+            <div class="detail-item"><span class="detail-label">本次申请：</span>¥{{ formatMoney(currentApply.applyAmount) }}</div>
+          </el-col>
+          <el-col :span="6">
+            <div class="detail-item"><span class="detail-label">剩余可申请：</span>¥{{ formatMoney(currentApply.remainingAmount) }}</div>
+          </el-col>
+        </el-row>
+        <el-divider />
+        <div class="form-section-title">付款信息</div>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <div class="detail-item"><span class="detail-label">付款方式：</span>{{ currentApply.paymentMethod }}</div>
+          </el-col>
+          <el-col :span="12">
+            <div class="detail-item"><span class="detail-label">付款账户：</span>{{ currentApply.bankAccount }}</div>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <div class="detail-item"><span class="detail-label">申请人：</span>{{ currentApply.applicant }}</div>
+          </el-col>
+          <el-col :span="12">
+            <div class="detail-item"><span class="detail-label">申请日期：</span>{{ currentApply.applyDate }}</div>
+          </el-col>
+        </el-row>
+        <el-form-item v-if="currentApply.remark" label="备注" style="margin-top: 12px">
+          {{ currentApply.remark }}
+        </el-form-item>
+      </div>
+      <template #footer>
+        <el-button @click="showDetail = false">关闭</el-button>
+        <el-button v-if="currentApply && currentApply.status === 'pending'" type="success" @click="handlePay(currentApply); showDetail = false">确认付款</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 账龄分析弹窗 -->
+    <el-dialog v-model="showAgingAnalysis" title="付款申请账龄分析" width="900px">
+      <div class="aging-analysis">
+        <el-row :gutter="20" class="aging-stats">
+          <el-col :span="6">
+            <div class="aging-stat-item">
+              <div class="aging-label">30天内</div>
+              <div class="aging-value text-success">¥{{ formatMoney(agingData.within30Days) }}</div>
+            </div>
+          </el-col>
+          <el-col :span="6">
+            <div class="aging-stat-item">
+              <div class="aging-label">31-60天</div>
+              <div class="aging-value text-warning">¥{{ formatMoney(agingData.days31to60) }}</div>
+            </div>
+          </el-col>
+          <el-col :span="6">
+            <div class="aging-stat-item">
+              <div class="aging-label">61-90天</div>
+              <div class="aging-value text-danger">¥{{ formatMoney(agingData.days61to90) }}</div>
+            </div>
+          </el-col>
+          <el-col :span="6">
+            <div class="aging-stat-item">
+              <div class="aging-label">90天以上</div>
+              <div class="aging-value text-info">¥{{ formatMoney(agingData.over90Days) }}</div>
+            </div>
+          </el-col>
+        </el-row>
+        <el-table :data="agingTableData" border style="margin-top: 20px">
+          <el-table-column prop="supplier" label="供应商" min-width="180" />
+          <el-table-column prop="statementNo" label="对账单号" min-width="150" />
+          <el-table-column prop="applyNo" label="申请单号" min-width="150" />
+          <el-table-column prop="applyAmount" label="申请金额" min-width="130" align="right">
+            <template #default="scope">¥{{ formatMoney(scope.row.applyAmount) }}</template>
+          </el-table-column>
+          <el-table-column prop="agingDays" label="账龄(天)" width="100" />
+          <el-table-column prop="agingLevel" label="账龄区间" width="120">
+            <template #default="scope">
+              <el-tag :type="getAgingTagType(scope.row.agingLevel)" size="small">{{ scope.row.agingLevel }}</el-tag>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Plus, Download, Money, Clock, CircleCheck, CloseBold } from '@element-plus/icons-vue'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search, Refresh, Plus, Download, Check, DataAnalysis } from '@element-plus/icons-vue'
+import { usePaymentApplyStore, APPLY_STATUS_LABEL, APPLY_STATUS_TYPE, PAYMENT_METHOD_OPTIONS, BANK_ACCOUNT_OPTIONS, type PaymentApplyOrder, type PaymentApplyStatus } from '../../store/paymentApply'
+import { usePayableStatementStore, type PayableStatement } from '../../store/payableStatement'
 
-const router = useRouter()
+const store = usePaymentApplyStore()
+const payableStore = usePayableStatementStore()
 
-// 统计卡片数据
-const statistics = reactive({
-  totalPayment: 3850000,
-  confirmed: 3500000,
-  pendingConfirm: 350000,
-  rejected: 0
-})
+const loading = ref(false)
+const selectedRows = ref<PaymentApplyOrder[]>([])
+const activeStatusTab = ref<'all' | PaymentApplyStatus>('all')
 
-// 供应商列表
-const supplierList = ref([
-  { id: 1, name: '深圳硬件供应商A公司' },
-  { id: 2, name: '北京云服务B公司' },
-  { id: 3, name: '上海网络设备C公司' },
-  { id: 4, name: '广州物流服务D公司' },
-  { id: 5, name: '杭州软件服务E公司' }
-])
-
-// 搜索表单
 const searchForm = reactive({
-  supplierId: '',
-  paymentNo: '',
-  status: '',
-  dateRange: [],
-  paymentMethod: ''
-})
-
-// 表格数据
-const tableData = ref([
-  {
-    id: 1,
-    paymentNo: 'FK2024040001',
-    supplierId: 1,
-    supplierName: '深圳硬件供应商A公司',
-    payableId: 1,
-    payableNo: 'YF2024040001',
-    paymentAmount: 200000,
-    actualAmount: 200000,
-    paymentDate: '2024-04-15',
-    paymentMethod: 'bank',
-    bankAccount: '基本户-中国银行',
-    status: 'confirmed',
-    confirmTime: '2024-04-15 14:30:00',
-    remark: ''
-  },
-  {
-    id: 2,
-    paymentNo: 'FK2024040002',
-    supplierId: 2,
-    supplierName: '北京云服务B公司',
-    payableId: 2,
-    payableNo: 'YF2024040002',
-    paymentAmount: 500000,
-    actualAmount: 500000,
-    paymentDate: '2024-04-18',
-    paymentMethod: 'bank',
-    bankAccount: '基本户-中国银行',
-    status: 'confirmed',
-    confirmTime: '2024-04-18 10:00:00',
-    remark: ''
-  },
-  {
-    id: 3,
-    paymentNo: 'FK2024040003',
-    supplierId: 3,
-    supplierName: '上海网络设备C公司',
-    payableId: 3,
-    payableNo: 'YF2024040003',
-    paymentAmount: 180000,
-    actualAmount: 178000,
-    paymentDate: '2024-04-20',
-    paymentMethod: 'bank',
-    bankAccount: '一般户-工商银行',
-    status: 'pending',
-    confirmTime: '',
-    remark: '扣除手续费2000元'
-  }
-])
-
-// 分页
-const pagination = reactive({
-  page: 1,
-  pageSize: 10,
-  total: 3
-})
-
-// 详情抽屉
-const showDetailDrawer = ref(false)
-const currentRow = ref<any>(null)
-
-// 新增对话框
-const showCreateDialog = ref(false)
-const createFormRef = ref<FormInstance>()
-const createForm = reactive({
-  supplierId: '',
-  supplierName: '',
-  payableId: '',
-  payableNo: '',
-  paymentAmount: 0,
-  actualAmount: 0,
-  paymentDate: '',
+  applyNo: '',
+  statementNo: '',
+  supplier: '',
+  settlementUnit: '',
+  status: '' as '' | PaymentApplyStatus,
   paymentMethod: '',
+  dateRange: [] as string[]
+})
+
+const pagination = reactive({ page: 1, size: 20 })
+
+const showCreate = ref(false)
+const showDetail = ref(false)
+const showAgingAnalysis = ref(false)
+const createLoading = ref(false)
+const currentApply = ref<PaymentApplyOrder | null>(null)
+
+const form = reactive({
+  statementId: '',
+  paymentMethod: '银行转账',
   bankAccount: '',
+  applyAmount: 0,
+  expectedPaymentDate: '',
   remark: ''
 })
-const createRules: FormRules = {
-  supplierId: [{ required: true, message: '请选择供应商', trigger: 'change' }],
-  payableId: [{ required: true, message: '请选择应付单', trigger: 'change' }],
-  paymentAmount: [{ required: true, message: '请输入付款金额', trigger: 'blur' }],
-  paymentDate: [{ required: true, message: '请选择付款日期', trigger: 'change' }],
-  paymentMethod: [{ required: true, message: '请选择付款方式', trigger: 'change' }],
-  bankAccount: [{ required: true, message: '请选择付款账户', trigger: 'change' }]
+
+const availableStatements = computed(() => store.getAvailableStatements())
+
+const currentStatement = computed<PayableStatement | undefined>(() =>
+  payableStore.list.find(s => s.id === form.statementId)
+)
+
+const appliedAmount = computed(() =>
+  form.statementId ? store.getAppliedAmountByStatement(form.statementId) : 0
+)
+
+const remainingAmount = computed(() => {
+  if (!currentStatement.value) return 0
+  return Math.max(0, currentStatement.value.totalIncTaxCny - appliedAmount.value)
+})
+
+const getStatementRemaining = (statementId: string) => {
+  const stmt = payableStore.list.find(s => s.id === statementId)
+  if (!stmt) return 0
+  return Math.max(0, stmt.totalIncTaxCny - store.getAppliedAmountByStatement(statementId))
 }
 
-// 应付单列表
-const payableList = ref([
-  { id: 1, payableNo: 'YF2024040001', pendingAmount: 100000 },
-  { id: 2, payableNo: 'YF2024040002', pendingAmount: 0 },
-  { id: 3, payableNo: 'YF2024040003', pendingAmount: 180000 }
-])
+const filteredData = computed(() => {
+  return store.list.filter(item => {
+    if (activeStatusTab.value !== 'all' && item.status !== activeStatusTab.value) return false
+    if (searchForm.applyNo && !item.applyNo.toLowerCase().includes(searchForm.applyNo.toLowerCase())) return false
+    if (searchForm.statementNo && !item.statementNo.toLowerCase().includes(searchForm.statementNo.toLowerCase())) return false
+    if (searchForm.supplier && !item.supplier.toLowerCase().includes(searchForm.supplier.toLowerCase())) return false
+    if (searchForm.settlementUnit && !item.settlementUnit.toLowerCase().includes(searchForm.settlementUnit.toLowerCase())) return false
+    if (searchForm.status && item.status !== searchForm.status) return false
+    if (searchForm.paymentMethod && item.paymentMethod !== searchForm.paymentMethod) return false
+    if (searchForm.dateRange && searchForm.dateRange.length === 2) {
+      if (item.applyDate < searchForm.dateRange[0] || item.applyDate > searchForm.dateRange[1]) return false
+    }
+    return true
+  })
+})
 
-// 方法
-const getStatusType = (status: string) => {
-  const types: Record<string, string> = {
-    pending: 'warning',
-    confirmed: 'success',
-    rejected: 'danger'
-  }
-  return types[status] || 'info'
-}
+const pagedData = computed(() => {
+  const start = (pagination.page - 1) * pagination.size
+  return filteredData.value.slice(start, start + pagination.size)
+})
 
-const getStatusText = (status: string) => {
-  const texts: Record<string, string> = {
-    pending: '待确认',
-    confirmed: '已确认',
-    rejected: '已驳回'
-  }
-  return texts[status] || status
-}
+const formatMoney = (value: number) => (value || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
-const getPaymentMethodText = (method: string) => {
-  const texts: Record<string, string> = {
-    bank: '银行转账',
-    acceptance: '承兑汇票',
-    trade_bill: '商业汇票',
-    cash: '现金',
-    other: '其他'
+const handleStatementChange = () => {
+  if (currentStatement.value) {
+    form.applyAmount = remainingAmount.value
   }
-  return texts[method] || method
 }
 
 const handleSearch = () => {
-  ElMessage.success('搜索付款记录')
+  loading.value = true
+  setTimeout(() => { loading.value = false }, 300)
   pagination.page = 1
 }
 
 const handleReset = () => {
-  Object.keys(searchForm).forEach(key => {
-    if (Array.isArray(searchForm[key as keyof typeof searchForm])) {
-      ;(searchForm as any)[key] = []
-    } else {
-      ;(searchForm as any)[key] = ''
-    }
+  Object.assign(searchForm, {
+    applyNo: '', statementNo: '', supplier: '', settlementUnit: '', status: '', paymentMethod: '', dateRange: []
   })
-  ElMessage.info('已重置搜索条件')
+  handleSearch()
 }
 
-const handleCreate = () => {
-  Object.assign(createForm, {
-    supplierId: '',
-    supplierName: '',
-    payableId: '',
-    payableNo: '',
-    paymentAmount: 0,
-    actualAmount: 0,
-    paymentDate: new Date().toISOString().slice(0, 10),
-    paymentMethod: '',
-    bankAccount: '',
-    remark: ''
-  })
-  showCreateDialog.value = true
-}
-
-const handleExport = () => {
-  ElMessage.success('导出付款记录')
-}
-
-const handleRowClick = (row: any) => {
-  currentRow.value = row
-}
-
-const handleView = (row: any) => {
-  currentRow.value = row
-  showDetailDrawer.value = true
-}
-
-const handleViewPayable = (payableId: number) => {
-  router.push(`/payable/detail/${payableId}`)
-}
-
-const handleConfirm = (row: any) => {
-  currentRow.value = row
-  ElMessageBox.confirm(`确认付款单 ${row.paymentNo} 吗？`, '确认付款', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    ElMessage.success('确认成功')
-  }).catch(() => {})
-}
-
-const handleSupplierChange = (supplierId: number) => {
-  const supplier = supplierList.value.find(s => s.id === supplierId)
-  if (supplier) {
-    createForm.supplierName = supplier.name
-  }
-}
-
-const handleSubmitCreate = async () => {
-  if (!createFormRef.value) return
-  await createFormRef.value.validate((valid) => {
-    if (valid) {
-      ElMessage.success('新增付款单成功')
-      showCreateDialog.value = false
-    }
-  })
-}
-
-const handleSizeChange = (val: number) => {
-  pagination.pageSize = val
+const handleStatusTabChange = () => {
   pagination.page = 1
 }
 
-const handleCurrentChange = (val: number) => {
-  pagination.page = val
+const handlePageChange = () => {
+  // computed 自动响应
 }
+
+const handleSelectionChange = (rows: PaymentApplyOrder[]) => {
+  selectedRows.value = rows
+}
+
+const handleRowClick = (row: PaymentApplyOrder) => {
+  handleView(row)
+}
+
+const handleView = (row: PaymentApplyOrder) => {
+  currentApply.value = row
+  showDetail.value = true
+}
+
+const handleViewStatement = (row: PaymentApplyOrder) => {
+  ElMessage.info(`查看对账单 ${row.statementNo} 详情（功能开发中）`)
+}
+
+const handleCreate = () => {
+  form.statementId = ''
+  form.paymentMethod = '银行转账'
+  form.bankAccount = ''
+  form.applyAmount = 0
+  form.expectedPaymentDate = new Date().toISOString().slice(0, 10)
+  form.remark = ''
+  showCreate.value = true
+}
+
+const confirmCreate = async () => {
+  if (!form.statementId) {
+    ElMessage.warning('请选择应付对账单')
+    return
+  }
+  if (!currentStatement.value) {
+    ElMessage.warning('对账单不存在')
+    return
+  }
+  if (!form.expectedPaymentDate) {
+    ElMessage.warning('请选择期望付款日期')
+    return
+  }
+  if (!form.paymentMethod) {
+    ElMessage.warning('请选择付款方式')
+    return
+  }
+  if (!form.bankAccount) {
+    ElMessage.warning('请选择付款账户')
+    return
+  }
+  if (form.applyAmount <= 0) {
+    ElMessage.warning('本次申请金额必须大于0')
+    return
+  }
+  if (form.applyAmount > remainingAmount.value) {
+    ElMessage.warning(`本次申请金额不能超过剩余可申请金额 ¥${formatMoney(remainingAmount.value)}`)
+    return
+  }
+  createLoading.value = true
+  try {
+    await new Promise(resolve => setTimeout(resolve, 500))
+    store.addApply({
+      statementId: currentStatement.value.id,
+      statementNo: currentStatement.value.statementNo,
+      supplier: currentStatement.value.supplier,
+      settlementUnit: currentStatement.value.settlementUnit,
+      settlementBank: currentStatement.value.settlementBank,
+      settlementAccount: currentStatement.value.settlementAccount,
+      statementTotalIncTax: currentStatement.value.totalIncTaxCny,
+      applyAmount: form.applyAmount,
+      paymentMethod: form.paymentMethod,
+      bankAccount: form.bankAccount,
+      expectedPaymentDate: form.expectedPaymentDate,
+      status: 'pending',
+      remark: form.remark
+    })
+    ElMessage.success('付款申请单已生成')
+    showCreate.value = false
+  } finally {
+    createLoading.value = false
+  }
+}
+
+const handlePay = async (row: PaymentApplyOrder) => {
+  try {
+    await ElMessageBox.confirm(`确认对申请单 ${row.applyNo} 进行付款？确认后状态将变为"已付款"`, '提示', { type: 'warning' })
+    store.updateStatus(row.id, 'paid')
+    ElMessage.success('付款确认成功')
+  } catch {
+    // 取消
+  }
+}
+
+const handleCancel = async (row: PaymentApplyOrder) => {
+  try {
+    await ElMessageBox.confirm(`确认作废申请单 ${row.applyNo}？作废后不可恢复`, '警告', { type: 'warning' })
+    store.updateStatus(row.id, 'cancelled')
+    ElMessage.success('已作废')
+  } catch {
+    // 取消
+  }
+}
+
+const handleBatchPay = async () => {
+  const invalidRows = selectedRows.value.filter(r => r.status !== 'pending')
+  if (invalidRows.length > 0) {
+    ElMessage.warning('所选记录中存在非"待付款"状态，无法批量确认')
+    return
+  }
+  try {
+    await ElMessageBox.confirm(`确认对选中的 ${selectedRows.value.length} 条申请单进行付款？`, '提示', { type: 'warning' })
+    selectedRows.value.forEach(row => store.updateStatus(row.id, 'paid'))
+    ElMessage.success(`成功确认付款 ${selectedRows.value.length} 条`)
+    selectedRows.value = []
+  } catch {
+    // 取消
+  }
+}
+
+const handleExport = () => {
+  ElMessage.success(`导出 ${selectedRows.value.length} 条申请单`)
+}
+
+const agingData = reactive({
+  within30Days: 0,
+  days31to60: 0,
+  days61to90: 0,
+  over90Days: 0
+})
+const agingTableData = ref<any[]>([])
+const getAgingTagType = (level: string) => {
+  const map: Record<string, string> = { '30天内': 'success', '31-60天': 'warning', '61-90天': 'danger', '90天以上': 'danger' }
+  return map[level] || 'info'
+}
+
+const handleAgingAnalysis = () => {
+  const now = new Date()
+  const levels = ['30天内', '31-60天', '61-90天', '90天以上']
+  const buckets = [0, 0, 0, 0]
+  const rows: any[] = []
+  store.list.filter(i => i.status === 'pending').forEach(i => {
+    const apply = new Date(i.applyDate)
+    const days = Math.floor((now.getTime() - apply.getTime()) / (1000 * 60 * 60 * 24))
+    const idx = days <= 30 ? 0 : days <= 60 ? 1 : days <= 90 ? 2 : 3
+    buckets[idx] += i.applyAmount
+    rows.push({
+      supplier: i.supplier,
+      statementNo: i.statementNo,
+      applyNo: i.applyNo,
+      applyAmount: i.applyAmount,
+      agingDays: days,
+      agingLevel: levels[idx]
+    })
+  })
+  agingData.within30Days = buckets[0]
+  agingData.days31to60 = buckets[1]
+  agingData.days61to90 = buckets[2]
+  agingData.over90Days = buckets[3]
+  agingTableData.value = rows
+  showAgingAnalysis.value = true
+}
+
+onMounted(() => {
+  handleSearch()
+})
 </script>
 
 <style scoped>
-.payment-container {
+.payment-apply-container {
   padding: 0;
-  background: #f5f7fa;
-  min-height: 100%;
-}
-
-.action-header {
-  background: #fff;
-  padding: 16px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #eee;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-}
-
-.header-left .page-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #303133;
-}
-
-.header-right {
-  display: flex;
-  gap: 12px;
-}
-
-.statistics-cards {
-  padding: 16px 20px;
-}
-
-.stat-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-}
-
-.stat-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-}
-
-.stat-icon.total {
-  background: #ecf5ff;
-  color: #409eff;
-}
-
-.stat-icon.confirmed {
-  background: #f0f9eb;
-  color: #67c23a;
-}
-
-.stat-icon.pending {
-  background: #fdf6ec;
-  color: #e6a23c;
-}
-
-.stat-icon.rejected {
-  background: #fef0f0;
-  color: #f56c6c;
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: 600;
-  color: #303133;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: #909399;
-  margin-top: 4px;
 }
 
 .search-panel {
   background: #fff;
-  margin: 0 20px;
   padding: 20px;
   border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.action-bar {
+  background: #fff;
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  display: flex;
+  gap: 10px;
+}
+
+.status-tabs {
+  background: #fff;
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
 .table-container {
   background: #fff;
-  margin: 16px 20px;
   padding: 20px;
   border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
 .pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
   margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
 }
 
-.detail-content {
-  padding: 0 10px;
+.pagination-info {
+  font-size: 13px;
+  color: #909399;
 }
 
-.drawer-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+.text-success { color: #67c23a; }
+.text-warning { color: #e6a23c; }
+.text-danger { color: #f56c6c; }
+.text-primary { color: #409eff; }
+.text-info { color: #909399; }
+
+.form-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 16px;
+  padding-left: 10px;
+  border-left: 3px solid #409eff;
+}
+
+.create-form,
+.detail-form {
+  padding: 10px 0;
+}
+
+.detail-item {
+  font-size: 14px;
+  color: #303133;
+  line-height: 32px;
+}
+
+.detail-label {
+  color: #909399;
+  margin-right: 4px;
+}
+
+.aging-analysis {
+  padding: 10px 0;
+}
+
+.aging-stats {
+  margin-bottom: 10px;
+}
+
+.aging-stat-item {
+  text-align: center;
+  padding: 15px;
+  background: #f5f7fa;
+  border-radius: 6px;
+}
+
+.aging-label {
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 8px;
+}
+
+.aging-value {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+:deep(.el-table .cell) {
+  white-space: nowrap;
 }
 </style>

@@ -68,7 +68,6 @@
       <el-table-column prop="billingDoc" label="计费单据" min-width="100" />
       <el-table-column prop="supplier" label="供应商" min-width="180" show-overflow-tooltip />
       <el-table-column prop="settlementUnit" label="结算单位" min-width="120" />
-      <el-table-column prop="costType" label="成本类型" min-width="100" />
       <el-table-column prop="costItem" label="成本项目" min-width="100" />
       <el-table-column prop="productL3" label="产品标准名L3" min-width="120" />
       <el-table-column prop="currency" label="币种" min-width="80" />
@@ -159,7 +158,7 @@ const tableRef = ref()
 const mockData: PayableStatementRow[] = [
   {
     rateSheetNo: 'FL2026050001', customerName: '深圳市腾讯科技有限公司', businessRefNo: 'PO2026050001',
-    billingDoc: '应付单', costType: '直接成本', costItem: '仓储费',
+    billingDoc: '应付单', costItem: '仓储费',
     productL1: '物流服务', productL2: '仓储服务', productL3: '普通仓储',
     currency: 'CNY', exTaxAmount: 50000, taxRate: 13, taxAmount: 6500, incTaxAmount: 56500,
     exchangeRate: 1.0, exTaxAmountCny: 50000, incTaxAmountCny: 56500,
@@ -167,7 +166,7 @@ const mockData: PayableStatementRow[] = [
   },
   {
     rateSheetNo: 'FL2026050002', customerName: '阿里巴巴（中国）有限公司', businessRefNo: 'PO2026050002',
-    billingDoc: '应付单', costType: '直接成本', costItem: '运输费',
+    billingDoc: '应付单', costItem: '运输费',
     productL1: '物流服务', productL2: '运输服务', productL3: '海运运输',
     currency: 'CNY', exTaxAmount: 80000, taxRate: 13, taxAmount: 10400, incTaxAmount: 90400,
     exchangeRate: 1.0, exTaxAmountCny: 80000, incTaxAmountCny: 90400,
@@ -175,7 +174,7 @@ const mockData: PayableStatementRow[] = [
   },
   {
     rateSheetNo: 'FL2026050003', customerName: '字节跳动科技有限公司', businessRefNo: 'PO2026050003',
-    billingDoc: '应付单', costType: '直接成本', costItem: '报关费',
+    billingDoc: '应付单', costItem: '报关费',
     productL1: '物流服务', productL2: '报关服务', productL3: '出口报关',
     currency: 'CNY', exTaxAmount: 12000, taxRate: 6, taxAmount: 720, incTaxAmount: 12720,
     exchangeRate: 1.0, exTaxAmountCny: 12000, incTaxAmountCny: 12720,
@@ -183,7 +182,7 @@ const mockData: PayableStatementRow[] = [
   },
   {
     rateSheetNo: 'FL2026050004', customerName: '华为技术有限公司', businessRefNo: 'PO2026050004',
-    billingDoc: '应付单', costType: '直接成本', costItem: '空运费',
+    billingDoc: '应付单', costItem: '空运费',
     productL1: '物流服务', productL2: '运输服务', productL3: '航空运输',
     currency: 'CNY', exTaxAmount: 35000, taxRate: 13, taxAmount: 4550, incTaxAmount: 39550,
     exchangeRate: 1.0, exTaxAmountCny: 35000, incTaxAmountCny: 39550,
@@ -191,7 +190,7 @@ const mockData: PayableStatementRow[] = [
   },
   {
     rateSheetNo: 'FL2026050005', customerName: '京东集团股份有限公司', businessRefNo: 'PO2026050005',
-    billingDoc: '应付单', costType: '直接成本', costItem: '冷链运输费',
+    billingDoc: '应付单', costItem: '冷链运输费',
     productL1: '物流服务', productL2: '运输服务', productL3: '海运运输',
     currency: 'CNY', exTaxAmount: 22000, taxRate: 13, taxAmount: 2860, incTaxAmount: 24860,
     exchangeRate: 1.0, exTaxAmountCny: 22000, incTaxAmountCny: 24860,

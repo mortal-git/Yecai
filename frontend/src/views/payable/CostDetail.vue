@@ -248,7 +248,6 @@
           </template>
         </el-table-column>
         <el-table-column v-if="visibleColumns.docId" prop="docId" label="单据ID" min-width="100" />
-        <el-table-column v-if="visibleColumns.costType" prop="costType" label="成本类型" min-width="120" />
         <el-table-column v-if="visibleColumns.supplier" prop="supplier" label="供应商" min-width="160" />
         <el-table-column v-if="visibleColumns.settlementUnit" prop="settlementUnit" label="结算单位" min-width="150" />
         <el-table-column v-if="visibleColumns.costItem" prop="costItem" label="成本项目" min-width="100" />
@@ -447,7 +446,6 @@ const allFields = [
   { key: 'rateSheetCostConfirmTime', label: '费率单成本确认时间' },
   { key: 'approvalStatus', label: '修改审批状态' },
   { key: 'docId', label: '单据ID' },
-  { key: 'costType', label: '成本类型' },
   { key: 'supplier', label: '供应商' },
   { key: 'settlementUnit', label: '结算单位' },
   { key: 'costItem', label: '成本项目' },
@@ -478,7 +476,7 @@ const defaultFieldOrder = [
   'billingDocNo', 'customerName', 'warehouse', 'businessMode', 'rateSheetType',
   'orderCreateTime', 'orderFinishTime', 'orderStatus', 'isSettled', 'customerQuoteNo',
   'businessNo', 'flowSheetNo', 'rateSheetCostStatus', 'rateSheetCostConfirmTime', 'approvalStatus',
-  'docId', 'costType', 'supplier', 'settlementUnit', 'costItem',
+  'docId', 'supplier', 'settlementUnit', 'costItem',
   'productL1', 'productL2', 'productL3', 'currency', 'exTaxAmount',
   'taxRate', 'taxAmount', 'incTaxAmount', 'exchangeRate', 'exTaxAmountCny',
   'incTaxAmountCny', 'customerService', 'remark', 'reconcileStatus',
@@ -534,7 +532,6 @@ const tableData = ref([
     rateSheetCostConfirmTime: '2026-05-03 10:00:00',
     approvalStatus: '已通过',
     docId: 'RS001',
-    costType: '直接成本',
     supplier: '深圳盐田国际集装箱码头有限公司',
     costItem: '仓储费',
     productL1: '物流服务',
@@ -584,7 +581,6 @@ const tableData = ref([
     rateSheetCostConfirmTime: '',
     approvalStatus: '待审批',
     docId: 'RS002',
-    costType: '直接成本',
     supplier: '上海中远海运集装箱运输有限公司',
     costItem: '运输费',
     productL1: '物流服务',
@@ -711,7 +707,6 @@ const handleGenerateStatement = () => {
     customerName: r.customerName,
     businessRefNo: r.businessRefNo,
     billingDoc: r.billingDoc,
-    costType: r.costType,
     costItem: r.costItem,
     productL1: r.productL1,
     productL2: r.productL2,

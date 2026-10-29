@@ -39,6 +39,12 @@ const routes: Array<RouteRecordRaw> = [
             meta: { title: '对话工作台' }
           },
           {
+            path: 'chatbi',
+            name: 'AgentChatBI',
+            component: () => import('../views/agent/ChatBI.vue'),
+            meta: { title: 'ChatBI 数据分析' }
+          },
+          {
             path: 'models',
             name: 'AgentModels',
             component: () => import('../views/agent/ModelConfig.vue'),
@@ -111,10 +117,22 @@ const routes: Array<RouteRecordRaw> = [
         meta: { title: '发票管理', icon: 'Ticket' },
         children: [
           {
-            path: 'list',
-            name: 'InvoiceList',
-            component: () => import('../views/invoice/List.vue'),
-            meta: { title: '发票列表' }
+            path: 'input',
+            name: 'InvoiceInputList',
+            component: () => import('../views/invoice/InputList.vue'),
+            meta: { title: '进项发票' }
+          },
+          {
+            path: 'output',
+            name: 'InvoiceOutputList',
+            component: () => import('../views/invoice/OutputList.vue'),
+            meta: { title: '销项发票' }
+          },
+          {
+            path: 'apply',
+            name: 'InvoiceApply',
+            component: () => import('../views/invoice/InvoiceApply.vue'),
+            meta: { title: '申请开票' }
           },
           {
             path: 'create',
@@ -335,6 +353,24 @@ const routes: Array<RouteRecordRaw> = [
             meta: { title: '对账单详情' }
           },
           {
+            path: 'receivable',
+            name: 'ReceivableStatementList',
+            component: () => import('../views/statement/receivable/List.vue'),
+            meta: { title: '应收对账单' }
+          },
+          {
+            path: 'receivable/create',
+            name: 'ReceivableStatementCreate',
+            component: () => import('../views/statement/receivable/Create.vue'),
+            meta: { title: '新建应收对账单' }
+          },
+          {
+            path: 'receivable/edit/:id',
+            name: 'ReceivableStatementEdit',
+            component: () => import('../views/statement/receivable/Create.vue'),
+            meta: { title: '编辑应收对账单' }
+          },
+          {
             path: 'payable',
             name: 'PayableStatementList',
             component: () => import('../views/statement/payable/List.vue'),
@@ -357,24 +393,6 @@ const routes: Array<RouteRecordRaw> = [
             name: 'PayableStatementDetail',
             component: () => import('../views/statement/payable/Detail.vue'),
             meta: { title: '应付对账单详情' }
-          },
-          {
-            path: 'receivable',
-            name: 'ReceivableStatementList',
-            component: () => import('../views/statement/receivable/List.vue'),
-            meta: { title: '应收对账单' }
-          },
-          {
-            path: 'receivable/create',
-            name: 'ReceivableStatementCreate',
-            component: () => import('../views/statement/receivable/Create.vue'),
-            meta: { title: '新建应收对账单' }
-          },
-          {
-            path: 'receivable/edit/:id',
-            name: 'ReceivableStatementEdit',
-            component: () => import('../views/statement/receivable/Create.vue'),
-            meta: { title: '编辑应收对账单' }
           }
         ]
       },
@@ -515,6 +533,30 @@ const routes: Array<RouteRecordRaw> = [
             name: 'QuotationSupplier',
             component: () => import('../views/quotation/Supplier.vue'),
             meta: { title: '供应商成本报价' }
+          },
+          {
+            path: 'freight',
+            name: 'QuotationFreight',
+            component: () => import('../views/quotation/Freight.vue'),
+            meta: { title: '货代报价' }
+          },
+          {
+            path: 'freight/create',
+            name: 'QuotationFreightCreate',
+            component: () => import('../views/quotation/FreightCreate.vue'),
+            meta: { title: '新增货代报价' }
+          },
+          {
+            path: 'freight/edit/:id',
+            name: 'QuotationFreightEdit',
+            component: () => import('../views/quotation/FreightCreate.vue'),
+            meta: { title: '编辑货代报价' }
+          },
+          {
+            path: 'freight/detail/:id',
+            name: 'QuotationFreightDetail',
+            component: () => import('../views/quotation/FreightDetail.vue'),
+            meta: { title: '货代报价详情' }
           },
           {
             path: 'history/:id',

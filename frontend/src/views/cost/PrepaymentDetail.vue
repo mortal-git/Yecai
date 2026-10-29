@@ -13,8 +13,12 @@
         <el-descriptions-item label="供应商名称">
           <el-link type="primary">{{ prepayment.supplierName }}</el-link>
         </el-descriptions-item>
-        <el-descriptions-item label="供应商账号">{{ prepayment.supplierAccount }}</el-descriptions-item>
+        <el-descriptions-item label="结算单位">{{ prepayment.settlementUnit }}</el-descriptions-item>
+        <el-descriptions-item label="结算银行">{{ prepayment.settlementBank }}</el-descriptions-item>
+        <el-descriptions-item label="结算账号">{{ prepayment.settlementAccount }}</el-descriptions-item>
         <el-descriptions-item label="预付款公司">{{ prepayment.prepaymentCompany }}</el-descriptions-item>
+        <el-descriptions-item label="公司银行">{{ prepayment.companyBank }}</el-descriptions-item>
+        <el-descriptions-item label="公司账号">{{ prepayment.companyAccount }}</el-descriptions-item>
         <el-descriptions-item label="仓库代码">{{ prepayment.warehouseCode }}</el-descriptions-item>
         <el-descriptions-item label="业务参考编号">{{ prepayment.businessRefNo }}</el-descriptions-item>
         <el-descriptions-item label="费率单编号">{{ prepayment.rateSheetNo }}</el-descriptions-item>
@@ -42,36 +46,10 @@
         <el-descriptions-item label="预付金额">
           <span class="amount-text">¥{{ formatMoney(prepayment.prepaymentAmount) }}</span>
         </el-descriptions-item>
-        <el-descriptions-item label="已付金额">
-          <span class="text-success">¥{{ formatMoney(prepayment.paidAmount) }}</span>
-        </el-descriptions-item>
-        <el-descriptions-item label="已绑定发票">
-          <span :class="prepayment.invoicedAmount >= prepayment.prepaymentAmount ? 'text-success' : 'text-warning'">
-            ¥{{ formatMoney(prepayment.invoicedAmount) }}
-          </span>
-        </el-descriptions-item>
-        <el-descriptions-item label="已核销金额">
-          <span class="text-success">¥{{ formatMoney(prepayment.writtenOffAmount) }}</span>
-        </el-descriptions-item>
-        <el-descriptions-item label="可用余额">
-          <span :class="prepayment.balanceAmount > 0 ? 'text-primary' : 'text-success'">
-            ¥{{ formatMoney(prepayment.balanceAmount) }}
-          </span>
-        </el-descriptions-item>
         <el-descriptions-item label="账龄">
           <span v-if="prepayment.overdueDays > 0" class="text-danger">逾期{{ prepayment.overdueDays }}天</span>
-          <span v-else-if="prepayment.balanceAmount > 0">{{ prepayment.agingDays || 0 }}天</span>
+          <span v-else-if="prepayment.agingDays > 0">{{ prepayment.agingDays }}天</span>
           <span v-else class="text-success">-</span>
-        </el-descriptions-item>
-        <el-descriptions-item label="发票状态">
-          <el-tag :type="getInvoiceStatusType(prepayment)" size="small">
-            {{ getInvoiceStatusText(prepayment) }}
-          </el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="核销状态">
-          <el-tag :type="getWriteoffStatusType(prepayment)" size="small">
-            {{ getWriteoffStatusText(prepayment) }}
-          </el-tag>
         </el-descriptions-item>
       </el-descriptions>
     </div>
@@ -174,8 +152,12 @@ const prepayment = ref({
   prepaymentNo: 'YF2024050001',
   supplierName: '深圳硬件供应商A公司',
   supplierId: 1,
-  supplierAccount: '75512345678',
+  settlementUnit: '深圳硬件供应商A公司',
+  settlementBank: '中国工商银行',
+  settlementAccount: '75512345678',
   prepaymentCompany: '总部',
+  companyBank: '中国工商银行',
+  companyAccount: '6222021234567890123',
   warehouseCode: 'WH001',
   businessRefNo: 'PO2024040001',
   rateSheetNo: 'FL2024040001',

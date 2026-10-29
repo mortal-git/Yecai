@@ -18,9 +18,8 @@
 
     <!-- 录入方式选择 -->
     <div class="input-mode-tabs" v-if="!isEdit">
-      <el-radio-group v-model="inputMode" size="default">
+      <el-radio-group v-model="inputMode" size="default" @change="handleInputModeChange">
         <el-radio-button value="manual">手工录入</el-radio-button>
-        <el-radio-button value="scan">扫码录入</el-radio-button>
         <el-radio-button value="ocr">OCR识别</el-radio-button>
         <el-radio-button value="import">批量导入</el-radio-button>
         <el-radio-button value="sync">税局同步</el-radio-button>
@@ -95,56 +94,123 @@
           </el-row>
         </div>
 
-        <!-- 供应商/客户信息区 -->
+        <!-- 采购方信息区 -->
         <div class="form-section">
           <div class="section-title">
             <el-icon><OfficeBuilding /></el-icon>
-            {{ formData.invoiceDirection === 'JX' ? '供应商信息' : '客户信息' }}
+            采购方信息
+            <el-tooltip content="发票中的购买方信息" placement="top">
+              <el-icon style="margin-left: 4px; color: #909399; cursor: help;"><QuestionFilled /></el-icon>
+            </el-tooltip>
           </div>
           <el-row :gutter="24">
             <el-col :span="12">
-              <el-form-item :label="formData.invoiceDirection === 'JX' ? '供应商' : '客户'" prop="partyName">
+              <el-form-item label="采购方名称" prop="purchaserName">
                 <el-select
-                  v-model="formData.partyId"
+                  v-model="formData.purchaserId"
                   filterable
                   remote
                   reserve-keyword
                   placeholder="请输入名称搜索"
-                  :remote-method="handleSearchParty"
-                  :loading="partyLoading"
+                  :remote-method="handleSearchPurchaser"
+                  :loading="purchaserLoading"
                   style="width: 100%;"
-                  @change="handlePartyChange"
+                  @change="handlePurchaserChange"
                 >
                   <el-option
-                    v-for="item in partyOptions"
+                    v-for="item in purchaserOptions"
                     :key="item.id"
                     :label="item.name"
                     :value="item.id"
-                  />
+                  >
+                    <span style="float: left">{{ item.name }}</span>
+                    <span style="float: right; color: #909399; font-size: 12px">{{ item.taxNo }}</span>
+                  </el-option>
                   <template #footer>
-                    <el-button text type="primary" @click="handleAddParty">
+                    <el-button text type="primary" @click="handleAddPurchaser">
                       <el-icon><Plus /></el-icon>
-                      新增{{ formData.invoiceDirection === 'JX' ? '供应商' : '客户' }}
+                      新增采购方
                     </el-button>
                   </template>
                 </el-select>
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="税号" prop="partyTaxNo">
-                <el-input v-model="formData.partyTaxNo" placeholder="统一社会信用代码" maxlength="18" />
+              <el-form-item label="采购方税号" prop="purchaserTaxNo">
+                <el-input v-model="formData.purchaserTaxNo" placeholder="统一社会信用代码" maxlength="18" />
               </el-form-item>
             </el-col>
           </el-row>
           <el-row :gutter="24">
             <el-col :span="12">
               <el-form-item label="地址电话">
-                <el-input v-model="formData.partyAddress" placeholder="请输入地址和电话" />
+                <el-input v-model="formData.purchaserAddress" placeholder="请输入地址和电话" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="银行账号">
-                <el-input v-model="formData.partyBank" placeholder="请输入银行账号" />
+              <el-form-item label="开户行账号">
+                <el-input v-model="formData.purchaserBank" placeholder="请输入开户行及账号" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </div>
+
+        <!-- 销售方信息区 -->
+        <div class="form-section">
+          <div class="section-title">
+            <el-icon><OfficeBuilding /></el-icon>
+            销售方信息
+            <el-tooltip content="发票中的销售方信息" placement="top">
+              <el-icon style="margin-left: 4px; color: #909399; cursor: help;"><QuestionFilled /></el-icon>
+            </el-tooltip>
+          </div>
+          <el-row :gutter="24">
+            <el-col :span="12">
+              <el-form-item label="销售方名称" prop="sellerName">
+                <el-select
+                  v-model="formData.sellerId"
+                  filterable
+                  remote
+                  reserve-keyword
+                  placeholder="请输入名称搜索"
+                  :remote-method="handleSearchSeller"
+                  :loading="sellerLoading"
+                  style="width: 100%;"
+                  @change="handleSellerChange"
+                >
+                  <el-option
+                    v-for="item in sellerOptions"
+                    :key="item.id"
+                    :label="item.name"
+                    :value="item.id"
+                  >
+                    <span style="float: left">{{ item.name }}</span>
+                    <span style="float: right; color: #909399; font-size: 12px">{{ item.taxNo }}</span>
+                  </el-option>
+                  <template #footer>
+                    <el-button text type="primary" @click="handleAddSeller">
+                      <el-icon><Plus /></el-icon>
+                      新增销售方
+                    </el-button>
+                  </template>
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="销售方税号" prop="sellerTaxNo">
+                <el-input v-model="formData.sellerTaxNo" placeholder="统一社会信用代码" maxlength="18" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="24">
+            <el-col :span="12">
+              <el-form-item label="地址电话">
+                <el-input v-model="formData.sellerAddress" placeholder="请输入地址和电话" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="开户行账号">
+                <el-input v-model="formData.sellerBank" placeholder="请输入开户行及账号" />
               </el-form-item>
             </el-col>
           </el-row>
@@ -402,8 +468,8 @@
             <el-descriptions-item label="税率">{{ ocrResult.taxRate }}</el-descriptions-item>
             <el-descriptions-item label="税额">¥{{ ocrResult.taxAmount }}</el-descriptions-item>
             <el-descriptions-item label="价税合计" :span="2">¥{{ ocrResult.totalAmount }}</el-descriptions-item>
-            <el-descriptions-item label="销方名称" :span="2">{{ ocrResult.sellerName }}</el-descriptions-item>
-            <el-descriptions-item label="购方名称" :span="2">{{ ocrResult.buyerName }}</el-descriptions-item>
+            <el-descriptions-item label="销售方名称" :span="2">{{ ocrResult.sellerName }}</el-descriptions-item>
+            <el-descriptions-item label="采购方名称" :span="2">{{ ocrResult.purchaserName }}</el-descriptions-item>
           </el-descriptions>
 
           <div v-if="ocrResult.lowConfidenceFields?.length" class="ocr-warning">
@@ -431,8 +497,9 @@ import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules, UploadFile } from 'element-plus'
 import {
   ArrowLeft, Document, OfficeBuilding, List, Paperclip,
-  Setting, Plus, Delete, Camera, UploadFilled, Loading
+  Setting, Plus, Delete, Camera, UploadFilled, Loading, QuestionFilled
 } from '@element-plus/icons-vue'
+import { PARTY_ARCHIVE, searchParty, type InvoiceParty, type InvoiceDirection } from './types'
 
 const router = useRouter()
 const route = useRoute()
@@ -446,7 +513,8 @@ const ocrUploadRef = ref()
 const isEdit = computed(() => !!route.params.id)
 const loading = ref(false)
 const checkingDuplicate = ref(false)
-const partyLoading = ref(false)
+const purchaserLoading = ref(false)
+const sellerLoading = ref(false)
 const orderLoading = ref(false)
 const showOcrDialog = ref(false)
 const ocrLoading = ref(false)
@@ -456,12 +524,9 @@ const fileList = ref<UploadFile[]>([])
 // 输入模式
 const inputMode = ref('manual')
 
-// 供应商/客户选项
-const partyOptions = ref<any[]>([
-  { id: '1', name: '深圳市腾讯科技有限公司', taxNo: '91440300MA5XXXX1X' },
-  { id: '2', name: '阿里巴巴（中国）有限公司', taxNo: '91330100MA2XXXX2Y' },
-  { id: '3', name: '华为技术有限公司', taxNo: '91440300MA5XXXX3Z' }
-])
+// 采购方/销售方选项
+const purchaserOptions = ref<InvoiceParty[]>(PARTY_ARCHIVE.map(p => ({ ...p })))
+const sellerOptions = ref<InvoiceParty[]>(PARTY_ARCHIVE.map(p => ({ ...p })))
 
 // 订单选项
 const orderOptions = ref<any[]>([
@@ -472,17 +537,24 @@ const orderOptions = ref<any[]>([
 
 // 表单数据
 const formData = reactive({
-  invoiceDirection: 'JX',
+  invoiceDirection: (route.query.direction as InvoiceDirection) || 'JX' as InvoiceDirection,
   invoiceType: 'SZ',
   invoiceCode: '',
   invoiceNumber: '',
   billingDate: '',
   checkCode: '',
-  partyId: '',
-  partyName: '',
-  partyTaxNo: '',
-  partyAddress: '',
-  partyBank: '',
+  // 采购方
+  purchaserId: '' as string | undefined,
+  purchaserName: '',
+  purchaserTaxNo: '',
+  purchaserAddress: '',
+  purchaserBank: '',
+  // 销售方
+  sellerId: '' as string | undefined,
+  sellerName: '',
+  sellerTaxNo: '',
+  sellerAddress: '',
+  sellerBank: '',
   items: [
     {
       id: '1',
@@ -517,7 +589,30 @@ const formRules: FormRules = {
     { pattern: /^\d{8}$/, message: '发票号码应为8位数字', trigger: 'blur' }
   ],
   billingDate: [{ required: true, message: '请选择开票日期', trigger: 'change' }],
-  partyId: [{ required: true, message: '请选择供应商/客户', trigger: 'change' }]
+  purchaserName: [{ required: true, message: '请选择采购方', trigger: 'change' }],
+  sellerName: [{ required: true, message: '请选择销售方', trigger: 'change' }]
+}
+
+// 采购方切换
+const handlePurchaserChange = (val: string | undefined) => {
+  const party = purchaserOptions.value.find(p => p.id === val)
+  if (party) {
+    formData.purchaserName = party.name
+    formData.purchaserTaxNo = party.taxNo || ''
+    formData.purchaserAddress = party.address ? `${party.address} ${party.phone || ''}`.trim() : ''
+    formData.purchaserBank = party.bankName ? `${party.bankName} ${party.bankAccount}` : ''
+  }
+}
+
+// 销售方切换
+const handleSellerChange = (val: string | undefined) => {
+  const party = sellerOptions.value.find(p => p.id === val)
+  if (party) {
+    formData.sellerName = party.name
+    formData.sellerTaxNo = party.taxNo || ''
+    formData.sellerAddress = party.address ? `${party.address} ${party.phone || ''}`.trim() : ''
+    formData.sellerBank = party.bankName ? `${party.bankName} ${party.bankAccount}` : ''
+  }
 }
 
 // 汇总计算
@@ -557,23 +652,44 @@ const authDeadlineWarning = computed(() => {
   return diff <= 30 && diff > 0
 })
 
+// 返回列表路径
+const getListPath = () => formData.invoiceDirection === 'SX' ? '/invoice/output' : '/invoice/input'
+
 // 方法
 const handleBack = () => {
-  router.back()
+  router.push(getListPath())
+}
+
+// 录入方式切换
+const handleInputModeChange = (val: string | number | boolean | undefined) => {
+  const mode = String(val)
+  if (mode === 'ocr') {
+    showOcrDialog.value = true
+    inputMode.value = 'manual'
+  } else if (mode === 'import') {
+    ElMessage.info('请返回列表页使用"批量导入"功能上传发票')
+    inputMode.value = 'manual'
+  } else if (mode === 'sync') {
+    ElMessage.info('税局同步功能开发中')
+    inputMode.value = 'manual'
+  }
 }
 
 const handleSaveDraft = async () => {
-  try {
-    await formRef.value?.validate()
-    loading.value = true
-    setTimeout(() => {
-      loading.value = false
-      ElMessage.success('草稿保存成功')
-      router.push('/invoice/list')
-    }, 1000)
-  } catch {
-    ElMessage.warning('请完善表单信息')
+  if (!formData.invoiceDirection) {
+    ElMessage.warning('请选择发票方向')
+    return
   }
+  if (!formData.invoiceType) {
+    ElMessage.warning('请选择发票类型')
+    return
+  }
+  loading.value = true
+  setTimeout(() => {
+    loading.value = false
+    ElMessage.success('草稿保存成功')
+    router.push(getListPath())
+  }, 800)
 }
 
 const handleSubmit = async () => {
@@ -583,7 +699,7 @@ const handleSubmit = async () => {
     setTimeout(() => {
       loading.value = false
       ElMessage.success('发票提交查验成功')
-      router.push('/invoice/list')
+      router.push(getListPath())
     }, 1000)
   } catch {
     ElMessage.warning('请完善表单信息')
@@ -608,29 +724,28 @@ const handleCheckDuplicate = async () => {
   }, 500)
 }
 
-const handleSearchParty = (query: string) => {
-  if (!query) return
-  partyLoading.value = true
+const handleSearchPurchaser = (query: string) => {
+  purchaserLoading.value = true
   setTimeout(() => {
-    partyLoading.value = false
-    // 模拟搜索
-    partyOptions.value = [
-      { id: '1', name: `${query}科技有限公司`, taxNo: '91440300MA5XXXX1X' },
-      { id: '2', name: `${query}集团有限公司`, taxNo: '91330100MA2XXXX2Y' }
-    ]
-  }, 500)
+    purchaserLoading.value = false
+    purchaserOptions.value = query ? searchParty(query) : PARTY_ARCHIVE
+  }, 300)
 }
 
-const handlePartyChange = (val: string) => {
-  const party = partyOptions.value.find(p => p.id === val)
-  if (party) {
-    formData.partyName = party.name
-    formData.partyTaxNo = party.taxNo
-  }
+const handleSearchSeller = (query: string) => {
+  sellerLoading.value = true
+  setTimeout(() => {
+    sellerLoading.value = false
+    sellerOptions.value = query ? searchParty(query) : PARTY_ARCHIVE
+  }, 300)
 }
 
-const handleAddParty = () => {
-  ElMessage.info('跳转新增供应商/客户页面')
+const handleAddPurchaser = () => {
+  ElMessage.info('跳转新增采购方档案页面')
+}
+
+const handleAddSeller = () => {
+  ElMessage.info('跳转新增销售方档案页面')
 }
 
 const handleSearchOrder = (query: string) => {
@@ -678,17 +793,17 @@ const calculateItemAmount = (index: number) => {
   item.totalAmount = item.amount + item.taxAmount
 }
 
-const handleFileChange = (file: UploadFile, files: UploadFile[]) => {
+const handleFileChange = (_file: UploadFile, files: UploadFile[]) => {
   fileList.value = files
   formData.attachments = files.map(f => f.raw as File)
 }
 
-const handleFileRemove = (file: UploadFile, files: UploadFile[]) => {
+const handleFileRemove = (_file: UploadFile, files: UploadFile[]) => {
   fileList.value = files
   formData.attachments = files.map(f => f.raw as File)
 }
 
-const handleOcrUpload = (file: UploadFile) => {
+const handleOcrUpload = (_file: UploadFile) => {
   ocrLoading.value = true
   ocrResult.value = null
   setTimeout(() => {
@@ -702,7 +817,7 @@ const handleOcrUpload = (file: UploadFile) => {
       taxAmount: '796.46',
       totalAmount: '9646.02',
       sellerName: '深圳市XX科技有限公司',
-      buyerName: '广州XX有限公司',
+      purchaserName: '广州XX有限公司',
       lowConfidenceFields: ['发票号码']
     }
     ElMessage.success('发票识别完成，请核对信息')

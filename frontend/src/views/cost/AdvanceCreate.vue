@@ -16,7 +16,7 @@
       >
         <el-row :gutter="20">
           <el-col :span="8">
-            <el-form-item label="申请单号" prop="advanceNo">
+            <el-form-item label="垫付单号" prop="advanceNo">
               <el-input v-model="form.advanceNo" disabled placeholder="系统自动生成" />
             </el-form-item>
           </el-col>
@@ -33,10 +33,13 @@
           </el-col>
           <el-col :span="8">
             <el-form-item label="申请人" prop="applicantId">
-              <el-select v-model="form.applicantId" placeholder="请选择" style="width: 100%">
-                <el-option label="张三" value="1" />
-                <el-option label="李四" value="2" />
-                <el-option label="王五" value="3" />
+              <el-select v-model="form.applicantId" placeholder="请选择" filterable style="width: 100%" @change="handleApplicantChange">
+                <el-option
+                  v-for="emp in employeeList"
+                  :key="emp.id"
+                  :label="emp.name"
+                  :value="emp.id"
+                />
               </el-select>
             </el-form-item>
           </el-col>
@@ -46,30 +49,36 @@
           <el-col :span="8">
             <el-form-item label="所属部门" prop="departmentId">
               <el-select v-model="form.departmentId" placeholder="请选择" style="width: 100%">
-                <el-option label="销售一部" value="1" />
-                <el-option label="销售二部" value="2" />
-                <el-option label="技术部" value="3" />
-                <el-option label="行政部" value="4" />
+                <el-option
+                  v-for="dept in departmentList"
+                  :key="dept.id"
+                  :label="dept.name"
+                  :value="dept.id"
+                />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="费用类型" prop="costType">
               <el-select v-model="form.costType" placeholder="请选择" style="width: 100%">
-                <el-option label="差旅费" value="travel" />
-                <el-option label="招待费" value="entertainment" />
-                <el-option label="交通费" value="transportation" />
-                <el-option label="办公费" value="office" />
-                <el-option label="通讯费" value="communication" />
-                <el-option label="其他" value="other" />
+                <el-option
+                  v-for="item in costTypeOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="关联订单" prop="orderId">
-              <el-select v-model="form.orderId" filterable placeholder="可选择" clearable style="width: 100%">
-                <el-option label="SO202402150008 - 杭州制造有限公司" value="1" />
-                <el-option label="SO202403010012 - 北京科技有限公司" value="2" />
+              <el-select v-model="form.orderId" filterable placeholder="可选择" clearable style="width: 100%" @change="handleOrderChange">
+                <el-option
+                  v-for="order in orderList"
+                  :key="order.id"
+                  :label="`${order.orderNo} - ${order.customerName}`"
+                  :value="order.id"
+                />
               </el-select>
             </el-form-item>
           </el-col>
@@ -99,12 +108,44 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="收款账户" prop="paymentAccountId">
-              <el-select v-model="form.paymentAccountId" placeholder="请选择" style="width: 100%">
-                <el-option label="招商银行 6214831234567890" value="1" />
-                <el-option label="工商银行 6222081234567890" value="2" />
-                <el-option label="建设银行 6217001234567890" value="3" />
+            <el-form-item label="预计还款日" prop="expectedRepaymentDate">
+              <el-date-picker
+                v-model="form.expectedRepaymentDate"
+                type="date"
+                placeholder="请选择预计还款日"
+                value-format="YYYY-MM-DD"
+                style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-form-item label="收款账户类型" prop="accountType">
+              <el-select v-model="form.accountType" placeholder="请选择" style="width: 100%">
+                <el-option label="个人银行账户" value="personal" />
+                <el-option label="支付宝" value="alipay" />
+                <el-option label="微信" value="wechat" />
+                <el-option label="现金" value="cash" />
               </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="收款银行" prop="bankName">
+              <el-select v-model="form.bankName" placeholder="请选择" filterable style="width: 100%">
+                <el-option
+                  v-for="bank in bankOptions"
+                  :key="bank"
+                  :label="bank"
+                  :value="bank"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="收款账号" prop="accountNo">
+              <el-input v-model="form.accountNo" placeholder="请输入收款账号" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -124,92 +165,100 @@
           </el-col>
         </el-row>
 
-        <el-row>
-          <el-col :span="24">
-            <el-form-item label="费用明细" prop="costDetails">
-              <el-table :data="form.items" border style="width: 100%">
-                <el-table-column label="费用项目" min-width="150">
-                  <template #default="scope">
-                    <el-form-item :prop="`items[${scope.$index}].itemName`" :rules="rules.itemName" style="margin: 0">
-                      <el-input v-model="scope.row.itemName" placeholder="请输入" />
-                    </el-form-item>
-                  </template>
-                </el-table-column>
-                <el-table-column label="规格说明" min-width="150">
-                  <template #default="scope">
-                    <el-form-item :prop="`items[${scope.$index}].spec`" style="margin: 0">
-                      <el-input v-model="scope.row.spec" placeholder="请输入" />
-                    </el-form-item>
-                  </template>
-                </el-table-column>
-                <el-table-column label="数量" width="100">
-                  <template #default="scope">
-                    <el-form-item :prop="`items[${scope.$index}].quantity`" :rules="rules.quantity" style="margin: 0">
-                      <el-input-number
-                        v-model="scope.row.quantity"
-                        :min="1"
-                        :precision="0"
-                        @change="calculateItem(scope.$index)"
-                        style="width: 100%"
-                      />
-                    </el-form-item>
-                  </template>
-                </el-table-column>
-                <el-table-column label="单价" width="120">
-                  <template #default="scope">
-                    <el-form-item :prop="`items[${scope.$index}].unitPrice`" :rules="rules.unitPrice" style="margin: 0">
-                      <el-input-number
-                        v-model="scope.row.unitPrice"
-                        :min="0"
-                        :precision="2"
-                        @change="calculateItem(scope.$index)"
-                        style="width: 100%"
-                      />
-                    </el-form-item>
-                  </template>
-                </el-table-column>
-                <el-table-column label="金额" width="120">
-                  <template #default="scope">
-                    <span>{{ formatMoney(scope.row.amount || 0) }}</span>
-                  </template>
-                </el-table-column>
-                <el-table-column label="备注" min-width="150">
-                  <template #default="scope">
-                    <el-form-item :prop="`items[${scope.$index}].remark`" style="margin: 0">
-                      <el-input v-model="scope.row.remark" placeholder="请输入" />
-                    </el-form-item>
-                  </template>
-                </el-table-column>
-                <el-table-column label="操作" width="80" fixed="right">
-                  <template #default="scope">
-                    <el-button
-                      type="danger"
-                      size="small"
-                      link
-                      @click="deleteItem(scope.$index)"
-                      :disabled="form.items.length <= 1"
-                    >
-                      删除
-                    </el-button>
-                  </template>
-                </el-table-column>
-              </el-table>
-              <div style="margin-top: 10px;">
-                <el-button type="primary" size="small" @click="addItem">
-                  <el-icon><Plus /></el-icon>
-                  添加明细行
+        <!-- 费用明细 -->
+        <div class="form-section">
+          <div class="section-title">费用明细</div>
+          <el-table :data="form.items" border style="width: 100%">
+            <el-table-column label="费用项目" min-width="150">
+              <template #default="scope">
+                <el-form-item :prop="`items[${scope.$index}].itemName`" :rules="rules.itemName" style="margin: 0">
+                  <el-input v-model="scope.row.itemName" placeholder="请输入" />
+                </el-form-item>
+              </template>
+            </el-table-column>
+            <el-table-column label="规格说明" min-width="150">
+              <template #default="scope">
+                <el-form-item :prop="`items[${scope.$index}].spec`" style="margin: 0">
+                  <el-input v-model="scope.row.spec" placeholder="请输入" />
+                </el-form-item>
+              </template>
+            </el-table-column>
+            <el-table-column label="数量" width="110">
+              <template #default="scope">
+                <el-form-item :prop="`items[${scope.$index}].quantity`" :rules="rules.quantity" style="margin: 0">
+                  <el-input-number
+                    v-model="scope.row.quantity"
+                    :min="1"
+                    :precision="0"
+                    @change="calculateItem(scope.$index)"
+                    style="width: 100%"
+                  />
+                </el-form-item>
+              </template>
+            </el-table-column>
+            <el-table-column label="单价" width="130">
+              <template #default="scope">
+                <el-form-item :prop="`items[${scope.$index}].unitPrice`" :rules="rules.unitPrice" style="margin: 0">
+                  <el-input-number
+                    v-model="scope.row.unitPrice"
+                    :min="0"
+                    :precision="2"
+                    @change="calculateItem(scope.$index)"
+                    style="width: 100%"
+                  />
+                </el-form-item>
+              </template>
+            </el-table-column>
+            <el-table-column label="金额" width="120" align="right">
+              <template #default="scope">
+                <span>¥{{ formatMoney(scope.row.amount || 0) }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="发票号码" min-width="150">
+              <template #default="scope">
+                <el-form-item :prop="`items[${scope.$index}].invoiceNo`" style="margin: 0">
+                  <el-input v-model="scope.row.invoiceNo" placeholder="可选" />
+                </el-form-item>
+              </template>
+            </el-table-column>
+            <el-table-column label="备注" min-width="150">
+              <template #default="scope">
+                <el-form-item :prop="`items[${scope.$index}].remark`" style="margin: 0">
+                  <el-input v-model="scope.row.remark" placeholder="请输入" />
+                </el-form-item>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="80" fixed="right">
+              <template #default="scope">
+                <el-button
+                  type="danger"
+                  size="small"
+                  link
+                  @click="deleteItem(scope.$index)"
+                  :disabled="form.items.length <= 1"
+                >
+                  删除
                 </el-button>
-                <span style="margin-left: 20px; font-size: 14px;">
-                  合计金额：<strong style="color: #409eff; font-size: 16px;">¥{{ formatMoney(totalAmount) }}</strong>
-                </span>
-              </div>
-            </el-form-item>
-          </el-col>
-        </el-row>
+              </template>
+            </el-table-column>
+          </el-table>
+          <div class="items-footer">
+            <el-button type="primary" size="small" @click="addItem">
+              <el-icon><Plus /></el-icon>
+              添加明细行
+            </el-button>
+            <span class="total-amount">
+              合计金额：<strong class="text-primary">¥{{ formatMoney(totalAmount) }}</strong>
+            </span>
+          </div>
+        </div>
 
         <!-- 附件上传 -->
         <div class="form-section">
-          <h4>附件上传 <span style="color: red; font-size: 12px;">（请上传发票、支付凭证、消费小票等相关证明文件，所有发票必须清晰完整）</span></h4>
+          <div class="section-title">
+            附件上传
+            <span class="section-tip">请上传发票、支付凭证、消费小票等相关证明文件，所有发票必须清晰完整</span>
+          </div>
           <el-upload
             v-model:file-list="fileList"
             :limit="10"
@@ -257,7 +306,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElForm } from 'element-plus'
-import { Plus, Upload } from '@element-plus/icons-vue'
+import { Plus } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -265,20 +314,65 @@ const formRef = ref<InstanceType<typeof ElForm>>()
 const saveLoading = ref(false)
 const submitLoading = ref(false)
 
-// 编辑模式判断
 const isEdit = computed(() => !!route.params.id)
+
+// 员工列表
+const employeeList = ref([
+  { id: '1', name: '张三', departmentId: 3, departmentName: '技术部', bankName: '招商银行', accountNo: '6214831234567890' },
+  { id: '2', name: '李四', departmentId: 1, departmentName: '销售一部', bankName: '工商银行', accountNo: '6222081234567890' },
+  { id: '3', name: '王五', departmentId: 2, departmentName: '销售二部', bankName: '建设银行', accountNo: '6217001234567890' },
+  { id: '4', name: '赵六', departmentId: 4, departmentName: '行政部', bankName: '农业银行', accountNo: '6228481234567890' }
+])
+
+// 部门列表
+const departmentList = ref([
+  { id: 1, name: '销售一部' },
+  { id: 2, name: '销售二部' },
+  { id: 3, name: '技术部' },
+  { id: 4, name: '行政部' }
+])
+
+// 费用类型选项
+const costTypeOptions = ref([
+  { label: '差旅费', value: 'travel' },
+  { label: '招待费', value: 'entertainment' },
+  { label: '交通费', value: 'transportation' },
+  { label: '办公费', value: 'office' },
+  { label: '通讯费', value: 'communication' },
+  { label: '其他', value: 'other' }
+])
+
+// 订单列表
+const orderList = ref([
+  { id: 1, orderNo: 'SO202602150008', customerName: '杭州制造有限公司', amount: 30000.00 },
+  { id: 2, orderNo: 'SO202603010012', customerName: '北京科技有限公司', amount: 25000.00 },
+  { id: 3, orderNo: 'SO202605200010', customerName: '深圳智能科技有限公司', amount: 45000.00 }
+])
+
+// 银行选项
+const bankOptions = ref([
+  '中国工商银行',
+  '中国建设银行',
+  '中国农业银行',
+  '中国银行',
+  '招商银行',
+  '交通银行'
+])
 
 // 表单数据
 const form = reactive({
   advanceNo: '',
   applyDate: '',
   applicantId: '',
-  departmentId: '',
+  departmentId: null as number | null,
   costType: '',
-  orderId: '',
+  orderId: null as number | null,
   advanceAmount: 0,
   advanceDate: '',
-  paymentAccountId: '',
+  expectedRepaymentDate: '',
+  accountType: 'personal',
+  bankName: '',
+  accountNo: '',
   costReason: '',
   remark: '',
   items: [
@@ -288,6 +382,7 @@ const form = reactive({
       quantity: 1,
       unitPrice: 0,
       amount: 0,
+      invoiceNo: '',
       remark: ''
     }
   ]
@@ -314,8 +409,11 @@ const rules = {
   advanceDate: [
     { required: true, message: '请选择垫付日期', trigger: 'change' }
   ],
-  paymentAccountId: [
-    { required: true, message: '请选择收款账户', trigger: 'change' }
+  accountType: [
+    { required: true, message: '请选择收款账户类型', trigger: 'change' }
+  ],
+  accountNo: [
+    { required: true, message: '请输入收款账号', trigger: 'blur' }
   ],
   costReason: [
     { required: true, message: '请输入费用事由', trigger: 'blur' }
@@ -334,7 +432,7 @@ const rules = {
 }
 
 // 上传文件列表
-const fileList = ref([])
+const fileList = ref<any[]>([])
 
 // 计算合计
 const totalAmount = computed(() => {
@@ -343,7 +441,23 @@ const totalAmount = computed(() => {
 
 // 格式化金额
 const formatMoney = (value: number) => {
-  return value.toLocaleString('zh-CN', { minimumFractionDigits: 2 })
+  return (value || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })
+}
+
+// 申请人变化时自动带出部门和收款账户
+const handleApplicantChange = (empId: string) => {
+  const emp = employeeList.value.find(e => e.id === empId)
+  if (emp) {
+    form.departmentId = emp.departmentId
+    form.bankName = emp.bankName
+    form.accountNo = emp.accountNo
+  }
+}
+
+// 订单变化时带出订单信息
+const handleOrderChange = (orderId: number | null) => {
+  // 订单选中后可在此处带出相关业务信息
+  void orderId
 }
 
 // 计算行金额
@@ -352,7 +466,6 @@ const calculateItem = (index: number) => {
   if (item.quantity && item.unitPrice) {
     item.amount = Number((item.quantity * item.unitPrice).toFixed(2))
   }
-  // 自动更新总垫付金额
   form.advanceAmount = totalAmount.value
 }
 
@@ -364,6 +477,7 @@ const addItem = () => {
     quantity: 1,
     unitPrice: 0,
     amount: 0,
+    invoiceNo: '',
     remark: ''
   })
 }
@@ -371,21 +485,17 @@ const addItem = () => {
 // 删除明细行
 const deleteItem = (index: number) => {
   form.items.splice(index, 1)
-  // 重新计算总金额
   form.advanceAmount = totalAmount.value
 }
 
 // 文件超出限制
-const handleExceed = (files: any, fileList: any) => {
-  ElMessage.warning(`最多只能上传 ${10} 个文件`)
+const handleExceed = () => {
+  ElMessage.warning('最多只能上传 10 个文件')
 }
 
 // 文件上传前校验
 const beforeUpload = (file: any) => {
-  const allowedTypes = [
-    'image/jpeg', 'image/png',
-    'application/pdf'
-  ]
+  const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf']
   const isAllowed = allowedTypes.includes(file.type)
   if (!isAllowed) {
     ElMessage.error('只能上传JPG、PNG、PDF格式的文件')
@@ -407,18 +517,15 @@ const handleBack = () => {
 // 保存草稿
 const handleSaveDraft = async () => {
   if (!formRef.value) return
-
   try {
     await formRef.value.validate()
     saveLoading.value = true
-
-    // 模拟保存请求
     setTimeout(() => {
       saveLoading.value = false
       ElMessage.success('草稿保存成功')
       router.push('/payable/advance')
     }, 1000)
-  } catch (error) {
+  } catch {
     ElMessage.error('表单校验失败，请检查填写内容')
   }
 }
@@ -432,7 +539,6 @@ const handleSubmit = async () => {
     return
   }
 
-  // 校验金额是否一致
   if (Math.abs(form.advanceAmount - totalAmount.value) > 0.01) {
     ElMessage.warning('垫付金额与明细合计金额不一致，请检查')
     return
@@ -441,32 +547,31 @@ const handleSubmit = async () => {
   try {
     await formRef.value.validate()
     submitLoading.value = true
-
-    // 模拟提交请求
     setTimeout(() => {
       submitLoading.value = false
       ElMessage.success('提交成功，等待审核')
       router.push('/payable/advance')
     }, 1000)
-  } catch (error) {
+  } catch {
     ElMessage.error('表单校验失败，请检查填写内容')
   }
 }
 
 onMounted(() => {
-  // 如果是编辑模式，加载垫付申请数据
   if (isEdit.value) {
-    // 模拟加载数据
-    form.advanceNo = 'DF2024030004'
-    form.applyDate = '2024-03-15'
+    // 编辑模式：模拟加载数据
+    const id = route.params.id
+    form.advanceNo = `DF202607000${id}`
+    form.applyDate = '2026-07-15'
     form.applicantId = '3'
-    form.departmentId = '2'
+    handleApplicantChange('3')
     form.costType = 'transportation'
-    form.orderId = ''
+    form.orderId = null
     form.advanceAmount = 450.00
-    form.advanceDate = '2024-03-15'
-    form.paymentAccountId = '3'
-    form.costReason = '3月打车费报销'
+    form.advanceDate = '2026-07-15'
+    form.expectedRepaymentDate = '2026-07-25'
+    form.accountType = 'personal'
+    form.costReason = '7月打车费报销'
     form.remark = '包含上下班打车和见客户的打车费用'
     form.items = [
       {
@@ -475,18 +580,19 @@ onMounted(() => {
         quantity: 15,
         unitPrice: 30.00,
         amount: 450.00,
-        remark: '3月1日-3月15日'
+        invoiceNo: '',
+        remark: '7月1日-7月15日'
       }
     ]
   } else {
-    // 新增模式，生成临时单号
+    // 新增模式：生成临时单号
     const now = new Date()
     const dateStr = now.getFullYear() + (now.getMonth() + 1).toString().padStart(2, '0')
     form.advanceNo = `DF${dateStr}XXXXXX`
     form.applyDate = now.toISOString().split('T')[0]
     form.advanceDate = now.toISOString().split('T')[0]
-    form.applicantId = '1' // 默认当前登录用户
-    form.departmentId = '3' // 默认当前用户部门
+    form.applicantId = '1'
+    handleApplicantChange('1')
   }
 })
 </script>
@@ -515,14 +621,39 @@ onMounted(() => {
 }
 
 .form-section {
-  margin: 30px 0;
+  margin: 24px 0;
 }
 
-.form-section h4 {
-  margin: 0 0 15px 0;
-  font-size: 16px;
+.section-title {
+  font-size: 14px;
   font-weight: 600;
   color: #303133;
+  margin-bottom: 12px;
+  padding-left: 10px;
+  border-left: 3px solid #409eff;
+}
+
+.section-tip {
+  color: #f56c6c;
+  font-size: 12px;
+  font-weight: normal;
+  margin-left: 8px;
+}
+
+.items-footer {
+  margin-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.total-amount {
+  font-size: 14px;
+}
+
+.text-primary {
+  color: #409eff;
+  font-size: 16px;
 }
 
 .form-footer {

@@ -33,13 +33,13 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="供应商账号" prop="supplierAccount">
-              <el-select v-model="form.supplierAccount" placeholder="请选择" style="width: 100%">
+            <el-form-item label="结算单位" prop="settlementUnit">
+              <el-select v-model="form.settlementUnit" filterable placeholder="请选择" style="width: 100%">
                 <el-option
-                  v-for="item in supplierAccountList"
-                  :key="item.account"
-                  :label="item.account"
-                  :value="item.account"
+                  v-for="item in settlementUnitOptions"
+                  :key="item"
+                  :label="item"
+                  :value="item"
                 />
               </el-select>
             </el-form-item>
@@ -48,8 +48,32 @@
 
         <el-row :gutter="20">
           <el-col :span="8">
+            <el-form-item label="结算银行" prop="settlementBank">
+              <el-select v-model="form.settlementBank" filterable placeholder="请选择" style="width: 100%">
+                <el-option
+                  v-for="item in settlementBankOptions"
+                  :key="item"
+                  :label="item"
+                  :value="item"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="结算账号" prop="settlementAccount">
+              <el-select v-model="form.settlementAccount" filterable placeholder="请选择" style="width: 100%">
+                <el-option
+                  v-for="item in settlementAccountOptions"
+                  :key="item"
+                  :label="item"
+                  :value="item"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
             <el-form-item label="预付款公司" prop="prepaymentCompany">
-              <el-select v-model="form.prepaymentCompany" placeholder="请选择" style="width: 100%">
+              <el-select v-model="form.prepaymentCompany" placeholder="请选择" style="width: 100%" @change="handleCompanyChange">
                 <el-option label="总部" value="总部" />
                 <el-option label="北京分公司" value="北京分公司" />
                 <el-option label="上海分公司" value="上海分公司" />
@@ -58,6 +82,26 @@
               </el-select>
             </el-form-item>
           </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-form-item label="公司银行" prop="companyBank">
+              <el-select v-model="form.companyBank" placeholder="请选择" filterable style="width: 100%">
+                <el-option v-for="item in companyBankOptions" :key="item" :label="item" :value="item" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="公司账号" prop="companyAccount">
+              <el-select v-model="form.companyAccount" placeholder="请选择" filterable style="width: 100%">
+                <el-option v-for="item in companyAccountOptions" :key="item" :label="item" :value="item" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item label="仓库代码" prop="warehouseCode">
               <el-select v-model="form.warehouseCode" placeholder="请选择" style="width: 100%">
@@ -80,9 +124,6 @@
               />
             </el-form-item>
           </el-col>
-        </el-row>
-
-        <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item label="费用项目" prop="expenseItem">
               <el-select v-model="form.expenseItem" placeholder="请选择" style="width: 100%">
@@ -100,6 +141,9 @@
               </el-select>
             </el-form-item>
           </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item label="币种" prop="currency">
               <el-select v-model="form.currency" placeholder="请选择" style="width: 100%">
@@ -121,9 +165,6 @@
               />
             </el-form-item>
           </el-col>
-        </el-row>
-
-        <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item label="费率单编号" prop="rateSheetNo">
               <el-select v-model="form.rateSheetNo" placeholder="请选择" style="width: 100%" @change="handleRateSheetChange">
@@ -136,6 +177,9 @@
               </el-select>
             </el-form-item>
           </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item label="业务参考编号" prop="businessRefNo">
               <el-input v-model="form.businessRefNo" placeholder="自动获取" disabled />
@@ -153,9 +197,6 @@
               </el-select>
             </el-form-item>
           </el-col>
-        </el-row>
-
-        <el-row>
           <el-col :span="8">
             <el-form-item label="提单号" prop="billNo">
               <el-input v-model="form.billNo" placeholder="请输入提单号" />
@@ -212,13 +253,32 @@ const supplierList = ref([
   { id: 5, code: 'SUP005', name: '杭州装修E公司', account: '62220822222' }
 ])
 
-// 供应商账号列表
-const supplierAccountList = ref([
-  { account: '75512345678', name: '深圳硬件供应商A公司' },
-  { account: '62170012345', name: '北京云服务B公司' },
-  { account: '62220811111', name: '上海软件C公司' },
-  { account: '62284812345', name: '广州物流D公司' },
-  { account: '62220822222', name: '杭州装修E公司' }
+// 结算单位选项
+const settlementUnitOptions = ref([
+  '深圳硬件供应商A公司',
+  '北京云服务B公司',
+  '上海软件C公司',
+  '广州物流D公司',
+  '杭州装修E公司'
+])
+
+// 结算银行选项
+const settlementBankOptions = ref([
+  '中国工商银行',
+  '中国建设银行',
+  '中国农业银行',
+  '中国银行',
+  '招商银行',
+  '交通银行'
+])
+
+// 结算账号选项
+const settlementAccountOptions = ref([
+  '75512345678',
+  '62170012345',
+  '62220811111',
+  '62284812345',
+  '62220822222'
 ])
 
 // 费率单列表
@@ -236,8 +296,12 @@ const rateSheetList = ref([
 const form = reactive({
   prepaymentNo: '',
   supplierId: '',
-  supplierAccount: '',
+  settlementUnit: '',
+  settlementBank: '',
+  settlementAccount: '',
   prepaymentCompany: '',
+  companyBank: '',
+  companyAccount: '',
   warehouseCode: '',
   businessRefNo: '',
   rateSheetNo: '',
@@ -255,8 +319,14 @@ const rules = {
   supplierId: [
     { required: true, message: '请选择供应商', trigger: 'change' }
   ],
-  supplierAccount: [
-    { required: true, message: '请选择供应商账号', trigger: 'change' }
+  settlementUnit: [
+    { required: true, message: '请选择结算单位', trigger: 'change' }
+  ],
+  settlementBank: [
+    { required: true, message: '请选择结算银行', trigger: 'change' }
+  ],
+  settlementAccount: [
+    { required: true, message: '请选择结算账号', trigger: 'change' }
   ],
   prepaymentCompany: [
     { required: true, message: '请选择预付款公司', trigger: 'change' }
@@ -277,6 +347,46 @@ const rules = {
   expectedPaymentDate: [
     { required: true, message: '请选择预计付款日', trigger: 'change' }
   ]
+}
+
+// 预付款公司对应的银行与账号
+const companyBankMap: Record<string, { bank: string, account: string }> = {
+  '总部': { bank: '中国工商银行', account: '6222021234567890123' },
+  '北京分公司': { bank: '中国银行', account: '6217001234567890123' },
+  '上海分公司': { bank: '中国建设银行', account: '6214001234567890123' },
+  '广州分公司': { bank: '中国农业银行', account: '6228481234567890123' },
+  '杭州分公司': { bank: '招商银行', account: '6225881234567890123' }
+}
+
+// 公司银行选项
+const companyBankOptions = ref([
+  '中国工商银行',
+  '中国建设银行',
+  '中国农业银行',
+  '中国银行',
+  '招商银行',
+  '交通银行'
+])
+
+// 公司账号选项
+const companyAccountOptions = ref([
+  '6222021234567890123',
+  '6217001234567890123',
+  '6214001234567890123',
+  '6228481234567890123',
+  '6225881234567890123'
+])
+
+// 预付款公司变化时自动带出公司银行、公司账号
+const handleCompanyChange = (company: string) => {
+  const info = companyBankMap[company]
+  if (info) {
+    form.companyBank = info.bank
+    form.companyAccount = info.account
+  } else {
+    form.companyBank = ''
+    form.companyAccount = ''
+  }
 }
 
 // 费率单选择变化
@@ -342,8 +452,11 @@ onMounted(() => {
     // 模拟加载数据
     form.prepaymentNo = 'YF2024050001'
     form.supplierId = 1
-    form.supplierAccount = '75512345678'
+    form.settlementUnit = '深圳硬件供应商A公司'
+    form.settlementBank = '中国工商银行'
+    form.settlementAccount = '75512345678'
     form.prepaymentCompany = '总部'
+    handleCompanyChange('总部')
     form.warehouseCode = 'WH001'
     form.rateSheetNo = 'FL2024040001'
     form.businessRefNo = 'PO2024040001'

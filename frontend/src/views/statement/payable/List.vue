@@ -76,10 +76,6 @@
         <el-icon><Plus /></el-icon>
         新增对账单
       </el-button>
-      <el-button type="success" @click="handleExport" :disabled="selectedRows.length === 0">
-        <el-icon><Download /></el-icon>
-        导出
-      </el-button>
       <el-button type="warning" @click="handleBatchAudit" :disabled="selectedRows.length === 0">
         <el-icon><Check /></el-icon>
         批量审核
@@ -98,7 +94,6 @@
         <el-radio-button value="pending">待审核</el-radio-button>
         <el-radio-button value="pending_payment">待付款</el-radio-button>
         <el-radio-button value="paid">已付款</el-radio-button>
-        <el-radio-button value="cancelled">已作废</el-radio-button>
       </el-radio-group>
     </div>
 
@@ -135,32 +130,6 @@
         <el-table-column prop="totalIncTaxCny" label="含税金额" min-width="130" align="right" sortable>
           <template #default="scope">¥{{ formatMoney(scope.row.totalIncTaxCny) }}</template>
         </el-table-column>
-        <el-table-column label="关联付款" min-width="130" align="right">
-          <template #default="scope">
-            <span :class="paymentTotal(scope.row) >= scope.row.totalIncTaxCny && scope.row.totalIncTaxCny > 0 ? 'text-success' : (paymentTotal(scope.row) > 0 ? 'text-warning' : 'text-info')">
-              ¥{{ formatMoney(paymentTotal(scope.row)) }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column label="关联发票" min-width="130" align="right">
-          <template #default="scope">
-            <span :class="invoiceTotal(scope.row) >= scope.row.totalIncTaxCny && scope.row.totalIncTaxCny > 0 ? 'text-success' : (invoiceTotal(scope.row) > 0 ? 'text-warning' : 'text-info')">
-              ¥{{ formatMoney(invoiceTotal(scope.row)) }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column label="已付款金额" min-width="130" align="right">
-          <template #default="scope">
-            <span class="text-success">¥{{ formatMoney(paidTotal(scope.row)) }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="未付款金额" min-width="130" align="right" sortable :sort-method="(a, b) => unpaidAmount(a) - unpaidAmount(b)">
-          <template #default="scope">
-            <span :class="unpaidAmount(scope.row) > 0 ? 'text-danger' : 'text-success'">
-              ¥{{ formatMoney(unpaidAmount(scope.row)) }}
-            </span>
-          </template>
-        </el-table-column>
         <el-table-column prop="status" label="对账单状态" min-width="110">
           <template #default="scope">
             <el-tag :type="STATUS_TYPE[scope.row.status]" size="small">{{ STATUS_LABEL[scope.row.status] }}</el-tag>
@@ -183,9 +152,8 @@
                   <el-dropdown-item command="submit" :disabled="!canSubmit(scope.row)">提交审批</el-dropdown-item>
                   <el-dropdown-item command="audit" :disabled="!canAudit(scope.row)">审核</el-dropdown-item>
                   <el-dropdown-item command="applyPay" :disabled="!canApplyPayment(scope.row)">申请付款</el-dropdown-item>
-                  <el-dropdown-item command="pay" :disabled="!canPay(scope.row)">付款登记</el-dropdown-item>
                   <el-dropdown-item command="linkInvoice" :disabled="!canLinkInvoice(scope.row)">绑定发票</el-dropdown-item>
-                  <el-dropdown-item command="cancel" :disabled="!canCancel(scope.row)">作废</el-dropdown-item>
+                  <el-dropdown-item command="reconcile" :disabled="!canReconcile(scope.row)">重新对账</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -270,9 +238,11 @@
       </template>
     </el-dialog>
 
-    <!-- 付款登记 / 关联发票弹窗 -->
-    <PaymentLinkDialog v-model="paymentDialogVisible" :statement="currentRow" @confirm="onPaymentLinked" />
+    <!-- 关联发票弹窗 -->
     <InvoiceLinkDialog v-model="invoiceDialogVisible" :statement="currentRow" @confirm="onInvoiceLinked" />
+
+    <!-- 申请付款弹窗 -->
+    <PaymentApplyDialog v-model="paymentApplyDialogVisible" :statement="currentRow" @confirm="onPaymentApplied" />
 
     <!-- 账龄分析弹窗 -->
     <el-dialog v-model="showAgingAnalysis" title="应付对账单账龄分析" width="900px">
@@ -328,11 +298,11 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Refresh, Plus, Download, Check, DataAnalysis, ArrowDown } from '@element-plus/icons-vue'
+import { Search, Refresh, Plus, Check, DataAnalysis, ArrowDown } from '@element-plus/icons-vue'
 import { usePayableStatementStore, STATUS_LABEL, STATUS_TYPE, type PayableStatement, type PayableStatementStatus } from '../../../store/payableStatement'
 import PayableStatementDetailDrawer from './DetailDrawer.vue'
-import PaymentLinkDialog from './components/PaymentLinkDialog.vue'
 import InvoiceLinkDialog from './components/InvoiceLinkDialog.vue'
+import PaymentApplyDialog from './components/PaymentApplyDialog.vue'
 
 const router = useRouter()
 const store = usePayableStatementStore()
@@ -428,7 +398,6 @@ const unpaidAmount = (row: PayableStatement) => Math.max(0, row.totalIncTaxCny -
 
 // 行样式
 const getRowClassName = ({ row }: { row: PayableStatement }) => {
-  if (row.status === 'cancelled') return 'row-warning'
   return ''
 }
 
@@ -437,9 +406,8 @@ const canEdit = (row: PayableStatement) => row.status === 'draft'
 const canSubmit = (row: PayableStatement) => row.status === 'draft'
 const canAudit = (row: PayableStatement) => row.status === 'pending'
 const canApplyPayment = (row: PayableStatement) => row.status === 'pending_payment'
-const canPay = (row: PayableStatement) => row.status === 'pending_payment'
 const canLinkInvoice = (row: PayableStatement) => row.status === 'draft'
-const canCancel = (row: PayableStatement) => row.status === 'paid'
+const canReconcile = (row: PayableStatement) => row.status !== 'draft'
 const canDelete = (row: PayableStatement) => row.status === 'draft'
 
 const handleSearch = () => {
@@ -525,16 +493,6 @@ const confirmAudit = () => {
   auditDialog.visible = false
 }
 
-// 作废
-const handleCancel = (row: PayableStatement) => {
-  ElMessageBox.confirm(`确认作废对账单 ${row.statementNo}?`, '警告', { type: 'warning' })
-    .then(() => {
-      store.changeStatus(row.id, 'cancelled', '作废对账单')
-      ElMessage.success('已作废')
-    })
-    .catch(() => {})
-}
-
 // 删除
 const handleDelete = (row: PayableStatement) => {
   ElMessageBox.confirm(`确认删除对账单 ${row.statementNo}?删除后不可恢复`, '危险操作', { type: 'error' })
@@ -545,51 +503,48 @@ const handleDelete = (row: PayableStatement) => {
     .catch(() => {})
 }
 
-const handleExport = () => {
-  ElMessage.success(`导出 ${selectedRows.value.length} 条对账单`)
-}
-
 // 更多操作
 const handleMoreAction = (command: string, row: PayableStatement) => {
   switch (command) {
     case 'submit': handleSubmit(row); break
     case 'audit': handleAudit(row); break
     case 'applyPay': handleApplyPayment(row); break
-    case 'pay': openPaymentDialog(row); break
     case 'linkInvoice': openInvoiceDialog(row); break
-    case 'cancel': handleCancel(row); break
+    case 'reconcile': handleReconcile(row); break
   }
 }
 
-// 申请付款
-const handleApplyPayment = (row: PayableStatement) => {
-  ElMessageBox.confirm(`确认对账单 ${row.statementNo} 申请付款?申请金额 ¥${formatMoney(row.totalIncTaxCny)}`, '申请付款', { type: 'warning' })
+// 重新对账
+const handleReconcile = (row: PayableStatement) => {
+  ElMessageBox.confirm(`确认将对账单 ${row.statementNo} 重新对账?状态将变更为草稿`, '重新对账', { type: 'warning' })
     .then(() => {
-      store.addLog(row.id, '申请付款', `申请付款金额 ¥${formatMoney(row.totalIncTaxCny)}`)
-      ElMessage.success('已提交付款申请')
+      store.changeStatus(row.id, 'draft', '重新对账')
+      ElMessage.success('已变更为草稿状态，可重新进行对账')
     })
     .catch(() => {})
 }
 
-// 付款登记 / 关联发票弹窗
-const paymentDialogVisible = ref(false)
+// 申请付款
+const paymentApplyDialogVisible = ref(false)
+const handleApplyPayment = (row: PayableStatement) => {
+  currentRow.value = row
+  paymentApplyDialogVisible.value = true
+}
+const onPaymentApplied = () => {
+  if (currentRow.value) {
+    store.addLog(currentRow.value.id, '申请付款', '已生成付款申请单，请前往付款管理查看')
+    refreshCurrentRow()
+  }
+}
+
+// 关联发票弹窗
 const invoiceDialogVisible = ref(false)
 
-const openPaymentDialog = (row: PayableStatement) => {
-  currentRow.value = row
-  paymentDialogVisible.value = true
-}
 const openInvoiceDialog = (row: PayableStatement) => {
   currentRow.value = row
   invoiceDialogVisible.value = true
 }
 
-const onPaymentLinked = (payment: any) => {
-  if (!currentRow.value) return
-  store.addPayment(currentRow.value.id, payment)
-  ElMessage.success('付款登记成功，对账单状态已变更为已付款')
-  refreshCurrentRow()
-}
 const onInvoiceLinked = (invoice: any) => {
   if (!currentRow.value) return
   store.addInvoice(currentRow.value.id, invoice)
@@ -762,10 +717,6 @@ onMounted(() => {
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-}
-
-:deep(.row-warning) {
-  background-color: #fdf6ec;
 }
 
 :deep(.el-table .cell) {

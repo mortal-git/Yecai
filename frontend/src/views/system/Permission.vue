@@ -273,8 +273,9 @@ const tableData = ref([
     description: '发票管理模块',
     children: [
       { id: '3-1', name: '发票开具', code: 'invoice:create', type: 'menu', path: '/invoice/create', sort: 1, status: 'active', isSystem: false, description: '' },
-      { id: '3-2', name: '发票查询', code: 'invoice:list', type: 'menu', path: '/invoice/list', sort: 2, status: 'active', isSystem: false, description: '' },
-      { id: '3-3', name: '发票统计', code: 'invoice:stats', type: 'menu', path: '/invoice/stats', sort: 3, status: 'active', isSystem: false, description: '' }
+      { id: '3-2', name: '进项发票', code: 'invoice:input', type: 'menu', path: '/invoice/input', sort: 2, status: 'active', isSystem: false, description: '' },
+      { id: '3-3', name: '销项发票', code: 'invoice:output', type: 'menu', path: '/invoice/output', sort: 3, status: 'active', isSystem: false, description: '' },
+      { id: '3-4', name: '发票统计', code: 'invoice:stats', type: 'menu', path: '/invoice/stats', sort: 4, status: 'active', isSystem: false, description: '' }
     ]
   },
   {

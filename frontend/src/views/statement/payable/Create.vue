@@ -139,7 +139,6 @@
         <el-table-column prop="customerName" label="客户名称" min-width="160" show-overflow-tooltip />
         <el-table-column prop="businessRefNo" label="业务参考编号" min-width="140" />
         <el-table-column prop="billingDoc" label="计费单据" min-width="100" />
-        <el-table-column prop="costType" label="成本类型" min-width="100" />
         <el-table-column prop="costItem" label="成本项目" min-width="100" />
         <el-table-column prop="productL1" label="产品标准名L1" min-width="120" />
         <el-table-column prop="productL2" label="产品标准名L2" min-width="120" />
@@ -295,7 +294,7 @@ const clearAll = () => {
 }
 
 const getSummary = () => {
-  return ['合计', '', '', '', '', '', '', '', '', '', '', '',
+  return ['合计', '', '', '', '', '', '', '', '', '',
     `¥${formatMoney(detailRows.value.reduce((s, r) => s + r.exTaxAmount, 0))}`,
     '',
     `¥${formatMoney(detailRows.value.reduce((s, r) => s + r.taxAmount, 0))}`,

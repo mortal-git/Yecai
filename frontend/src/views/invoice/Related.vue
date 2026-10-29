@@ -42,7 +42,7 @@
             <el-link type="primary">{{ row.no }}</el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="partyName" label="供应商/客户" min-width="150" />
+        <el-table-column prop="partyName" label="对方单位" min-width="150" />
         <el-table-column prop="amount" label="单据金额" width="130" align="right">
           <template #default="{ row }">¥{{ formatNumber(row.amount) }}</template>
         </el-table-column>
@@ -103,7 +103,7 @@
             {{ getDocTypeLabel(row.type) }}
           </template>
         </el-table-column>
-        <el-table-column prop="partyName" label="供应商/客户" min-width="150" />
+        <el-table-column prop="partyName" label="对方单位" min-width="150" />
         <el-table-column prop="amount" label="单据金额" width="130" align="right">
           <template #default="{ row }">¥{{ formatNumber(row.amount) }}</template>
         </el-table-column>

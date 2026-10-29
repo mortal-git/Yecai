@@ -202,7 +202,7 @@
                   <el-table-column prop="invoiceType" label="发票类型" width="100" />
                   <el-table-column prop="invoiceCode" label="发票代码" width="140" />
                   <el-table-column prop="invoiceNumber" label="发票号码" width="120" />
-                  <el-table-column prop="partyName" label="供应商/客户" min-width="150" />
+                  <el-table-column prop="partyName" label="对方单位" min-width="150" />
                   <el-table-column prop="totalAmount" label="价税合计" width="120" align="right">
                     <template #default="{ row }">¥{{ row.totalAmount }}</template>
                   </el-table-column>
@@ -376,7 +376,7 @@ const importResult = reactive({
 
 // 方法
 const handleBack = () => {
-  router.push('/invoice/list')
+  router.push('/invoice/input')
 }
 
 const handleSelectMode = (mode: string) => {

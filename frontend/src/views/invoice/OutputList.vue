@@ -5,17 +5,8 @@
       <el-form :model="searchForm" :inline="true" label-width="90px">
         <el-row :gutter="20">
           <el-col :span="6">
-            <el-form-item label="发票方向">
-              <el-radio-group v-model="searchForm.invoiceDirection" size="small">
-                <el-radio-button value="">全部</el-radio-button>
-                <el-radio-button value="JX">进项发票</el-radio-button>
-                <el-radio-button value="SX">销项发票</el-radio-button>
-              </el-radio-group>
-            </el-form-item>
-          </el-col>
-          <el-col :span="6">
             <el-form-item label="发票类型">
-              <el-select v-model="searchForm.invoiceTypes" multiple collapse-tags collapse-tags-tooltip placeholder="请选择" clearable>
+              <el-select v-model="searchForm.invoiceTypes" multiple collapse-tags collapse-tags-tooltip placeholder="请选择" clearable size="small">
                 <el-option label="专票" value="SZ" />
                 <el-option label="普票" value="PT" />
                 <el-option label="电子发票" value="DZ" />
@@ -26,30 +17,18 @@
           </el-col>
           <el-col :span="6">
             <el-form-item label="发票状态">
-              <el-select v-model="searchForm.invoiceStatuses" multiple collapse-tags collapse-tags-tooltip placeholder="请选择" clearable>
+              <el-select v-model="searchForm.invoiceStatuses" multiple collapse-tags collapse-tags-tooltip placeholder="请选择" clearable size="small">
                 <el-option label="草稿" value="draft" />
                 <el-option label="待查验" value="pending" />
                 <el-option label="已查验" value="verified" />
                 <el-option label="已关联" value="related" />
-                <el-option label="已认证" value="authenticated" />
-                <el-option label="已抵扣" value="deducted" />
+                <el-option label="已开具" value="authenticated" />
                 <el-option label="已作废" value="cancelled" />
                 <el-option label="已红冲" value="red_letter" />
                 <el-option label="异常票" value="abnormal" />
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="6">
-            <el-form-item label="认证状态" v-if="searchForm.invoiceDirection === 'JX' || !searchForm.invoiceDirection">
-              <el-select v-model="searchForm.authStatuses" multiple collapse-tags collapse-tags-tooltip placeholder="请选择" clearable>
-                <el-option label="未认证" value="unauthenticated" />
-                <el-option label="已认证" value="authenticated" />
-                <el-option label="已抵扣" value="deducted" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row :gutter="20">
           <el-col :span="6">
             <el-form-item label="开票日期">
               <el-date-picker
@@ -60,6 +39,7 @@
                 end-placeholder="结束"
                 value-format="YYYY-MM-DD"
                 size="small"
+                style="width: 100%"
               />
             </el-form-item>
           </el-col>
@@ -68,9 +48,16 @@
               <el-input v-model="searchForm.invoiceNumber" placeholder="请输入号码" clearable size="small" />
             </el-form-item>
           </el-col>
+        </el-row>
+        <el-row :gutter="20">
           <el-col :span="6">
-            <el-form-item :label="searchForm.invoiceDirection === 'JX' ? '供应商' : searchForm.invoiceDirection === 'SX' ? '客户' : '供应商/客户'">
-              <el-input v-model="searchForm.partyName" :placeholder="searchForm.invoiceDirection === 'JX' ? '请输入供应商名称' : searchForm.invoiceDirection === 'SX' ? '请输入客户名称' : '请输入名称'" clearable size="small" />
+            <el-form-item label="采购方">
+              <el-input v-model="searchForm.purchaserName" placeholder="请输入采购方名称" clearable size="small" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="销售方">
+              <el-input v-model="searchForm.sellerName" placeholder="请输入销售方名称" clearable size="small" />
             </el-form-item>
           </el-col>
           <el-col :span="6">
@@ -84,8 +71,6 @@
               </el-select>
             </el-form-item>
           </el-col>
-        </el-row>
-        <el-row :gutter="20">
           <el-col :span="6">
             <el-form-item label="金额范围">
               <el-input-number v-model="searchForm.amountRange!.min" placeholder="最小值" :min="0" size="small" style="width: 100px" />
@@ -93,6 +78,8 @@
               <el-input-number v-model="searchForm.amountRange!.max" placeholder="最大值" :min="0" size="small" style="width: 100px" />
             </el-form-item>
           </el-col>
+        </el-row>
+        <el-row :gutter="20">
           <el-col :span="6">
             <el-form-item label="关联状态">
               <el-select v-model="searchForm.relatedStatus" placeholder="请选择" clearable size="small">
@@ -103,6 +90,26 @@
             </el-form-item>
           </el-col>
           <el-col :span="6">
+            <el-form-item label="入账状态">
+              <el-select v-model="searchForm.accountStatus" placeholder="请选择" clearable size="small">
+                <el-option label="未入账" value="unrecorded" />
+                <el-option label="已入账" value="recorded" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="申报所属期">
+              <el-date-picker
+                v-model="searchForm.declarePeriod"
+                type="month"
+                placeholder="选择月份"
+                value-format="YYYY-MM"
+                size="small"
+                style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
             <el-form-item label="影像">
               <el-select v-model="searchForm.hasAttachment" placeholder="请选择" clearable size="small">
                 <el-option label="有影像" :value="true" />
@@ -110,14 +117,14 @@
               </el-select>
             </el-form-item>
           </el-col>
+        </el-row>
+        <el-row :gutter="20">
           <el-col :span="6">
             <el-form-item label="责任人">
               <el-input v-model="searchForm.responsible" placeholder="请输入姓名" clearable size="small" />
             </el-form-item>
           </el-col>
-        </el-row>
-        <el-row :gutter="20">
-          <el-col :span="24" style="text-align: right;">
+          <el-col :span="6" style="text-align: right;">
             <el-form-item>
               <el-button type="primary" @click="handleSearch" size="small">
                 <el-icon><Search /></el-icon>
@@ -138,24 +145,10 @@
         <!-- 高级筛选 -->
         <el-row v-if="showAdvanced" :gutter="20">
           <el-col :span="6">
-            <el-form-item label="认证日期">
-              <el-date-picker
-                v-model="searchForm.authDateRange"
-                type="daterange"
-                range-separator="至"
-                start-placeholder="开始"
-                end-placeholder="结束"
-                value-format="YYYY-MM-DD"
-                size="small"
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :span="6">
             <el-form-item label="异常标识">
               <el-select v-model="searchForm.abnormalType" placeholder="请选择" clearable size="small">
                 <el-option label="正常" value="" />
                 <el-option label="失控票" value="out_of_control" />
-                <el-option label="逾期未认证" value="overdue_not_auth" />
                 <el-option label="信息不一致" value="info_inconsistent" />
               </el-select>
             </el-form-item>
@@ -171,28 +164,39 @@
           <div class="stat-card">
             <div class="stat-label">发票总张数</div>
             <div class="stat-value">{{ statistics.totalCount }}</div>
-            <div class="stat-sub">价税合计: ¥{{ formatNumber(statistics.totalAmount) }}</div>
+            <div class="stat-sub">
+              <span class="stat-sub-item">已开具: {{ statistics.issuedCount }} 张</span>
+              <span class="stat-sub-item">已作废: {{ statistics.cancelledCount }} 张</span>
+            </div>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="stat-card">
-            <div class="stat-label">可抵扣税额</div>
-            <div class="stat-value success">¥{{ formatNumber(statistics.totalTaxAmount) }}</div>
-            <div class="stat-sub">已认证: {{ statistics.authenticatedCount }} 张</div>
+            <div class="stat-label">价税合计</div>
+            <div class="stat-value">¥{{ formatNumber(statistics.totalAmount) }}</div>
+            <div class="stat-sub">
+              <span class="stat-sub-item">不含税: ¥{{ formatNumber(statistics.totalAmountWithoutTax) }}</span>
+              <span class="stat-sub-item">税额: ¥{{ formatNumber(statistics.totalTaxAmount) }}</span>
+            </div>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="stat-card">
-            <div class="stat-label">已抵扣</div>
-            <div class="stat-value primary">¥{{ formatNumber(statistics.deductedAmount) }}</div>
-            <div class="stat-sub">已抵扣: {{ statistics.deductedCount }} 张</div>
+            <div class="stat-label">应交税额</div>
+            <div class="stat-value primary">¥{{ formatNumber(statistics.totalTaxAmount) }}</div>
+            <div class="stat-sub">
+              <span class="stat-sub-item">有效票税额: ¥{{ formatNumber(statistics.validTaxAmount) }}</span>
+            </div>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="stat-card">
-            <div class="stat-label">待处理</div>
+            <div class="stat-label">待处理 / 异常</div>
             <div class="stat-value warning">{{ statistics.pendingVerifyCount + statistics.abnormalCount }}</div>
-            <div class="stat-sub">待查验: {{ statistics.pendingVerifyCount }} | 异常: {{ statistics.abnormalCount }}</div>
+            <div class="stat-sub">
+              <span class="stat-sub-item">待查验: {{ statistics.pendingVerifyCount }}</span>
+              <span class="stat-sub-item danger">异常: {{ statistics.abnormalCount }}</span>
+            </div>
           </div>
         </el-col>
       </el-row>
@@ -202,11 +206,7 @@
     <div class="action-bar">
       <el-button type="primary" @click="handleCreate">
         <el-icon><Plus /></el-icon>
-        新增发票
-      </el-button>
-      <el-button type="success" @click="handleScanInput">
-        <el-icon><Tickets /></el-icon>
-        扫码录入
+        新增销项发票
       </el-button>
       <el-button type="info" @click="handleBatchImport">
         <el-icon><Upload /></el-icon>
@@ -215,14 +215,6 @@
       <el-button @click="handleBatchVerify" :disabled="!selectedRows.length">
         <el-icon><Check /></el-icon>
         批量查验
-      </el-button>
-      <el-button @click="handleBatchAuth" :disabled="!selectedRows.length || searchForm.invoiceDirection !== 'JX'">
-        <el-icon><CircleCheck /></el-icon>
-        批量认证
-      </el-button>
-      <el-button @click="handleBatchDeduct" :disabled="!selectedRows.length || searchForm.invoiceDirection !== 'JX'">
-        <el-icon><Wallet /></el-icon>
-        批量抵扣
       </el-button>
       <el-button type="danger" @click="handleBatchCancel" :disabled="!selectedRows.length">
         <el-icon><Close /></el-icon>
@@ -270,10 +262,16 @@
           </template>
         </el-table-column>
         <el-table-column prop="billingDate" label="开票日期" width="110" sortable />
-        <el-table-column :prop="searchForm.invoiceDirection === 'JX' ? 'supplierName' : 'customerName'" label="供应商/客户" min-width="160">
+        <el-table-column prop="purchaserName" label="采购方" min-width="200" show-overflow-tooltip>
           <template #default="{ row }">
-            <span v-if="row.supplierName">{{ row.supplierName }}</span>
-            <span v-else>{{ row.customerName }}</span>
+            <span v-if="row.purchaserName" :title="row.purchaserTaxNo">{{ row.purchaserName }}</span>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="sellerName" label="销售方" min-width="160" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span v-if="row.sellerName" :title="row.sellerTaxNo">{{ row.sellerName }}</span>
+            <span v-else>-</span>
           </template>
         </el-table-column>
         <el-table-column prop="amountWithoutTax" label="不含税金额" width="120" align="right">
@@ -297,12 +295,15 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column v-if="searchForm.invoiceDirection === 'JX' || !searchForm.invoiceDirection" prop="authStatus" label="认证状态" width="100">
+        <el-table-column prop="accountStatus" label="入账状态" width="90">
           <template #default="{ row }">
-            <el-tag v-if="row.invoiceDirection === 'JX'" :type="getAuthStatusConfig(row.authStatus).type" size="small">
-              {{ getAuthStatusConfig(row.authStatus).label }}
+            <el-tag :type="row.accountStatus === 'recorded' ? 'success' : 'info'" size="small">
+              {{ row.accountStatus === 'recorded' ? '已入账' : '未入账' }}
             </el-tag>
           </template>
+        </el-table-column>
+        <el-table-column prop="declarePeriod" label="申报所属期" width="110">
+          <template #default="{ row }">{{ row.declarePeriod || '-' }}</template>
         </el-table-column>
         <el-table-column prop="relatedCount" label="关联单据" width="100">
           <template #default="{ row }">
@@ -312,9 +313,8 @@
             <span v-else type="info">-</span>
           </template>
         </el-table-column>
-        <el-table-column v-if="searchForm.invoiceDirection === 'JX' || !searchForm.invoiceDirection" prop="authPeriod" label="认证期间" width="100" />
         <el-table-column prop="responsible" label="责任人" width="80" />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="180" fixed="right">
           <template #default="scope">
             <el-button type="primary" size="small" link @click.stop="handleView(scope.row)">查看</el-button>
             <el-button type="success" size="small" link @click.stop="handleEdit(scope.row)" :disabled="scope.row.invoiceStatus !== 'draft'">编辑</el-button>
@@ -325,8 +325,6 @@
               </template>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="auth" :disabled="scope.row.invoiceStatus !== 'verified' || scope.row.invoiceDirection !== 'JX'">认证</el-dropdown-item>
-                  <el-dropdown-item command="deduct" :disabled="scope.row.authStatus !== 'authenticated' || scope.row.invoiceDirection !== 'JX'">抵扣</el-dropdown-item>
                   <el-dropdown-item command="relate" :disabled="scope.row.invoiceStatus === 'draft'">关联单据</el-dropdown-item>
                   <el-dropdown-item command="cancel" :disabled="scope.row.invoiceStatus === 'cancelled' || scope.row.invoiceStatus === 'draft'">作废</el-dropdown-item>
                   <el-dropdown-item command="red" :disabled="scope.row.invoiceStatus === 'cancelled' || scope.row.invoiceStatus === 'draft'">红冲</el-dropdown-item>
@@ -342,7 +340,12 @@
       <!-- 分页 -->
       <div class="pagination-container">
         <div class="pagination-info">
-          已选中 {{ selectedRows.length }} 项，共 {{ pagination.total }} 条记录
+          <span>已选中 <b>{{ selectedRows.length }}</b> 项，共 {{ pagination.total }} 条记录</span>
+          <span v-if="selectedRows.length > 0" class="selection-summary">
+            ｜选中合计：不含税 <b>¥{{ formatNumber(selectionSummary.amountWithoutTax) }}</b>
+            ，税额 <b class="text-success">¥{{ formatNumber(selectionSummary.taxAmount) }}</b>
+            ，价税合计 <b class="text-primary">¥{{ formatNumber(selectionSummary.totalAmount) }}</b>
+          </span>
         </div>
         <el-pagination
           v-model:current-page="pagination.page"
@@ -359,7 +362,7 @@
     <!-- 发票详情抽屉 -->
     <el-drawer
       v-model="showDetail"
-      title="发票详情"
+      title="销项发票详情"
       size="900px"
       :before-close="handleCloseDetail"
     >
@@ -381,7 +384,7 @@
     </el-drawer>
 
     <!-- 批量导入对话框 -->
-    <el-dialog v-model="showImportDialog" title="批量导入发票" width="600px">
+    <el-dialog v-model="showImportDialog" title="批量导入销项发票" width="600px">
       <div class="import-dialog-content">
         <el-steps :active="importStep" finish-status="success" align-center>
           <el-step title="下载模板" />
@@ -392,7 +395,7 @@
 
         <div class="step-content">
           <div v-if="importStep === 0" class="step-1">
-            <p>请先下载发票导入模板，按模板格式填写发票信息</p>
+            <p>请先下载销项发票导入模板，按模板格式填写发票信息</p>
             <el-button type="primary" @click="handleDownloadTemplate">
               <el-icon><Download /></el-icon>
               下载导入模板
@@ -404,7 +407,7 @@
             <ul>
               <li>发票号码不能为空且不能重复</li>
               <li>金额、税率、税额需符合勾稽关系</li>
-              <li>供应商/客户需与档案中名称一致</li>
+              <li>采购方/销售方需与档案中名称一致</li>
             </ul>
           </div>
 
@@ -453,63 +456,10 @@
       </template>
     </el-dialog>
 
-    <!-- 扫码录入对话框 -->
-    <el-dialog v-model="showScanDialog" title="扫码录入发票" width="500px">
-      <div class="scan-dialog-content">
-        <p>请使用扫码枪扫描发票二维码，或点击按钮选择发票图片</p>
-        <el-upload
-          ref="scanUploadRef"
-          class="scan-upload"
-          :auto-upload="false"
-          :show-file-list="false"
-          accept="image/*"
-          :on-change="handleScanUpload"
-        >
-          <el-button type="primary">
-            <el-icon><Camera /></el-icon>
-            选择发票图片
-          </el-button>
-        </el-upload>
-
-        <div v-if="scanResult" class="scan-result">
-          <el-divider>识别结果</el-divider>
-          <el-descriptions :column="2" border size="small">
-            <el-descriptions-item label="发票代码">{{ scanResult.invoiceCode }}</el-descriptions-item>
-            <el-descriptions-item label="发票号码">{{ scanResult.invoiceNumber }}</el-descriptions-item>
-            <el-descriptions-item label="开票日期">{{ scanResult.billingDate }}</el-descriptions-item>
-            <el-descriptions-item label="不含税金额">¥{{ formatNumber(scanResult.amountWithoutTax) }}</el-descriptions-item>
-            <el-descriptions-item label="税率">{{ (scanResult.taxRate * 100).toFixed(0) }}%</el-descriptions-item>
-            <el-descriptions-item label="税额">¥{{ formatNumber(scanResult.taxAmount) }}</el-descriptions-item>
-            <el-descriptions-item label="价税合计" :span="2">¥{{ formatNumber(scanResult.totalAmount) }}</el-descriptions-item>
-          </el-descriptions>
-        </div>
-      </div>
-      <template #footer>
-        <el-button @click="showScanDialog = false">关闭</el-button>
-        <el-button v-if="scanResult" type="primary" @click="handleConfirmScan">确认录入</el-button>
-      </template>
-    </el-dialog>
-
     <!-- 批量操作确认对话框 -->
     <el-dialog v-model="showBatchDialog" :title="batchDialogTitle" width="500px">
       <div class="batch-dialog-content">
         <p>确认对选中的 {{ selectedRows.length }} 张发票进行操作？</p>
-        <el-form v-if="batchDialogType === 'auth' || batchDialogType === 'deduct'" :model="batchForm" label-width="100px">
-          <el-form-item label="认证/抵扣期间">
-            <el-date-picker
-              v-model="batchForm.period"
-              type="month"
-              placeholder="选择月份"
-              value-format="YYYY-MM"
-            />
-          </el-form-item>
-          <el-form-item v-if="batchDialogType === 'deduct'" label="抵扣类型">
-            <el-select v-model="batchForm.deductType" placeholder="请选择">
-              <el-option label="正常抵扣" value="normal" />
-              <el-option label="加计抵减" value="additional" />
-            </el-select>
-          </el-form-item>
-        </el-form>
         <el-form v-if="batchDialogType === 'cancel' || batchDialogType === 'red'" :model="batchForm" label-width="100px">
           <el-form-item :label="batchDialogType === 'cancel' ? '作废原因' : '红冲原因'" required>
             <el-input v-model="batchForm.reason" type="textarea" :rows="3" :placeholder="batchDialogType === 'cancel' ? '请输入作废原因' : '请输入红冲原因'" />
@@ -541,17 +491,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, h, computed } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { UploadFile } from 'element-plus'
 import {
-  Search, Refresh, Plus, Download, Tickets, Upload, Check, CircleCheck,
-  Wallet, Close, Printer, Picture, ArrowUp, ArrowDown, Camera, UploadFilled
+  Search, Refresh, Plus, Download, Upload, Check,
+  Close, Printer, Picture, ArrowUp, ArrowDown, UploadFilled
 } from '@element-plus/icons-vue'
 import InvoiceDetail from './Detail.vue'
 import InvoiceRelated from './Related.vue'
-import type { InvoiceStatistics, InvoiceStatus, AuthStatus, InvoiceType, InvoiceDirection } from './types'
+import type { InvoiceStatus, InvoiceType, AccountStatus } from './types'
+import { PARTY_ARCHIVE } from './types'
 
 const router = useRouter()
 
@@ -562,14 +513,14 @@ const selectedRows = ref<any[]>([])
 
 // 搜索表单
 const searchForm = reactive({
-  invoiceDirection: '' as InvoiceDirection | '',
   invoiceTypes: [] as InvoiceType[],
   invoiceStatuses: [] as InvoiceStatus[],
-  authStatuses: [] as AuthStatus[],
   billingDateRange: [] as string[],
-  authDateRange: [] as string[],
   invoiceNumber: '',
-  partyName: '',
+  purchaserName: '',
+  sellerName: '',
+  declarePeriod: '' as string,
+  accountStatus: undefined as AccountStatus | undefined,
   amountRange: { min: undefined as number | undefined, max: undefined as number | undefined },
   taxRates: [] as number[],
   relatedStatus: 'all' as 'all' | 'related' | 'unrelated',
@@ -586,56 +537,59 @@ const pagination = reactive({
 })
 
 // 统计
-const statistics = reactive<InvoiceStatistics>({
-  totalCount: 156,
-  totalAmountWithoutTax: 8560000,
-  totalTaxAmount: 1112800,
-  totalAmount: 9672800,
-  authenticatedCount: 89,
-  authenticatedAmount: 923400,
-  deductedCount: 67,
-  deductedAmount: 712800,
-  pendingVerifyCount: 12,
-  abnormalCount: 3
+const statistics = reactive({
+  totalCount: 74,
+  totalAmountWithoutTax: 4020000,
+  totalTaxAmount: 532800,
+  totalAmount: 4552800,
+  issuedCount: 65,
+  cancelledCount: 5,
+  validTaxAmount: 480000,
+  pendingVerifyCount: 6,
+  abnormalCount: 1
 })
 
 // 表格数据
 const tableData = ref<any[]>([])
 const mockTableData = () => {
-  const directions: InvoiceDirection[] = ['JX', 'SX']
   const types: InvoiceType[] = ['SZ', 'PT', 'DZ']
-  const statuses: InvoiceStatus[] = ['draft', 'pending', 'verified', 'related', 'authenticated', 'deducted', 'cancelled', 'abnormal']
-  const authStatuses: AuthStatus[] = ['unauthenticated', 'authenticated', 'deducted']
-  const parties = {
-    JX: ['深圳市腾讯科技有限公司', '阿里巴巴（中国）有限公司', '华为技术有限公司', '小米科技有限公司', '京东集团'],
-    SX: ['北京字节跳动科技有限公司', '美团网络科技有限公司', '网易杭州有限公司', '拼多多网络有限公司', '快手科技有限公司']
-  }
+  const statuses: InvoiceStatus[] = ['draft', 'pending', 'verified', 'related', 'authenticated', 'cancelled', 'abnormal']
+  const accountStatuses: AccountStatus[] = ['recorded', 'unrecorded']
 
   const data = []
-  for (let i = 0; i < 50; i++) {
-    const direction = directions[i % 2] as InvoiceDirection
+  for (let i = 0; i < 28; i++) {
     const status = statuses[Math.floor(Math.random() * statuses.length)] as InvoiceStatus
     const type = types[Math.floor(Math.random() * types.length)] as InvoiceType
+    const seller = PARTY_ARCHIVE[i % PARTY_ARCHIVE.length]
+    const purchaser = PARTY_ARCHIVE[(i + 4) % PARTY_ARCHIVE.length]
+    const billingDay = Math.floor(i / 2) + 1
+    const billingDate = `2024-04-${String(billingDay).padStart(2, '0')}`
+    const isRecorded = accountStatuses[Math.floor(Math.random() * accountStatuses.length)]
 
     data.push({
-      id: `INV${String(i + 1).padStart(8, '0')}`,
-      invoiceNo: direction === 'JX' ? `JXFP202404${String(i + 1).padStart(5, '0')}` : `XXFP202404${String(i + 1).padStart(5, '0')}`,
+      id: `SX${String(i + 1).padStart(8, '0')}`,
+      invoiceNo: `XXFP202404${String(i + 1).padStart(5, '0')}`,
       invoiceType: type,
-      invoiceDirection: direction,
-      invoiceCode: direction === 'JX' ? '144031900110' : '111011900110',
-      invoiceNumber: String(10000000 + i + 1),
-      billingDate: `2024-04-${String(Math.floor(i / 2) + 1).padStart(2, '0')}`,
-      supplierName: direction === 'JX' ? parties.JX[i % 5] : undefined,
-      customerName: direction === 'SX' ? parties.SX[i % 5] : undefined,
+      invoiceDirection: 'SX',
+      invoiceCode: '111011900110',
+      invoiceNumber: String(20000000 + i + 1),
+      billingDate,
+      purchaserName: purchaser.name,
+      purchaserTaxNo: purchaser.taxNo,
+      purchaserAddress: purchaser.address,
+      purchaserBank: purchaser.bankName ? `${purchaser.bankName} ${purchaser.bankAccount}` : undefined,
+      sellerName: seller.name,
+      sellerTaxNo: seller.taxNo,
+      sellerAddress: seller.address,
+      sellerBank: seller.bankName ? `${seller.bankName} ${seller.bankAccount}` : undefined,
       amountWithoutTax: Math.round((10000 + Math.random() * 90000) * 100) / 100,
       taxRate: [0, 0.03, 0.06, 0.09, 0.13][Math.floor(Math.random() * 5)],
       taxAmount: 0,
       totalAmount: 0,
       invoiceStatus: status,
-      authStatus: direction === 'JX' ? authStatuses[Math.floor(Math.random() * authStatuses.length)] : undefined,
+      accountStatus: isRecorded,
+      declarePeriod: status === 'authenticated' ? `2024-${String((billingDay % 12) + 1).padStart(2, '0')}` : undefined,
       relatedCount: Math.floor(Math.random() * 5),
-      authPeriod: status === 'authenticated' || status === 'deducted' ? '2024-04' : undefined,
-      deductPeriod: status === 'deducted' ? '2024-04' : undefined,
       hasAttachment: Math.random() > 0.3,
       responsible: ['张三', '李四', '王五', '赵六'][i % 4],
       createTime: `2024-04-${String(Math.floor(i / 3) + 1).padStart(2, '0')} ${String(8 + (i % 10)).padStart(2, '0')}:30:00`
@@ -654,7 +608,6 @@ const showAdvanced = ref(false)
 const showDetail = ref(false)
 const showRelated = ref(false)
 const showImportDialog = ref(false)
-const showScanDialog = ref(false)
 const showBatchDialog = ref(false)
 const showLogDialog = ref(false)
 
@@ -665,8 +618,6 @@ const currentInvoice = ref<any>(null)
 const batchDialogType = ref('')
 const batchDialogTitle = ref('')
 const batchForm = reactive({
-  period: '',
-  deductType: 'normal',
   reason: ''
 })
 
@@ -678,10 +629,6 @@ const importResult = reactive({
 })
 const uploadRef = ref()
 
-// 扫码
-const scanResult = ref<any>(null)
-const scanUploadRef = ref()
-
 // 操作日志
 const operationLogs = ref<any[]>([])
 
@@ -692,20 +639,11 @@ const getStatusConfig = (status: InvoiceStatus) => {
     'pending': { label: '待查验', type: 'warning' },
     'verified': { label: '已查验', type: 'success' },
     'related': { label: '已关联', type: 'primary' },
-    'authenticated': { label: '已认证', type: 'primary' },
+    'authenticated': { label: '已开具', type: 'primary' },
     'deducted': { label: '已抵扣', type: 'success' },
     'cancelled': { label: '已作废', type: 'danger' },
     'red_letter': { label: '已红冲', type: 'danger' },
     'abnormal': { label: '异常票', type: 'danger' }
-  }
-  return config[status] || { label: status, type: 'info' }
-}
-
-const getAuthStatusConfig = (status: AuthStatus) => {
-  const config: Record<AuthStatus, { label: string; type: string }> = {
-    'unauthenticated': { label: '未认证', type: 'info' },
-    'authenticated': { label: '已认证', type: 'success' },
-    'deducted': { label: '已抵扣', type: 'primary' }
   }
   return config[status] || { label: status, type: 'info' }
 }
@@ -734,6 +672,16 @@ const getInvoiceTypeTagType = (type: InvoiceType) => {
   return types[type] || 'info'
 }
 
+// 选中行汇总
+const selectionSummary = computed(() => {
+  return selectedRows.value.reduce((acc, row) => {
+    acc.amountWithoutTax += row.amountWithoutTax || 0
+    acc.taxAmount += row.taxAmount || 0
+    acc.totalAmount += row.totalAmount || 0
+    return acc
+  }, { amountWithoutTax: 0, taxAmount: 0, totalAmount: 0 })
+})
+
 // 方法
 const formatNumber = (value: number) => {
   return value.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -753,14 +701,14 @@ const handleSearch = () => {
 
 const handleReset = () => {
   Object.assign(searchForm, {
-    invoiceDirection: '',
     invoiceTypes: [],
     invoiceStatuses: [],
-    authStatuses: [],
     billingDateRange: [],
-    authDateRange: [],
     invoiceNumber: '',
-    partyName: '',
+    purchaserName: '',
+    sellerName: '',
+    declarePeriod: '',
+    accountStatus: undefined,
     amountRange: { min: undefined, max: undefined },
     taxRates: [],
     relatedStatus: 'all',
@@ -772,12 +720,7 @@ const handleReset = () => {
 }
 
 const handleCreate = () => {
-  router.push('/invoice/create')
-}
-
-const handleScanInput = () => {
-  scanResult.value = null
-  showScanDialog.value = true
+  router.push('/invoice/create?direction=SX')
 }
 
 const handleBatchImport = () => {
@@ -826,7 +769,7 @@ const handleView = (row: any) => {
 }
 
 const handleEdit = (row: any) => {
-  router.push(`/invoice/edit/${row.id}`)
+  router.push(`/invoice/edit/${row.id}?direction=SX`)
 }
 
 const handleVerify = async (row: any) => {
@@ -854,12 +797,6 @@ const handleViewRelated = (row: any) => {
 
 const handleMoreAction = (command: string, row: any) => {
   switch (command) {
-    case 'auth':
-      handleBatchAuthSingle(row)
-      break
-    case 'deduct':
-      handleBatchDeductSingle(row)
-      break
     case 'relate':
       handleViewRelated(row)
       break
@@ -882,59 +819,6 @@ const handleBatchVerify = async () => {
   batchDialogType.value = 'verify'
   batchDialogTitle.value = '批量查验发票'
   showBatchDialog.value = true
-}
-
-const handleBatchAuth = () => {
-  batchDialogType.value = 'auth'
-  batchDialogTitle.value = '批量认证发票'
-  batchForm.period = ''
-  showBatchDialog.value = true
-}
-
-const handleBatchAuthSingle = async (row: any) => {
-  try {
-    await ElMessageBox.confirm('确定要认证该发票吗？', '发票认证', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'info'
-    })
-    loading.value = true
-    setTimeout(() => {
-      loading.value = false
-      row.authStatus = 'authenticated'
-      row.authPeriod = '2024-04'
-      ElMessage.success('认证成功')
-    }, 1000)
-  } catch {
-    // 取消
-  }
-}
-
-const handleBatchDeduct = () => {
-  batchDialogType.value = 'deduct'
-  batchDialogTitle.value = '批量抵扣发票'
-  batchForm.period = ''
-  batchForm.deductType = 'normal'
-  showBatchDialog.value = true
-}
-
-const handleBatchDeductSingle = async (row: any) => {
-  try {
-    await ElMessageBox.confirm('确定要抵扣该发票吗？', '发票抵扣', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'info'
-    })
-    loading.value = true
-    setTimeout(() => {
-      loading.value = false
-      row.authStatus = 'deducted'
-      row.deductPeriod = '2024-04'
-      ElMessage.success('抵扣成功')
-    }, 1000)
-  } catch {
-    // 取消
-  }
 }
 
 const handleBatchCancel = () => {
@@ -980,16 +864,16 @@ const handleRedLetter = async (row: any) => {
   }
 }
 
-const handleViewAttachment = (row: any) => {
+const handleViewAttachment = (_row: any) => {
   ElMessage.info('查看影像功能开发中')
 }
 
-const handleViewLog = (row: any) => {
+const handleViewLog = (_row: any) => {
   operationLogs.value = [
-    { operateTime: '2024-04-20 10:30:00', operator: '张三', operateContent: '录入发票', beforeStatus: '-', afterStatus: '草稿' },
+    { operateTime: '2024-04-20 10:30:00', operator: '张三', operateContent: '开具发票', beforeStatus: '-', afterStatus: '草稿' },
     { operateTime: '2024-04-20 10:35:00', operator: '张三', operateContent: '提交查验', beforeStatus: '草稿', afterStatus: '待查验' },
     { operateTime: '2024-04-20 10:36:00', operator: '系统', operateContent: '查验完成', beforeStatus: '待查验', afterStatus: '已查验' },
-    { operateTime: '2024-04-21 09:00:00', operator: '李四', operateContent: '发票认证', beforeStatus: '已查验', afterStatus: '已认证' }
+    { operateTime: '2024-04-21 09:00:00', operator: '李四', operateContent: '发票开具', beforeStatus: '已查验', afterStatus: '已开具' }
   ]
   showLogDialog.value = true
 }
@@ -1005,49 +889,15 @@ const handleCloseRelated = () => {
 }
 
 const handleDownloadTemplate = () => {
-  ElMessage.success('开始下载导入模板')
+  ElMessage.success('开始下载销项发票导入模板')
 }
 
 const handleFileChange = (file: UploadFile) => {
   ElMessage.info(`已选择文件: ${file.name}`)
 }
 
-const handleScanUpload = (file: UploadFile) => {
-  // 模拟OCR识别
-  setTimeout(() => {
-    scanResult.value = {
-      invoiceCode: '144031900110',
-      invoiceNumber: '12345678',
-      billingDate: '2024-04-15',
-      amountWithoutTax: 8849.56,
-      taxRate: 0.09,
-      taxAmount: 796.46,
-      totalAmount: 9646.02
-    }
-    ElMessage.success('发票识别成功')
-  }, 1000)
-}
-
-const handleConfirmScan = () => {
-  ElMessage.success('发票录入成功')
-  showScanDialog.value = false
-  handleRefresh()
-}
-
 const handleConfirmBatch = () => {
-  if (batchDialogType.value === 'auth') {
-    selectedRows.value.forEach(row => {
-      row.authStatus = 'authenticated'
-      row.authPeriod = batchForm.period
-    })
-    ElMessage.success(`成功认证 ${selectedRows.value.length} 张发票`)
-  } else if (batchDialogType.value === 'deduct') {
-    selectedRows.value.forEach(row => {
-      row.authStatus = 'deducted'
-      row.deductPeriod = batchForm.period
-    })
-    ElMessage.success(`成功抵扣 ${selectedRows.value.length} 张发票`)
-  } else if (batchDialogType.value === 'cancel') {
+  if (batchDialogType.value === 'cancel') {
     if (!batchForm.reason) {
       ElMessage.warning('请输入作废原因')
       return
@@ -1131,6 +981,18 @@ onMounted(() => {
   font-size: 12px;
   color: #c0c4cc;
   margin-top: 4px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.stat-sub-item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.stat-sub-item.danger {
+  color: #f56c6c;
 }
 
 .action-bar {
@@ -1163,6 +1025,23 @@ onMounted(() => {
 .pagination-info {
   font-size: 13px;
   color: #909399;
+}
+
+.pagination-info b {
+  color: #303133;
+  margin: 0 2px;
+}
+
+.selection-summary b {
+  font-weight: 600;
+}
+
+.selection-summary .text-success {
+  color: #67c23a;
+}
+
+.selection-summary .text-primary {
+  color: #409eff;
 }
 
 .total-amount {
@@ -1209,20 +1088,6 @@ onMounted(() => {
 
 .error-list h4 {
   margin-bottom: 10px;
-}
-
-.scan-dialog-content {
-  padding: 20px;
-  text-align: center;
-}
-
-.scan-upload {
-  margin: 20px 0;
-}
-
-.scan-result {
-  margin-top: 20px;
-  text-align: left;
 }
 
 .batch-dialog-content {

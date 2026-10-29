@@ -85,26 +85,52 @@
       </el-descriptions>
     </el-card>
 
-    <!-- 供应商/客户信息 -->
+    <!-- 采购方信息 -->
     <el-card class="detail-card" shadow="never">
       <template #header>
         <div class="card-header">
-          <span class="card-title">{{ invoiceData.invoiceDirection === 'JX' ? '供应商信息' : '客户信息' }}</span>
+          <span class="card-title">采购方信息</span>
+          <el-tag size="small" type="info" effect="plain">购买方</el-tag>
         </div>
       </template>
 
       <el-descriptions :column="3" border size="small">
-        <el-descriptions-item :label="invoiceData.invoiceDirection === 'JX' ? '供应商名称' : '客户名称'" :span="2">
-          {{ invoiceData.supplierName || invoiceData.customerName }}
+        <el-descriptions-item label="采购方名称" :span="2">
+          {{ invoiceData.purchaserName || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item :label="invoiceData.invoiceDirection === 'JX' ? '供应商税号' : '客户税号'">
-          {{ invoiceData.supplierTaxNo || invoiceData.customerTaxNo }}
+        <el-descriptions-item label="采购方税号">
+          {{ invoiceData.purchaserTaxNo || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item :label="invoiceData.invoiceDirection === 'JX' ? '供应商地址电话' : '客户地址电话'" :span="2">
-          {{ invoiceData.supplierAddress || invoiceData.customerAddress || '-' }}
+        <el-descriptions-item label="地址电话" :span="2">
+          {{ invoiceData.purchaserAddress || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item :label="invoiceData.invoiceDirection === 'JX' ? '供应商银行账号' : '客户银行账号'">
-          {{ invoiceData.supplierBank || invoiceData.customerBank || '-' }}
+        <el-descriptions-item label="开户行账号">
+          {{ invoiceData.purchaserBank || '-' }}
+        </el-descriptions-item>
+      </el-descriptions>
+    </el-card>
+
+    <!-- 销售方信息 -->
+    <el-card class="detail-card" shadow="never">
+      <template #header>
+        <div class="card-header">
+          <span class="card-title">销售方信息</span>
+          <el-tag size="small" type="info" effect="plain">销售方</el-tag>
+        </div>
+      </template>
+
+      <el-descriptions :column="3" border size="small">
+        <el-descriptions-item label="销售方名称" :span="2">
+          {{ invoiceData.sellerName || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item label="销售方税号">
+          {{ invoiceData.sellerTaxNo || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item label="地址电话" :span="2">
+          {{ invoiceData.sellerAddress || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item label="开户行账号">
+          {{ invoiceData.sellerBank || '-' }}
         </el-descriptions-item>
       </el-descriptions>
     </el-card>
@@ -380,10 +406,16 @@ const invoiceData = ref<any>({
   authPeriod: '2024-04',
   deductPeriod: '2024-04',
   authDeadline: '2025-04-10',
-  supplierName: '深圳市腾讯科技有限公司',
-  supplierTaxNo: '91440300MA5XXXX1X',
-  supplierAddress: '深圳市南山区科技中一路88号 0755-86013388',
-  supplierBank: '招商银行深圳科技园支行 6222988888888888',
+  accountStatus: 'recorded',
+  declarePeriod: '2024-04',
+  purchaserName: '深圳市泓明供应链管理有限公司',
+  purchaserTaxNo: '91440300MA5XXXX01A',
+  purchaserAddress: '深圳市福田区福华三路168号深圳国际创新中心A座25层 0755-88219988',
+  purchaserBank: '中国工商银行深圳福田支行 4000022109200456789',
+  sellerName: '深圳市腾讯科技有限公司',
+  sellerTaxNo: '91440300MA5XXXX1X',
+  sellerAddress: '深圳市南山区科技中一路88号 0755-86013388',
+  sellerBank: '招商银行深圳科技园支行 6222988888888888',
   createTime: '2024-04-15 10:30:00',
   createBy: '张三',
   items: [

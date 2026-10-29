@@ -4,6 +4,7 @@ export type InvoiceDirection = 'JX' | 'SX'
 export type InvoiceStatus = 'draft' | 'pending' | 'verified' | 'related' | 'authenticated' | 'deducted' | 'cancelled' | 'red_letter' | 'abnormal'
 export type AuthStatus = 'unauthenticated' | 'authenticated' | 'deducted'
 export type RedLetterType = 'buyer_apply' | 'seller_apply'
+export type AccountStatus = 'unrecorded' | 'recorded' // 入账状态
 
 // 发票类型映射
 export const INVOICE_TYPE_MAP: Record<InvoiceType, { label: string; direction: InvoiceDirection[] }> = {
@@ -32,6 +33,12 @@ export const INVOICE_STATUS_MAP: Record<InvoiceStatus, { label: string; type: st
   'cancelled': { label: '已作废', type: 'danger' },
   'red_letter': { label: '已红冲', type: 'danger' },
   'abnormal': { label: '异常票', type: 'danger' }
+}
+
+// 入账状态映射
+export const ACCOUNT_STATUS_MAP: Record<AccountStatus, { label: string; type: string }> = {
+  'unrecorded': { label: '未入账', type: 'info' },
+  'recorded': { label: '已入账', type: 'success' }
 }
 
 // 认证状态映射
@@ -84,6 +91,17 @@ export const RELATED_DOCUMENT_TYPES = [
   { value: 'payment', label: '付款单', directions: ['JX'] }
 ]
 
+// 发票主体信息（采购方/销售方通用）
+export interface InvoiceParty {
+  id?: string
+  name: string
+  taxNo?: string
+  address?: string
+  phone?: string
+  bankName?: string
+  bankAccount?: string
+}
+
 // 发票数据接口
 export interface InvoiceItem {
   id: string
@@ -94,23 +112,32 @@ export interface InvoiceItem {
   invoiceNumber: string
   billingDate: string
   checkCode?: string
-  supplierId?: string
-  supplierName?: string
-  supplierTaxNo?: string
-  customerId?: string
-  customerName?: string
-  customerTaxNo?: string
+  // 采购方信息
+  purchaserName?: string
+  purchaserTaxNo?: string
+  purchaserAddress?: string
+  purchaserBank?: string
+  // 销售方信息
+  sellerName?: string
+  sellerTaxNo?: string
+  sellerAddress?: string
+  sellerBank?: string
   amountWithoutTax: number
   taxRate: number
   taxAmount: number
   totalAmount: number
   authStatus: AuthStatus
   invoiceStatus: InvoiceStatus
+  accountStatus?: AccountStatus
+  declarePeriod?: string // 申报所属期(YYYY-MM)
   authPeriod?: string
   deductPeriod?: string
   remark?: string
   attachments?: Attachment[]
   relatedDocuments?: RelatedDocument[]
+  relatedCount?: number
+  hasAttachment?: boolean
+  responsible?: string
   createTime: string
   createBy: string
   updateTime: string
@@ -130,6 +157,7 @@ export interface RelatedDocument {
   id: string
   type: string
   no: string
+  partyName?: string
   amount: number
   relatedAmount: number
   createTime: string
@@ -182,17 +210,25 @@ export interface InvoiceFormData {
   invoiceNumber: string
   billingDate: string
   checkCode?: string
-  partyId: string
-  partyName: string
-  partyTaxNo?: string
-  partyAddress?: string
-  partyBank?: string
+  // 采购方
+  purchaserId?: string
+  purchaserName: string
+  purchaserTaxNo?: string
+  purchaserAddress?: string
+  purchaserBank?: string
+  // 销售方
+  sellerId?: string
+  sellerName: string
+  sellerTaxNo?: string
+  sellerAddress?: string
+  sellerBank?: string
   items: InvoiceItemRow[]
   totalAmountWithoutTax: number
   totalTaxAmount: number
   totalAmount: number
   remark?: string
   expectedDeductPeriod?: string
+  declarePeriod?: string
   attachments: File[]
 }
 
@@ -220,6 +256,8 @@ export interface InvoiceSearchForm {
   authDateRange?: string[]
   invoiceNumber?: string
   partyName?: string
+  declarePeriod?: string
+  accountStatus?: AccountStatus
   amountRange?: { min?: number; max?: number }
   taxRates?: number[]
   relatedStatus?: 'all' | 'related' | 'unrelated'
@@ -247,4 +285,30 @@ export interface BatchOperationResult {
   success: number
   failed: number
   errors: { id: string; reason: string }[]
+}
+
+// 模拟主体档案（采购方/销售方共用）
+export const PARTY_ARCHIVE: InvoiceParty[] = [
+  { id: 'P001', name: '深圳市腾讯科技有限公司', taxNo: '91440300MA5XXXX1X', address: '深圳市南山区科技中一路88号', phone: '0755-86013388', bankName: '招商银行深圳科技园支行', bankAccount: '6222988888888888' },
+  { id: 'P002', name: '阿里巴巴（中国）有限公司', taxNo: '91330100MA5XXXX2X', address: '杭州市余杭区文一西路969号', phone: '0571-85022688', bankName: '中国工商银行杭州分行', bankAccount: '6222081234567890123' },
+  { id: 'P003', name: '华为技术有限公司', taxNo: '91440300MA5XXXX3X', address: '深圳市龙岗区坂田华为基地', phone: '0755-28780808', bankName: '中国建设银行深圳龙岗支行', bankAccount: '6217001234567890123' },
+  { id: 'P004', name: '小米科技有限公司', taxNo: '91110108MA5XXXX4X', address: '北京市海淀区清河中街68号', phone: '010-60608888', bankName: '中国银行北京海淀支行', bankAccount: '6217901234567890123' },
+  { id: 'P005', name: '京东集团股份有限公司', taxNo: '91110108MA5XXXX5X', address: '北京市大兴区科创十街18号', phone: '010-89198888', bankName: '中国农业银行北京大兴支行', bankAccount: '6228481234567890123' },
+  { id: 'P006', name: '北京字节跳动科技有限公司', taxNo: '91110108MA5XXXX6X', address: '北京市海淀区知春路甲48号', phone: '010-82918888', bankName: '招商银行北京中关村支行', bankAccount: '6214831234567890123' },
+  { id: 'P007', name: '美团网络科技有限公司', taxNo: '91110108MA5XXXX7X', address: '北京市朝阳区望京东路6号', phone: '010-57376600', bankName: '中国工商银行北京望京支行', bankAccount: '6222021234567890123' },
+  { id: 'P008', name: '网易杭州有限公司', taxNo: '91330100MA5XXXX8X', address: '杭州市滨江区网商路399号', phone: '0571-89853388', bankName: '中国建设银行杭州滨江支行', bankAccount: '6217001234567890456' }
+]
+
+export const getPartyById = (id?: string): InvoiceParty | undefined => {
+  if (!id) return undefined
+  return PARTY_ARCHIVE.find(p => p.id === id)
+}
+
+export const searchParty = (keyword: string): InvoiceParty[] => {
+  if (!keyword) return PARTY_ARCHIVE
+  const lower = keyword.toLowerCase()
+  return PARTY_ARCHIVE.filter(p =>
+    p.name.toLowerCase().includes(lower) ||
+    (p.taxNo || '').toLowerCase().includes(lower)
+  )
 }

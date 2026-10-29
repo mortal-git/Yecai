@@ -27,6 +27,7 @@
               <span>智能体</span>
             </template>
             <el-menu-item index="/agent">对话工作台</el-menu-item>
+            <el-menu-item index="/agent/chatbi">ChatBI 数据分析</el-menu-item>
             <el-menu-item index="/agent/models">模型配置</el-menu-item>
           </el-sub-menu>
 
@@ -47,6 +48,7 @@
             </template>
             <el-menu-item index="/quotation/customer">客户收入报价</el-menu-item>
             <el-menu-item index="/quotation/supplier">供应商成本报价</el-menu-item>
+            <el-menu-item index="/quotation/freight">货代报价</el-menu-item>
           </el-sub-menu>
 
           <el-sub-menu index="ruleEngine">
@@ -121,8 +123,8 @@
             </template>
             <el-menu-item index="/statement/list">对账单列表</el-menu-item>
             <el-menu-item index="/statement/create">生成对账单</el-menu-item>
-            <el-menu-item index="/statement/payable">应付对账单</el-menu-item>
             <el-menu-item index="/statement/receivable">应收对账单</el-menu-item>
+            <el-menu-item index="/statement/payable">应付对账单</el-menu-item>
           </el-sub-menu>
 
           <el-sub-menu index="invoice">
@@ -130,7 +132,9 @@
               <el-icon><Ticket /></el-icon>
               <span>发票管理</span>
             </template>
-            <el-menu-item index="/invoice/list">发票列表</el-menu-item>
+            <el-menu-item index="/invoice/input">进项发票</el-menu-item>
+            <el-menu-item index="/invoice/output">销项发票</el-menu-item>
+            <el-menu-item index="/invoice/apply">申请开票</el-menu-item>
             <el-menu-item index="/invoice/create">新增发票</el-menu-item>
           </el-sub-menu>
 
@@ -362,7 +366,7 @@ const handleMenuSelect = (index: string) => {
   } else if (index === 'order') {
     router.push('/order/list')
   } else if (index === 'invoice') {
-    router.push('/invoice/list')
+    router.push('/invoice/input')
   } else if (index === 'receivable') {
     router.push('/receivable/list')
   } else if (index === 'payable') {

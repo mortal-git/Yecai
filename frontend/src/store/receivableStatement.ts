@@ -4,10 +4,9 @@ import { ref, computed } from 'vue'
 export type ReceivableStatementStatus =
   | 'draft'           // 草稿
   | 'pending'         // 待审核
-  | 'approved'        // 已审核（待开票）
-  | 'invoiced'        // 已开票（待收款）
+  | 'approved'        // 待开票
+  | 'invoiced'        // 待收款
   | 'collected'       // 已收款
-  | 'cancelled'       // 已作废
 
 export interface ReceivableStatementRow {
   rateSheetNo: string
@@ -90,10 +89,9 @@ export interface ReceivableStatement {
 export const STATUS_LABEL: Record<ReceivableStatementStatus, string> = {
   draft: '草稿',
   pending: '待审核',
-  approved: '已审核',
-  invoiced: '已开票',
-  collected: '已收款',
-  cancelled: '已作废'
+  approved: '待开票',
+  invoiced: '待收款',
+  collected: '已收款'
 }
 
 export const STATUS_TYPE: Record<ReceivableStatementStatus, string> = {
@@ -101,8 +99,7 @@ export const STATUS_TYPE: Record<ReceivableStatementStatus, string> = {
   pending: 'warning',
   approved: 'primary',
   invoiced: 'primary',
-  collected: 'success',
-  cancelled: 'info'
+  collected: 'success'
 }
 
 function uid(prefix = ''): string {
@@ -213,22 +210,6 @@ function buildMockData(): ReceivableStatement[] {
         { id: uid('log_'), action: '创建对账单', operator: '张三', operateTime: '2026-07-09 09:00:00' }
       ],
       creator: '张三', createTime: '2026-07-09 09:00:00'
-    },
-    {
-      id: uid('rs_'), statementNo: 'RS2026070006', name: '2026年5月应收对账单（已作废）',
-      customer: '深圳市腾讯科技有限公司', settlementUnit: '深圳分公司',
-      settlementBank: '中国工商银行', settlementAccount: '6222021234567890123',
-      settleDate: '2026-06-20',
-      totalExTaxCny: 18000, totalIncTaxCny: 20340, status: 'cancelled', remark: '数据重复，已作废重开',
-      rows: [],
-      invoiceApplies: [], collections: [],
-      logs: [
-        { id: uid('log_'), action: '创建对账单', operator: '张三', operateTime: '2026-06-22 10:00:00' },
-        { id: uid('log_'), action: '提交审核', operator: '张三', operateTime: '2026-06-22 14:00:00' },
-        { id: uid('log_'), action: '审核通过', operator: '王经理', operateTime: '2026-06-23 09:00:00' },
-        { id: uid('log_'), action: '作废对账单', operator: '王经理', operateTime: '2026-07-05 15:00:00', remark: '数据重复' }
-      ],
-      creator: '张三', createTime: '2026-06-22 10:00:00', updater: '王经理', updateTime: '2026-07-05 15:00:00'
     }
   ]
 }
@@ -325,7 +306,12 @@ export const useReceivableStatementStore = defineStore('receivableStatement', ()
     const item = getById(id)
     if (!item) return
     item.collections.push({ ...collection, id: uid('c_') })
-    item.status = 'collected'
+    const collectedTotal = item.collections.filter(c => c.status === '已收款').reduce((s, c) => s + c.amount, 0)
+    if (collectedTotal >= item.totalIncTaxCny) {
+      item.status = 'collected'
+    } else {
+      item.status = 'invoiced'
+    }
     item.logs.push({ id: uid('log_'), action: '收款登记', operator: '当前用户', operateTime: now(), remark: `收款单号 ${collection.collectionNo}` })
     item.updateTime = now()
     item.updater = '当前用户'

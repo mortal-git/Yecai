@@ -6,14 +6,12 @@ export type PayableStatementStatus =
   | 'pending'         // 待审核
   | 'pending_payment' // 待付款
   | 'paid'            // 已付款
-  | 'cancelled'       // 已作废
 
 export interface PayableStatementRow {
   rateSheetNo: string
   customerName: string
   businessRefNo: string
   billingDoc: string
-  costType: string
   costItem: string
   productL1: string
   productL2: string
@@ -99,16 +97,14 @@ export const STATUS_LABEL: Record<PayableStatementStatus, string> = {
   draft: '草稿',
   pending: '待审核',
   pending_payment: '待付款',
-  paid: '已付款',
-  cancelled: '已作废'
+  paid: '已付款'
 }
 
 export const STATUS_TYPE: Record<PayableStatementStatus, string> = {
   draft: 'info',
   pending: 'warning',
   pending_payment: 'primary',
-  paid: 'success',
-  cancelled: 'info'
+  paid: 'success'
 }
 
 function uid(prefix = ''): string {
@@ -123,7 +119,7 @@ function buildMockRows(): PayableStatementRow[] {
   return [
     {
       rateSheetNo: 'FL2026050001', customerName: '深圳市腾讯科技有限公司', businessRefNo: 'PO2026050001',
-      billingDoc: '应付单', costType: '直接成本', costItem: '仓储费',
+      billingDoc: '应付单', costItem: '仓储费',
       productL1: '物流服务', productL2: '仓储服务', productL3: '普通仓储',
       currency: 'CNY', exTaxAmount: 50000, taxRate: 13, taxAmount: 6500, incTaxAmount: 56500,
       exchangeRate: 1.0, exTaxAmountCny: 50000, incTaxAmountCny: 56500,
@@ -131,7 +127,7 @@ function buildMockRows(): PayableStatementRow[] {
     },
     {
       rateSheetNo: 'FL2026050002', customerName: '阿里巴巴（中国）有限公司', businessRefNo: 'PO2026050002',
-      billingDoc: '应付单', costType: '直接成本', costItem: '运输费',
+      billingDoc: '应付单', costItem: '运输费',
       productL1: '物流服务', productL2: '运输服务', productL3: '海运运输',
       currency: 'CNY', exTaxAmount: 80000, taxRate: 13, taxAmount: 10400, incTaxAmount: 90400,
       exchangeRate: 1.0, exTaxAmountCny: 80000, incTaxAmountCny: 90400,
@@ -226,23 +222,6 @@ function buildMockData(): PayableStatement[] {
         { id: uid('log_'), action: '创建对账单', operator: '张三', operateTime: '2026-07-09 09:00:00' }
       ],
       creator: '张三', createTime: '2026-07-09 09:00:00'
-    },
-    {
-      id: uid('ps_'), statementNo: 'PS2026070006', name: '2026年5月垫付费用对账单（已作废）',
-      supplier: '深圳盐田国际集装箱码头有限公司', settlementUnit: '深圳分公司',
-      settlementBank: '中国工商银行', settlementAccount: '6222021234567890123',
-      settleDate: '2026-06-20',
-      totalExTaxCny: 18000, totalIncTaxCny: 20340, status: 'cancelled', remark: '数据重复，已作废重开',
-      rows: [],
-      payments: [], invoices: [],
-      logs: [
-        { id: uid('log_'), action: '创建对账单', operator: '张三', operateTime: '2026-06-22 10:00:00' },
-        { id: uid('log_'), action: '提交审核', operator: '张三', operateTime: '2026-06-22 14:00:00' },
-        { id: uid('log_'), action: '审核通过', operator: '王经理', operateTime: '2026-06-23 09:00:00' },
-        { id: uid('log_'), action: '付款登记', operator: '张三', operateTime: '2026-06-28 11:00:00' },
-        { id: uid('log_'), action: '作废对账单', operator: '王经理', operateTime: '2026-07-05 15:00:00', remark: '数据重复' }
-      ],
-      creator: '张三', createTime: '2026-06-22 10:00:00', updater: '王经理', updateTime: '2026-07-05 15:00:00'
     }
   ]
 }

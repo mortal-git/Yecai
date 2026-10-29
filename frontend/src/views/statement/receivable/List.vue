@@ -96,10 +96,9 @@
         <el-radio-button value="all">全部</el-radio-button>
         <el-radio-button value="draft">草稿</el-radio-button>
         <el-radio-button value="pending">待审核</el-radio-button>
-        <el-radio-button value="approved">已审核</el-radio-button>
-        <el-radio-button value="invoiced">已开票</el-radio-button>
+        <el-radio-button value="approved">待开票</el-radio-button>
+        <el-radio-button value="invoiced">待收款</el-radio-button>
         <el-radio-button value="collected">已收款</el-radio-button>
-        <el-radio-button value="cancelled">已作废</el-radio-button>
       </el-radio-group>
     </div>
 
@@ -184,8 +183,7 @@
                   <el-dropdown-item command="submit" :disabled="!canSubmit(scope.row)">提交审核</el-dropdown-item>
                   <el-dropdown-item command="audit" :disabled="!canAudit(scope.row)">审核</el-dropdown-item>
                   <el-dropdown-item command="applyInvoice" :disabled="!canApplyInvoice(scope.row)">申请开票</el-dropdown-item>
-                  <el-dropdown-item command="collect" :disabled="!canCollect(scope.row)">收款登记</el-dropdown-item>
-                  <el-dropdown-item command="cancel" :disabled="!canCancel(scope.row)">作废</el-dropdown-item>
+                  <el-dropdown-item command="collect" :disabled="!canCollect(scope.row)">申请收款</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -270,9 +268,9 @@
       </template>
     </el-dialog>
 
-    <!-- 申请开票 / 收款登记弹窗 -->
+    <!-- 申请开票 / 申请收款弹窗 -->
     <InvoiceApplyDialog v-model="invoiceDialogVisible" :statement="currentRow" @confirm="onInvoiceApplied" />
-    <CollectionDialog v-model="collectionDialogVisible" :statement="currentRow" @confirm="onCollectionAdded" />
+    <CollectionApplyDialog v-model="collectionDialogVisible" :statement="currentRow" @confirm="onCollectionApplied" />
 
     <!-- 账龄分析弹窗 -->
     <el-dialog v-model="showAgingAnalysis" title="应收对账单账龄分析" width="900px">
@@ -332,7 +330,7 @@ import { Search, Refresh, Plus, Download, Check, DataAnalysis, ArrowDown } from 
 import { useReceivableStatementStore, STATUS_LABEL, STATUS_TYPE, type ReceivableStatement, type ReceivableStatementStatus } from '../../../store/receivableStatement'
 import ReceivableStatementDetailDrawer from './DetailDrawer.vue'
 import InvoiceApplyDialog from './components/InvoiceApplyDialog.vue'
-import CollectionDialog from './components/CollectionDialog.vue'
+import CollectionApplyDialog from './components/CollectionApplyDialog.vue'
 
 const router = useRouter()
 const store = useReceivableStatementStore()
@@ -425,7 +423,6 @@ const collectedTotal = (row: ReceivableStatement) => row.collections.filter(c =>
 const uncollectedAmount = (row: ReceivableStatement) => Math.max(0, row.totalIncTaxCny - collectedTotal(row))
 
 const getRowClassName = ({ row }: { row: ReceivableStatement }) => {
-  if (row.status === 'cancelled') return 'row-warning'
   return ''
 }
 
@@ -434,7 +431,6 @@ const canSubmit = (row: ReceivableStatement) => row.status === 'draft'
 const canAudit = (row: ReceivableStatement) => row.status === 'pending'
 const canApplyInvoice = (row: ReceivableStatement) => row.status === 'approved'
 const canCollect = (row: ReceivableStatement) => row.status === 'invoiced'
-const canCancel = (row: ReceivableStatement) => row.status === 'collected'
 const canDelete = (row: ReceivableStatement) => row.status === 'draft'
 
 const handleSearch = () => {
@@ -519,15 +515,6 @@ const confirmAudit = () => {
   auditDialog.visible = false
 }
 
-const handleCancel = (row: ReceivableStatement) => {
-  ElMessageBox.confirm(`确认作废对账单 ${row.statementNo}?`, '警告', { type: 'warning' })
-    .then(() => {
-      store.changeStatus(row.id, 'cancelled', '作废对账单')
-      ElMessage.success('已作废')
-    })
-    .catch(() => {})
-}
-
 const handleDelete = (row: ReceivableStatement) => {
   ElMessageBox.confirm(`确认删除对账单 ${row.statementNo}?删除后不可恢复`, '危险操作', { type: 'error' })
     .then(() => {
@@ -547,7 +534,6 @@ const handleMoreAction = (command: string, row: ReceivableStatement) => {
     case 'audit': handleAudit(row); break
     case 'applyInvoice': openInvoiceDialog(row); break
     case 'collect': openCollectionDialog(row); break
-    case 'cancel': handleCancel(row); break
   }
 }
 
@@ -566,14 +552,14 @@ const openCollectionDialog = (row: ReceivableStatement) => {
 const onInvoiceApplied = (invoice: any) => {
   if (!currentRow.value) return
   store.addInvoiceApply(currentRow.value.id, invoice)
-  ElMessage.success('开票登记成功，对账单状态已变更为已开票')
+  ElMessage.success('开票登记成功，对账单状态已变更为待收款')
   refreshCurrentRow()
 }
-const onCollectionAdded = (collection: any) => {
-  if (!currentRow.value) return
-  store.addCollection(currentRow.value.id, collection)
-  ElMessage.success('收款登记成功，对账单状态已变更为已收款')
-  refreshCurrentRow()
+const onCollectionApplied = () => {
+  if (currentRow.value) {
+    store.addLog(currentRow.value.id, '申请收款', '已生成收款申请单，请前往收款管理查看')
+    refreshCurrentRow()
+  }
 }
 
 const showBatchAudit = ref(false)
@@ -736,10 +722,6 @@ onMounted(() => {
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-}
-
-:deep(.row-warning) {
-  background-color: #fdf6ec;
 }
 
 :deep(.el-table .cell) {

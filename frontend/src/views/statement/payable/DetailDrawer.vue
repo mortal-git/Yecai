@@ -35,22 +35,6 @@
         <el-descriptions-item label="含税金额">
           <span class="amount-text">¥{{ formatMoney(statement.totalIncTaxCny) }}</span>
         </el-descriptions-item>
-        <el-descriptions-item label="关联付款">
-          <span :class="paymentTotal >= statement.totalIncTaxCny && statement.totalIncTaxCny > 0 ? 'text-success' : (paymentTotal > 0 ? 'text-warning' : 'text-info')">
-            ¥{{ formatMoney(paymentTotal) }}
-          </span>
-        </el-descriptions-item>
-        <el-descriptions-item label="关联发票">
-          <span :class="invoiceTotal >= statement.totalIncTaxCny && statement.totalIncTaxCny > 0 ? 'text-success' : (invoiceTotal > 0 ? 'text-warning' : 'text-info')">
-            ¥{{ formatMoney(invoiceTotal) }}
-          </span>
-        </el-descriptions-item>
-        <el-descriptions-item label="已付款金额">
-          <span class="text-success">¥{{ formatMoney(paidTotal) }}</span>
-        </el-descriptions-item>
-        <el-descriptions-item label="未付款金额">
-          <span :class="unpaidAmount > 0 ? 'text-danger' : 'text-success'">¥{{ formatMoney(unpaidAmount) }}</span>
-        </el-descriptions-item>
         <el-descriptions-item label="明细行数">{{ statement.rows.length }} 条</el-descriptions-item>
         <el-descriptions-item label="状态">
           <el-tag :type="STATUS_TYPE[statement.status]" size="small">{{ STATUS_LABEL[statement.status] }}</el-tag>
@@ -68,7 +52,6 @@
             <el-table-column prop="customerName" label="客户名称" min-width="160" show-overflow-tooltip />
             <el-table-column prop="businessRefNo" label="业务参考编号" min-width="140" />
             <el-table-column prop="billingDoc" label="计费单据" min-width="100" />
-            <el-table-column prop="costType" label="成本类型" min-width="100" />
             <el-table-column prop="costItem" label="成本项目" min-width="100" />
             <el-table-column prop="productL1" label="产品标准名L1" min-width="120" />
             <el-table-column prop="productL2" label="产品标准名L2" min-width="120" />
@@ -185,18 +168,10 @@ const activeTab = ref('rows')
 const formatMoney = (value: number) => (value || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const formatDateTime = (dateStr: string) => dateStr || '-'
 
-const paymentTotal = computed(() => statement.value?.payments.reduce((s, p) => s + p.amount, 0) || 0)
-const invoiceTotal = computed(() => statement.value?.invoices.reduce((s, i) => s + i.incTaxAmount, 0) || 0)
-const paidTotal = computed(() => statement.value?.payments.filter(p => p.status === '已付款').reduce((s, p) => s + p.amount, 0) || 0)
-const unpaidAmount = computed(() => {
-  if (!statement.value) return 0
-  return Math.max(0, statement.value.totalIncTaxCny - paidTotal.value)
-})
-
 const getRowsSummary = () => {
   if (!statement.value) return []
   const rows = statement.value.rows
-  return ['合计', '', '', '', '', '', '', '', '', '',
+  return ['合计', '', '', '', '', '', '', '', '',
     `¥${formatMoney(rows.reduce((s, r) => s + r.exTaxAmount, 0))}`,
     '',
     `¥${formatMoney(rows.reduce((s, r) => s + r.taxAmount, 0))}`,

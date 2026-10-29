@@ -29,20 +29,6 @@
             <el-option label="已核销" value="written_off" />
           </el-select>
         </el-form-item>
-        <el-form-item label="发票状态">
-          <el-select v-model="searchForm.invoiceStatus" placeholder="请选择" clearable style="width: 150px">
-            <el-option label="未绑定" value="unbinded" />
-            <el-option label="部分绑定" value="partial" />
-            <el-option label="已全额" value="binded" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="核销状态">
-          <el-select v-model="searchForm.writeoffStatus" placeholder="请选择" clearable style="width: 150px">
-            <el-option label="未核销" value="unwritten_off" />
-            <el-option label="部分核销" value="partial" />
-            <el-option label="已全额" value="written_off" />
-          </el-select>
-        </el-form-item>
         <el-form-item label="申请日期">
           <el-date-picker
             v-model="searchForm.dateRange"
@@ -130,8 +116,12 @@
             </el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="supplierAccount" label="供应商账号" min-width="130" />
+        <el-table-column prop="settlementUnit" label="结算单位" min-width="160" />
+        <el-table-column prop="settlementBank" label="结算银行" min-width="160" />
+        <el-table-column prop="settlementAccount" label="结算账号" min-width="180" />
         <el-table-column prop="prepaymentCompany" label="预付款公司" min-width="120" />
+        <el-table-column prop="companyBank" label="公司银行" min-width="140" />
+        <el-table-column prop="companyAccount" label="公司账号" min-width="160" />
         <el-table-column prop="warehouseCode" label="仓库代码" min-width="100" />
         <el-table-column prop="businessRefNo" label="业务参考编号" min-width="140" />
         <el-table-column prop="rateSheetNo" label="费率单编号" min-width="140" />
@@ -141,33 +131,13 @@
         <el-table-column prop="prepaymentAmount" label="预付金额" width="140" align="right" sortable>
           <template #default="scope">¥{{ formatMoney(scope.row.prepaymentAmount) }}</template>
         </el-table-column>
-        <el-table-column prop="paidAmount" label="已付金额" width="140" align="right" sortable>
-          <template #default="scope">¥{{ formatMoney(scope.row.paidAmount) }}</template>
-        </el-table-column>
-        <el-table-column prop="invoicedAmount" label="已绑定发票" width="130" align="right">
-          <template #default="scope">
-            <span :class="scope.row.invoicedAmount >= scope.row.prepaymentAmount ? 'text-success' : 'text-warning'">
-              ¥{{ formatMoney(scope.row.invoicedAmount) }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="writtenOffAmount" label="已核销金额" width="130" align="right">
-          <template #default="scope">¥{{ formatMoney(scope.row.writtenOffAmount) }}</template>
-        </el-table-column>
-        <el-table-column prop="balanceAmount" label="可用余额" width="130" align="right" sortable>
-          <template #default="scope">
-            <span :class="scope.row.balanceAmount > 0 ? 'text-primary' : 'text-success'">
-              ¥{{ formatMoney(scope.row.balanceAmount) }}
-            </span>
-          </template>
-        </el-table-column>
         <el-table-column prop="overdueDays" label="账龄" width="100">
           <template #default="scope">
             <el-tag v-if="scope.row.overdueDays > 0" type="danger" size="small">
               逾期{{ scope.row.overdueDays }}天
             </el-tag>
-            <span v-else-if="scope.row.balanceAmount > 0" class="text-info">
-              {{ scope.row.agingDays || 0 }}天
+            <span v-else-if="scope.row.agingDays > 0" class="text-info">
+              {{ scope.row.agingDays }}天
             </span>
             <span v-else class="text-success">-</span>
           </template>
@@ -176,20 +146,6 @@
           <template #default="scope">
             <el-tag :type="getStatusConfig(scope.row.prepaymentStatus).type" size="small">
               {{ getStatusConfig(scope.row.prepaymentStatus).label }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="invoiceStatus" label="发票状态" width="100">
-          <template #default="scope">
-            <el-tag :type="getInvoiceStatusType(scope.row)" size="small">
-              {{ getInvoiceStatusText(scope.row) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="writeoffStatus" label="核销状态" width="100">
-          <template #default="scope">
-            <el-tag :type="getWriteoffStatusType(scope.row)" size="small">
-              {{ getWriteoffStatusText(scope.row) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -221,7 +177,6 @@
                   <el-dropdown-item command="submit" :disabled="!canSubmit(scope.row)">提交审批</el-dropdown-item>
                   <el-dropdown-item command="audit" :disabled="!canAudit(scope.row)">审核</el-dropdown-item>
                   <el-dropdown-item command="applyPayment" :disabled="!canApplyPayment(scope.row)">申请付款</el-dropdown-item>
-                  <el-dropdown-item command="payment" :disabled="!canPayment(scope.row)">付款登记</el-dropdown-item>
                   <el-dropdown-item command="bindInvoice" :disabled="!canBindInvoice(scope.row)">绑定发票</el-dropdown-item>
                   <el-dropdown-item command="writeoff" :disabled="!canWriteoff(scope.row)">核销</el-dropdown-item>
                 </el-dropdown-menu>
@@ -668,105 +623,6 @@
         <el-button type="primary" @click="confirmAudit" :loading="auditLoading">确认</el-button>
       </template>
     </el-dialog>
-
-    <!-- 付款登记弹窗 -->
-    <el-dialog
-      v-model="showPayment"
-      title="付款登记"
-      width="700px"
-      :close-on-click-modal="false"
-    >
-      <div class="payment-form">
-        <el-form :model="paymentForm" label-width="120px">
-          <!-- 基本信息 -->
-          <div class="form-section-title">基本信息</div>
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="预付款单号">
-                {{ paymentForm.prepaymentNo }}
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="供应商">
-                {{ paymentForm.supplierName }}
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="预付款公司">
-                {{ paymentForm.prepaymentCompany }}
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="预付金额">
-                <span class="text-primary">¥{{ formatMoney(paymentForm.prepaymentAmount) }}</span>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-divider />
-          <!-- 付款信息 -->
-          <div class="form-section-title">付款信息</div>
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="付款方式" required>
-                <el-select v-model="paymentForm.paymentMethod" placeholder="请选择" style="width: 100%">
-                  <el-option label="银行转账" value="bank_transfer" />
-                  <el-option label="承兑汇票" value="acceptance" />
-                  <el-option label="现金" value="cash" />
-                  <el-option label="支票" value="cheque" />
-                </el-select>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="银行账号">
-                <el-select v-model="paymentForm.bankAccountId" placeholder="请选择" style="width: 100%">
-                  <el-option
-                    v-for="bank in bankAccounts"
-                    :key="bank.id"
-                    :label="`${bank.bankName} ${bank.accountNo}`"
-                    :value="bank.id"
-                  />
-                </el-select>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="银行流水">
-                <el-input v-model="paymentForm.transactionNo" placeholder="请输入银行流水" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="备注">
-                <el-input v-model="paymentForm.remark" placeholder="请输入备注" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-divider />
-          <el-form-item label="附件上传">
-            <el-upload
-              action="#"
-              :auto-upload="false"
-              :file-list="paymentForm.fileList"
-              :on-change="handlePaymentFileChange"
-              :on-remove="handlePaymentFileRemove"
-              accept=".jpg,.png,.pdf"
-              multiple
-            >
-              <el-button size="small" type="primary">点击上传</el-button>
-              <template #tip>
-                <div class="el-upload__tip">支持JPG、PNG、PDF格式，单文件不超过10MB</div>
-              </template>
-            </el-upload>
-          </el-form-item>
-        </el-form>
-      </div>
-      <template #footer>
-        <el-button @click="showPayment = false">取消</el-button>
-        <el-button type="primary" @click="confirmPayment" :loading="paymentLoading">确认付款</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -789,14 +645,12 @@ const showWriteoff = ref(false)
 const showAgingAnalysis = ref(false)
 const showBatchAudit = ref(false)
 const showAudit = ref(false)
-const showPayment = ref(false)
 const showBatchPayment = ref(false)
 const showBatchBindInvoice = ref(false)
 const bindLoading = ref(false)
 const writeoffLoading = ref(false)
 const batchAuditLoading = ref(false)
 const auditLoading = ref(false)
-const paymentLoading = ref(false)
 const batchPaymentLoading = ref(false)
 const batchBindInvoiceLoading = ref(false)
 
@@ -804,8 +658,6 @@ const batchBindInvoiceLoading = ref(false)
 const searchForm = reactive({
   supplierId: null as number | null,
   prepaymentStatus: '',
-  invoiceStatus: '',
-  writeoffStatus: '',
   dateRange: [] as string[],
   applicant: ''
 })
@@ -817,6 +669,34 @@ const supplierList = ref([
   { id: 3, code: 'SUP003', name: '上海软件C公司' },
   { id: 4, code: 'SUP004', name: '广州物流D公司' },
   { id: 5, code: 'SUP005', name: '杭州装修E公司' }
+])
+
+// 结算单位选项
+const settlementUnitOptions = ref([
+  '深圳硬件供应商A公司',
+  '北京云服务B公司',
+  '上海软件C公司',
+  '广州物流D公司',
+  '杭州装修E公司'
+])
+
+// 结算银行选项
+const settlementBankOptions = ref([
+  '中国工商银行',
+  '中国建设银行',
+  '中国农业银行',
+  '中国银行',
+  '招商银行',
+  '交通银行'
+])
+
+// 结算账号选项
+const settlementAccountOptions = ref([
+  '75512345678',
+  '62170012345',
+  '62220811111',
+  '62284812345',
+  '62220822222'
 ])
 
 // 分页信息
@@ -1190,6 +1070,25 @@ const tableData = ref([
 
 pagination.total = filteredTableData.value.length
 
+// 预付款公司对应的银行与账号
+const companyBankMap: Record<string, { bank: string, account: string }> = {
+  '总部': { bank: '中国工商银行', account: '6222021234567890123' },
+  '北京分公司': { bank: '中国银行', account: '6217001234567890123' },
+  '上海分公司': { bank: '中国建设银行', account: '6214001234567890123' },
+  '广州分公司': { bank: '中国农业银行', account: '6228481234567890123' },
+  '杭州分公司': { bank: '招商银行', account: '6225881234567890123' }
+}
+
+// 为每条预付款补充默认结算信息
+tableData.value.forEach((row, index) => {
+  row.settlementUnit = row.supplierName
+  row.settlementBank = settlementBankOptions.value[index % settlementBankOptions.value.length]
+  row.settlementAccount = settlementAccountOptions.value[index % settlementAccountOptions.value.length]
+  const companyInfo = companyBankMap[row.prepaymentCompany] || { bank: '', account: '' }
+  row.companyBank = companyInfo.bank
+  row.companyAccount = companyInfo.account
+})
+
 // 绑定发票表单
 const bindInvoiceForm = reactive({
   prepaymentId: null as number | null,
@@ -1290,23 +1189,6 @@ const auditForm = reactive({
   prepaymentAmount: 0,
   action: 'approve' as 'approve' | 'reject',
   remark: ''
-})
-
-// 付款登记表单
-const paymentForm = reactive({
-  prepaymentId: null as number | null,
-  prepaymentNo: '',
-  supplierName: '',
-  prepaymentCompany: '',
-  prepaymentAmount: 0,
-  balanceAmount: 0,
-  paymentAmount: 0,
-  paymentDate: '',
-  paymentMethod: '',
-  bankAccountId: null as number | null,
-  transactionNo: '',
-  remark: '',
-  fileList: [] as any[]
 })
 
 // 银行账户列表
@@ -1418,7 +1300,6 @@ const canSubmit = (row: any) => row.prepaymentStatus === 'draft'
 const canDelete = (row: any) => row.prepaymentStatus === 'draft'
 const canAudit = (row: any) => row.prepaymentStatus === 'pending'
 const canApplyPayment = (row: any) => row.prepaymentStatus === 'approved'
-const canPayment = (row: any) => row.prepaymentStatus === 'approved'
 const canBindInvoice = (row: any) => row.prepaymentStatus === 'invoiced' && row.balanceAmount > 0
 const canWriteoff = (row: any) => row.prepaymentStatus === 'partial_writeoff' && row.balanceAmount > 0
 const canAutoWriteoff = (row: any) => row.prepaymentStatus === 'invoiced' && row.balanceAmount > 0
@@ -1455,8 +1336,6 @@ const handleReset = () => {
   Object.assign(searchForm, {
     supplierId: null,
     prepaymentStatus: '',
-    invoiceStatus: '',
-    writeoffStatus: '',
     dateRange: [],
     applicant: ''
   })
@@ -1538,9 +1417,6 @@ const handleMoreAction = (command: string, row: any) => {
     case 'applyPayment':
       handleApplyPayment(row)
       break
-    case 'payment':
-      handlePayment(row)
-      break
     case 'bindInvoice':
       openBindInvoice(row)
       break
@@ -1611,68 +1487,6 @@ const confirmAudit = async () => {
     ElMessage.error('操作失败')
   } finally {
     auditLoading.value = false
-  }
-}
-
-// 付款登记
-const handlePayment = (row: any) => {
-  paymentForm.prepaymentId = row.id
-  paymentForm.prepaymentNo = row.prepaymentNo
-  paymentForm.supplierName = row.supplierName
-  paymentForm.prepaymentCompany = row.prepaymentCompany || ''
-  paymentForm.prepaymentAmount = row.prepaymentAmount
-  paymentForm.balanceAmount = row.balanceAmount
-  paymentForm.paymentAmount = row.balanceAmount
-  paymentForm.paymentDate = new Date().toISOString().split('T')[0]
-  paymentForm.paymentMethod = ''
-  paymentForm.bankAccountId = null
-  paymentForm.transactionNo = ''
-  paymentForm.remark = ''
-  paymentForm.fileList = []
-  showPayment.value = true
-}
-
-// 付款文件变化
-const handlePaymentFileChange = (file: any, fileList: any) => {
-  paymentForm.fileList = fileList
-}
-
-// 付款文件删除
-const handlePaymentFileRemove = (file: any, fileList: any) => {
-  paymentForm.fileList = fileList
-}
-
-// 确认付款
-const confirmPayment = async () => {
-  if (!paymentForm.paymentDate) {
-    ElMessage.warning('请选择付款日期')
-    return
-  }
-  if (!paymentForm.paymentMethod) {
-    ElMessage.warning('请选择付款方式')
-    return
-  }
-  if (paymentForm.paymentAmount <= 0) {
-    ElMessage.warning('付款金额必须大于0')
-    return
-  }
-  paymentLoading.value = true
-  try {
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    // 更新付款数据
-    const item = tableData.value.find(t => t.id === paymentForm.prepaymentId)
-    if (item) {
-      item.paidAmount = paymentForm.paymentAmount
-      item.paymentDate = paymentForm.paymentDate
-      item.prepaymentStatus = 'invoiced'
-    }
-    ElMessage.success('付款登记成功')
-    showPayment.value = false
-    filterDataByStatus()
-  } catch {
-    ElMessage.error('付款登记失败')
-  } finally {
-    paymentLoading.value = false
   }
 }
 
@@ -2098,10 +1912,6 @@ onMounted(() => {
 }
 
 .audit-form {
-  padding: 10px 0;
-}
-
-.payment-form {
   padding: 10px 0;
 }
 
