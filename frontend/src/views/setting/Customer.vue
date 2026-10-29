@@ -26,7 +26,7 @@
       <el-row :gutter="16">
         <el-col :span="6">
           <div class="stat-card">
-            <div class="stat-icon total"><el-icon><Office /></el-icon></div>
+            <div class="stat-icon total"><el-icon><OfficeBuilding /></el-icon></div>
             <div class="stat-content">
               <div class="stat-value">{{ statistics.total }}</div>
               <div class="stat-label">客户总数</div>
@@ -362,7 +362,7 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { Plus, Upload, Download, Office, CircleCheck, TrendCharts, Warning } from '@element-plus/icons-vue'
+import { Plus, Upload, Download, OfficeBuilding, CircleCheck, TrendCharts, Warning } from '@element-plus/icons-vue'
 
 // 统计数据
 const statistics = reactive({

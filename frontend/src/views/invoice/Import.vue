@@ -292,7 +292,7 @@ import { ElMessage } from 'element-plus'
 import type { UploadFile } from 'element-plus'
 import {
   ArrowLeft, UploadFilled, Download, Clock, Document,
-  DocumentAdd, Scan, Connection
+  DocumentAdd, Connection
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -324,7 +324,7 @@ const importModes = [
     value: 'SCAN',
     title: '扫码枪导入',
     desc: '连接扫码枪，连续扫描发票二维码进行导入',
-    icon: 'Scan'
+    icon: 'Search'
   },
   {
     value: 'OCR',
